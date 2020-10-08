@@ -91,8 +91,18 @@ func (s *service) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body, err := json.Marshal("")
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	session.Expires = time.Now().AddDate(0, 0, -1)
 	http.SetCookie(w, session)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
 
 func (s *service) Signup(w http.ResponseWriter, r *http.Request) {
