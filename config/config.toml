@@ -1,0 +1,17 @@
+[all]
+  type = "Debug"
+  port = "80" 
+  serviceName = "miami"
+
+[SQLDataBase]
+  Server = "localhost"
+  Database = "miami"
+  ApplicationName = "service"
+  MaxIdleConns = 2
+  MaxOpenConns = 2
+  ConnMaxLifetime = "5m"
+
+[ServerOpt]
+  ReadTimeout = "5s"
+  WriteTimeout = "5s"
+  IdleTimeout = "5s"
