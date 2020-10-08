@@ -73,6 +73,7 @@ func (s *service) Login(w http.ResponseWriter, r *http.Request) {
 		Value:   SID.String(),
 		Expires: time.Now().Add(10 * time.Hour),
 	}
+
 	http.SetCookie(w, cookie)
 	w.Write(body)
 }
@@ -197,12 +198,12 @@ func (s *service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, ok := s.users[photo.Name]; !ok {
+	if _, ok := s.users[photo.Telephone]; !ok {
 		http.Error(w, "user doesn' t exists", 400)
 		return
 	}
 
-	s.users[photo.Name].LinkImages = append(s.users[photo.Name].LinkImages, photo.LinkImage)
+	s.users[photo.Telephone].LinkImages = append(s.users[photo.Telephone].LinkImages, photo.LinkImage)
 
 	w.WriteHeader(http.StatusOK)
 }

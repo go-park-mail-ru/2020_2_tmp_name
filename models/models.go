@@ -13,7 +13,7 @@ type LoginData struct {
 }
 
 type Photo struct {
-	Name      string `json:"name"`
+	Telephone string `json:"telephone"`
 	LinkImage string `json:"link_image"`
 }
 
