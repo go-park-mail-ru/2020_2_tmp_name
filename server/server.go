@@ -1,40 +1,29 @@
 package server
 
 import (
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"net/http"
+	"os"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var uid int
-
-func (s *service) HealthHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-}
 
 type service struct {
 	sessions map[string]string
 	users    map[string]*models.User
 }
 
-var (
-	letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-)
-
-func RandStringRunes(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
-	}
-	return string(b)
+func (s *service) HealthHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
 }
 
 func NewServer() *service {
@@ -45,12 +34,6 @@ func NewServer() *service {
 }
 
 func (s *service) Login(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://95.163.213.222:3000")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	if r.Method == "OPTIONS" {
-		return
-	}
-
 	loginData := models.LoginData{}
 	err := json.NewDecoder(r.Body).Decode(&loginData)
 	if err != nil {
@@ -73,16 +56,21 @@ func (s *service) Login(w http.ResponseWriter, r *http.Request) {
 	body, err := json.Marshal(loginData)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	SID := RandStringRunes(32)
-	s.sessions[SID] = user.Telephone
+	SID, err := uuid.NewRandom()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	s.sessions[SID.String()] = user.Telephone
 
 	cookie := &http.Cookie{
 		Name:    "session_id",
-		Value:   SID,
+		Value:   SID.String(),
 		Expires: time.Now().Add(10 * time.Hour),
 	}
 	http.SetCookie(w, cookie)
@@ -107,11 +95,6 @@ func (s *service) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *service) Signup(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://95.163.213.222:3000")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	if r.Method == "OPTIONS" {
-		return
-	}
 	user := models.User{}
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -128,12 +111,18 @@ func (s *service) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	year, _ := strconv.Atoi(user.Year)
-	user.Age = 2020 - year
+	year, err := strconv.Atoi(user.Year)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	user.Age = time.Now().Year() - year
+
 	body, err := json.Marshal(user)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -155,12 +144,6 @@ func (s *service) Settings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *service) MeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://95.163.213.222:3000")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	if r.Method == "OPTIONS" {
-		return
-	}
-
 	cookies := r.Cookies()
 	var cookie string
 	cookie = fmt.Sprintf("%s", cookies[0])
@@ -176,7 +159,7 @@ func (s *service) MeHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := json.Marshal(s.users[res])
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -185,15 +168,9 @@ func (s *service) MeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *service) FeedHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://95.163.213.222:3000")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	if r.Method == "OPTIONS" {
-		return
-	}
-
 	user := models.UserFeed{
 		Name:       "andrey",
-		Age:        40,
+		Age:        39,
 		LinkImages: []string{"/static/avatars/3.jpg", "/static/avatars/4.jpg", "/static/avatars/5.jpg"},
 		Job:        "developer",
 		Education:  "high",
@@ -203,7 +180,7 @@ func (s *service) FeedHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := json.Marshal(user)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -232,7 +209,7 @@ func (s *service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 
 func (s *service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(1024 * 1024)
-	file, _, err := r.FormFile("avatar")
+	file, handler, err := r.FormFile("file")
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -240,8 +217,15 @@ func (s *service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	hasher := md5.New()
-	io.Copy(hasher, file)
+	r.FormValue("file_name")
+	f, err := os.OpenFile(handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer f.Close()
 
+	io.Copy(f, file)
 	w.WriteHeader(http.StatusOK)
 }

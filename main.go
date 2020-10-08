@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 	"park_2020/2020_2_tmp_name/server"
 
@@ -24,26 +25,6 @@ func init() {
 	models.LoadConfig(&conf)
 }
 
-func MyCORSMethodMiddleware(_ *mux.Router) mux.MiddlewareFunc {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			fmt.Printf("URL: %s, METHOD: %s", req.RequestURI, req.Method)
-			w.Header().Set("Content-Type", "*")
-			w.Header().Set("Access-Control-Allow-Methods",
-				"POST, GET, OPTIONS, PUT, DELETE")
-			w.Header().Set("Access-Control-Allow-Headers", "*")
-			w.Header().Set("Access-Control-Allow-Origin", "http://95.163.213.222:3000")
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
-			w.Header().Set("Set-Cookie", "*")
-			w.Header().Set("Vary", "Accept, Cookie")
-			if req.Method == "OPTIONS" {
-				return
-			}
-			next.ServeHTTP(w, req)
-		})
-	}
-}
-
 func (app *application) initServer() {
 
 	headersOk := handlers.AllowedHeaders([]string{"Content-Type", "Content-Disposition"})
@@ -53,6 +34,9 @@ func (app *application) initServer() {
 	app.s = mux.NewRouter().StrictSlash(true)
 
 	s := server.NewServer()
+
+	middleware.MyCORSMethodMiddleware(app.s)
+
 	http.Handle("/", app.s)
 	path := "/static/avatars/"
 	app.s.PathPrefix(path).Handler(http.StripPrefix(path, http.FileServer(http.Dir("."+path))))
