@@ -244,7 +244,16 @@ func (s *service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 
 	s.users[photo.Telephone].LinkImages = append(s.users[photo.Telephone].LinkImages, photo.LinkImage)
 
+	body, err := json.Marshal("")
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
 
 func (s *service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
@@ -278,7 +287,7 @@ func (s *service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 	os.Chdir(str)
 
-	body, err := json.Marshal("")
+	body, err := json.Marshal(handler.Filename)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
