@@ -37,8 +37,8 @@ func TestLogin(t *testing.T) {
 	r := httptest.NewRecorder()
 	handler := http.HandlerFunc(NewServer().Login)
 	handler.ServeHTTP(r, req)
-	if status := r.Code; status != http.StatusNotFound {
-		t.Errorf("wrong status code: got %v want %v", status, http.StatusOK)
+	if status := r.Code; status != http.StatusUnauthorized {
+		t.Errorf("wrong status code: got %v want %v", status, http.StatusUnauthorized)
 	}
 }
 
