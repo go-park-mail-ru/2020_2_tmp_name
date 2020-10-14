@@ -258,7 +258,7 @@ func (s *service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 
 func (s *service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(1024 * 1024)
-	file, handler, err := r.FormFile("photo")
+	file, _, err := r.FormFile("photo")
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -277,7 +277,13 @@ func (s *service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 
 	r.FormValue("photo")
 	os.Chdir("/home/ubuntu/go/src/2020_2_tmp_name/static/avatars")
-	f, err := os.OpenFile(handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+	photoID, err := uuid.NewRandom()
+	
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	f, err := os.OpenFile(photoID.String(), os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -287,7 +293,7 @@ func (s *service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 	os.Chdir(str)
 
-	body, err := json.Marshal(handler.Filename)
+	body, err := json.Marshal(photoID.String())
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
