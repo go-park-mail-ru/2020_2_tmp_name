@@ -56,3 +56,7 @@ type UserFeed struct {
 	Education  string   `json:"education"`
 	AboutMe    string   `json:"aboutMe"`
 }
+
+type Error struct {
+	Message string `json:"message"`
+}
