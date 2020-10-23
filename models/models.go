@@ -1,5 +1,7 @@
 package models
 
+import "github.com/gorilla/websocket"
+
 type Account struct {
 	AccountID int    `json:"account_id"`
 	Login     string `json:"login"`
@@ -17,46 +19,30 @@ type Photo struct {
 	LinkImage string `json:"link_image"`
 }
 
-type User struct {
-	Name       string   `json:"name"`
-	Telephone  string   `json:"telephone"`
-	Password   string   `json:"password"`
-	Age        int      `json:"age"`
-	Day        string   `json:"day"`
-	Month      string   `json:"month"`
-	Year       string   `json:"year"`
-	Sex        string   `json:"sex"`
-	AccountID  int      `json:"account_id"`
-	LinkImages []string `json:"linkImages"`
-	Job        string   `json:"job"`
-	Education  string   `json:"education"`
-	AboutMe    string   `json:"aboutMe"`
-}
-
-type UserSafe struct {
-	Name       string   `json:"name"`
-	Telephone  string   `json:"telephone"`
-	Age        int      `json:"age"`
-	Day        string   `json:"day"`
-	Month      string   `json:"month"`
-	Year       string   `json:"year"`
-	Sex        string   `json:"sex"`
-	AccountID  int      `json:"account_id"`
-	LinkImages []string `json:"linkImages"`
-	Job        string   `json:"job"`
-	Education  string   `json:"education"`
-	AboutMe    string   `json:"aboutMe"`
-}
-
-type UserFeed struct {
-	Name       string   `json:"name"`
-	Age        int      `json:"age"`
-	LinkImages []string `json:"linkImages"`
-	Job        string   `json:"job"`
-	Education  string   `json:"education"`
-	AboutMe    string   `json:"aboutMe"`
-}
-
 type Error struct {
 	Message string `json:"message"`
+}
+
+type Message struct {
+	Author string `json:"author"`
+	Body   string `json:"body"`
+}
+
+type Client struct {
+	id     int
+	ws     *websocket.Conn
+	server *Server
+	ch     chan *Message
+	doneCh chan bool
+}
+
+type Server struct {
+	pattern   string
+	messages  []*Message
+	clients   map[int]*Client
+	addCh     chan *Client
+	delCh     chan *Client
+	sendAllCh chan *Message
+	doneCh    chan bool
+	errCh     chan error
 }

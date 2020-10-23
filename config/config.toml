@@ -4,7 +4,7 @@
   serviceName = "miami"
 
 [SQLDataBase]
-  Server = "localhost"
+  Server = "95.163.213.222"
   Database = "miami"
   ApplicationName = "service"
   MaxIdleConns = 2

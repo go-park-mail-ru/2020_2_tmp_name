@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,6 +21,7 @@ var uid int
 type service struct {
 	sessions map[string]string
 	users    map[string]*models.User
+	DB       *sql.DB
 }
 
 func (s *service) HealthHandler(w http.ResponseWriter, r *http.Request) {
