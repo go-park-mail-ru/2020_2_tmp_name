@@ -5,10 +5,10 @@ CREATE TABLE "users" (
   "password" varchar NOT NULL,
   "date_birth" date NOT NULL DEFAULT (now()),
   "sex" varchar NOT NULL,
-  "studing" varchar,
-  "working" varchar,
+  "education" varchar,
+  "job" varchar,
   "about_me" varchar,
-  "group_id" int4 NOT NULL
+  "group_id" int4
 );
 
 CREATE TABLE "groups" (

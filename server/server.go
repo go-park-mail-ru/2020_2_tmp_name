@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 	"park_2020/2020_2_tmp_name/models"
-	"strconv"
+
 	"strings"
 	"time"
 
@@ -18,18 +18,18 @@ import (
 
 var uid int
 
-type service struct {
+type Service struct {
 	sessions map[string]string
 	users    map[string]*models.User
 	DB       *sql.DB
 }
 
-func (s *service) HealthHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Service) HealthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func NewServer() *service {
-	return &service{
+func NewServer() *Service {
+	return &Service{
 		sessions: make(map[string]string, 10),
 		users:    make(map[string]*models.User, 10),
 	}
@@ -43,7 +43,7 @@ func JSONError(message string) []byte {
 	return jsonError
 }
 
-func (s *service) Login(w http.ResponseWriter, r *http.Request) {
+func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
 	loginData := models.LoginData{}
 
 	err := json.NewDecoder(r.Body).Decode(&loginData)
@@ -87,7 +87,6 @@ func (s *service) Login(w http.ResponseWriter, r *http.Request) {
 		Name:    "session_id",
 		Value:   SID.String(),
 		Expires: time.Now().Add(10 * time.Hour),
-		// Raw:"mycookie=SomeValue; Path=/mysite;",
 	}
 	cookie.HttpOnly = false
 	cookie.Secure = false
@@ -96,7 +95,7 @@ func (s *service) Login(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func (s *service) Logout(w http.ResponseWriter, r *http.Request) {
+func (s *Service) Logout(w http.ResponseWriter, r *http.Request) {
 	session, err := r.Cookie("session_id")
 	if err == http.ErrNoCookie {
 		log.Println(err)
@@ -126,7 +125,7 @@ func (s *service) Logout(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func (s *service) Signup(w http.ResponseWriter, r *http.Request) {
+func (s *Service) Signup(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -137,22 +136,27 @@ func (s *service) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uid++
-	user.AccountID = uid
 
-	if _, ok := s.users[user.Telephone]; ok {
+	var check bool
+
+	if check, err = s.CheckUserSignup(user.Telephone); err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("Checking user error"))
+		return
+	}
+
+	if check {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(JSONError("User alredy exists"))
 		return
 	}
 
-	year, err := strconv.Atoi(user.Year)
+	err = s.InsertUserSignup(user, uid)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(JSONError("Error convert to int"))
+		w.Write(JSONError("insert DB error"))
 		return
 	}
-	user.Age = time.Now().Year() - year
 
 	body, err := json.Marshal(user)
 	if err != nil {
@@ -167,7 +171,7 @@ func (s *service) Signup(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func (s *service) Settings(w http.ResponseWriter, r *http.Request) {
+func (s *Service) Settings(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -180,7 +184,7 @@ func (s *service) Settings(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *service) MeHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Service) MeHandler(w http.ResponseWriter, r *http.Request) {
 	cookies := r.Cookies()
 	var cookie string
 	cookie = fmt.Sprintf("%s", cookies[0])
@@ -206,10 +210,9 @@ func (s *service) MeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func (s *service) FeedHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Service) FeedHandler(w http.ResponseWriter, r *http.Request) {
 	user := models.UserFeed{
 		Name:       "andrey",
-		Age:        39,
 		LinkImages: []string{"/static/avatars/3.jpg", "/static/avatars/4.jpg", "/static/avatars/5.jpg"},
 		Job:        "developer",
 		Education:  "high",
@@ -228,7 +231,7 @@ func (s *service) FeedHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func (s *service) AddPhoto(w http.ResponseWriter, r *http.Request) {
+func (s *Service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 	photo := models.Photo{}
 	err := json.NewDecoder(r.Body).Decode(&photo)
 	if err != nil {
@@ -249,7 +252,7 @@ func (s *service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
+func (s *Service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(1024 * 1024)
 	file, handler, err := r.FormFile("photo")
 	if err != nil {
