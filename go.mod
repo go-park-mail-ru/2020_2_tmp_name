@@ -8,6 +8,7 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/lib/pq v1.8.0
-	golang.org/x/net v0.0.0-20201024042810-be3efd7ff127
+	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
+	golang.org/x/net v0.0.0-20201026091529-146b70c837a4
 
 )

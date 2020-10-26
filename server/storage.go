@@ -12,11 +12,16 @@ func (s *Service) CheckUser(telephone string) bool {
 }
 
 func (s *Service) InsertUser(user models.User, id int) error {
-	_, err := s.DB.Exec(`INSERT INTO users(id, name, telephone, password, date_birth, sex, job, education, about_me)
+	password, err := HashPassword(user.Password)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	_, err = s.DB.Exec(`INSERT INTO users(id, name, telephone, password, date_birth, sex, job, education, about_me)
 						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`, id,
 		user.Name,
 		user.Telephone,
-		user.Password,
+		password,
 		user.DateBirth,
 		user.Sex,
 		user.Job,
@@ -104,4 +109,10 @@ func (s *Service) DeleteSession(sid string) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Service) CheckUserBySession(sid string) string {
+	var count string
+	s.DB.QueryRow(`SELECT value FROM sessions WHERE key=$1;`, sid).Scan(&count)
+	return count
 }

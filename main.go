@@ -27,7 +27,6 @@ func init() {
 }
 
 func (app *application) initServer() {
-
 	headersOk := handlers.AllowedHeaders([]string{"Content-Type", "Content-Disposition"})
 	originsOk := handlers.AllowedOrigins([]string{"http://95.163.213.222:3000"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE"})
@@ -37,7 +36,6 @@ func (app *application) initServer() {
 	s := server.NewServer()
 
 	var err error
-
 	s.DB, err = storage.DBConnection(&conf)
 	if err != nil {
 		log.Fatalln("database connection failed")
@@ -71,11 +69,9 @@ func (app *application) initServer() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }
 
 func newApplication(conf models.Config) *application {
-
 	return &application{
 		servicePort: 8080,
 	}

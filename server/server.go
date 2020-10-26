@@ -3,14 +3,12 @@ package server
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"park_2020/2020_2_tmp_name/models"
 
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,9 +17,7 @@ import (
 var uid int
 
 type Service struct {
-	sessions map[string]string
-	users    map[string]*models.User
-	DB       *sql.DB
+	DB *sql.DB
 }
 
 func (s *Service) HealthHandler(w http.ResponseWriter, r *http.Request) {
@@ -29,10 +25,7 @@ func (s *Service) HealthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewServer() *Service {
-	return &Service{
-		sessions: make(map[string]string, 10),
-		users:    make(map[string]*models.User, 10),
-	}
+	return &Service{}
 }
 
 func JSONError(message string) []byte {
@@ -69,7 +62,7 @@ func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.Password != loginData.Password {
+	if CheckPasswordHash(user.Password, loginData.Password) {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(JSONError("Wrong password"))
 		return
@@ -93,8 +86,6 @@ func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
 		w.Write(JSONError("insert DB error"))
 		return
 	}
-
-	s.sessions[SID.String()] = user.Telephone
 
 	cookie := &http.Cookie{
 		Name:    "session_id",
@@ -120,12 +111,6 @@ func (s *Service) Logout(w http.ResponseWriter, r *http.Request) {
 	session, err := r.Cookie("session_id")
 	if err == http.ErrNoCookie {
 		log.Println(err)
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("No session"))
-		return
-	}
-
-	if _, ok := s.sessions[session.Value]; !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(JSONError("No session"))
 		return
@@ -187,7 +172,6 @@ func (s *Service) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.users[user.Telephone] = &user
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
@@ -225,20 +209,16 @@ func (s *Service) ChangePassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) MeHandler(w http.ResponseWriter, r *http.Request) {
-	cookies := r.Cookies()
-	var cookie string
-	cookie = fmt.Sprintf("%s", cookies[0])
-	cookie = strings.TrimPrefix(cookie, "session_id=")
-
-	var res string
-	var ok bool
-	if res, ok = s.sessions[cookie]; !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("No session"))
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUser(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
 		return
 	}
 
-	body, err := json.Marshal(s.users[res])
+	body, err := json.Marshal(user)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -281,13 +261,15 @@ func (s *Service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, ok := s.users[photo.Telephone]; !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User alredy exists"))
+	user, err := s.SelectUser(photo.Telephone)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't select user"))
 		return
 	}
 
-	s.users[photo.Telephone].LinkImages = append(s.users[photo.Telephone].LinkImages, photo.LinkImage)
+	user.LinkImages = append(user.LinkImages, photo.LinkImage)
 
 	w.WriteHeader(http.StatusOK)
 }
