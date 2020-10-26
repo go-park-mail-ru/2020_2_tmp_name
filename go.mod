@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
-	github.com/gorilla/websocket v1.4.2
 	github.com/lib/pq v1.8.0
+	golang.org/x/net v0.0.0-20201024042810-be3efd7ff127
 
 )

@@ -43,3 +43,9 @@ CREATE TABLE "photo" (
   "path" varchar NOT NULL,
   "user_id" int4
 );
+
+CREATE TABLE "sessions" (
+  "id" SERIAL PRIMARY KEY,
+  "key" varchar NOT NULL,
+  "value" varchar
+);

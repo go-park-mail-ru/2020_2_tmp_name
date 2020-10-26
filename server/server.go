@@ -54,10 +54,18 @@ func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := s.users[loginData.Telephone]
-	if !ok {
+	var check bool
+
+	if check = s.CheckUser(loginData.Telephone); !check {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(JSONError("No user"))
+		return
+	}
+
+	user, err := s.SelectUser(loginData.Telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
 		return
 	}
 
@@ -67,18 +75,23 @@ func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := json.Marshal(loginData)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(JSONError("Marshal error"))
-		return
-	}
-
 	SID, err := uuid.NewRandom()
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	if check = s.CheckSession(loginData.Telephone); check {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User already authorized"))
+		return
+	}
+
+	err = s.InsertSession(SID.String(), loginData.Telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
 	}
 
 	s.sessions[SID.String()] = user.Telephone
@@ -90,6 +103,14 @@ func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	cookie.HttpOnly = false
 	cookie.Secure = false
+
+	body, err := json.Marshal(loginData)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
 
 	http.SetCookie(w, cookie)
 	w.Write(body)
@@ -110,7 +131,14 @@ func (s *Service) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := json.Marshal("")
+	err = s.DeleteSession(session.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("delete DB error"))
+		return
+	}
+
+	body, err := json.Marshal("logout success")
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -136,22 +164,15 @@ func (s *Service) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uid++
-
 	var check bool
 
-	if check, err = s.CheckUserSignup(user.Telephone); err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("Checking user error"))
-		return
-	}
-
-	if check {
+	if check = s.CheckUser(user.Telephone); check {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(JSONError("User alredy exists"))
 		return
 	}
 
-	err = s.InsertUserSignup(user, uid)
+	err = s.InsertUser(user, uid)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("insert DB error"))
@@ -181,7 +202,26 @@ func (s *Service) Settings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = s.UpdateUser(user)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Update user's params error"))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Service) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	var password string
+	err := json.NewDecoder(r.Body).Decode(&password)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't decode data"))
+		return
+	}
 }
 
 func (s *Service) MeHandler(w http.ResponseWriter, r *http.Request) {
