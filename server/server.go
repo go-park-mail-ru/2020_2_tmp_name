@@ -317,3 +317,57 @@ func (s *Service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
+
+func (s *Service) Like(w http.ResponseWriter, r *http.Request) {
+	like := models.Like{}
+	err := json.NewDecoder(r.Body).Decode(&like)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't decode data"))
+		return
+	}
+
+	err = s.InsertLike(like)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
+}
+
+func (s *Service) Dislike(w http.ResponseWriter, r *http.Request) {
+	dislike := models.Dislike{}
+	err := json.NewDecoder(r.Body).Decode(&dislike)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't decode data"))
+		return
+	}
+
+	err = s.InsertDislike(dislike)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
+}
+
+func (s *Service) Comment(w http.ResponseWriter, r *http.Request) {
+	comment := models.Comment{}
+	err := json.NewDecoder(r.Body).Decode(&comment)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't decode data"))
+		return
+	}
+
+	err = s.InsertComment(comment)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
+}

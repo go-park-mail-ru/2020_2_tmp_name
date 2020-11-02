@@ -116,3 +116,30 @@ func (s *Service) CheckUserBySession(sid string) string {
 	s.DB.QueryRow(`SELECT value FROM sessions WHERE key=$1;`, sid).Scan(&count)
 	return count
 }
+
+func (s *Service) InsertLike(like models.Like) error {
+	_, err := s.DB.Exec(`INSERT INTO likes VALUES ($1, $2, $3);`, like.ID, like.Uid1, like.Uid2)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s *Service) InsertDislike(dislike models.Dislike) error {
+	_, err := s.DB.Exec(`INSERT INTO dislikes VALUES ($1, $2, $3);`, dislike.ID, dislike.Uid1, dislike.Uid2)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s *Service) InsertComment(comment models.Comment) error {
+	_, err := s.DB.Exec(`INSERT INTO comments VALUES ($1, $2, $3);`, comment.ID, comment.PhotoID, comment.Text)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}

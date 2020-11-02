@@ -24,6 +24,12 @@ CREATE TABLE "likes" (
   "user_id2" int4
 );
 
+CREATE TABLE "dislikes" (
+  "id" int4 PRIMARY KEY,
+  "user_id1" int4,
+  "user_id2" int4
+);
+
 CREATE TABLE "chat" (
   "id" int4 PRIMARY KEY,
   "user_id1" int4,
@@ -42,6 +48,12 @@ CREATE TABLE "photo" (
   "id" int4 PRIMARY KEY,
   "path" varchar NOT NULL,
   "user_id" int4
+);
+
+CREATE TABLE "comments" (
+  "id" int4 PRIMARY KEY,
+  "photo_id" int4,
+  "text" text
 );
 
 CREATE TABLE "sessions" (
