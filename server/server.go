@@ -14,8 +14,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var uid int
-
 type Service struct {
 	DB *sql.DB
 }
@@ -148,7 +146,6 @@ func (s *Service) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uid++
 	var check bool
 
 	if check = s.CheckUser(user.Telephone); check {
@@ -157,7 +154,7 @@ func (s *Service) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.InsertUser(user, uid)
+	err = s.InsertUser(user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("insert DB error"))
@@ -197,15 +194,15 @@ func (s *Service) Settings(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *Service) ChangePassword(w http.ResponseWriter, r *http.Request) {
-	var password string
-	err := json.NewDecoder(r.Body).Decode(&password)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(JSONError("Can't decode data"))
-		return
-	}
+func UserToFeed(user models.User) (userFeed models.UserFeed) {
+	userFeed.ID = user.ID
+	userFeed.Name = user.Name
+	userFeed.DateBirth = user.DateBirth
+	userFeed.LinkImages = user.LinkImages
+	userFeed.Job = user.Job
+	userFeed.Education = user.Education
+	userFeed.AboutMe = user.AboutMe
+	return
 }
 
 func (s *Service) MeHandler(w http.ResponseWriter, r *http.Request) {
@@ -218,7 +215,9 @@ func (s *Service) MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := json.Marshal(user)
+	userFeed := UserToFeed(user)
+
+	body, err := json.Marshal(userFeed)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -230,16 +229,18 @@ func (s *Service) MeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func (s *Service) FeedHandler(w http.ResponseWriter, r *http.Request) {
-	user := models.UserFeed{
-		Name:       "andrey",
-		LinkImages: []string{"/static/avatars/3.jpg", "/static/avatars/4.jpg", "/static/avatars/5.jpg"},
-		Job:        "developer",
-		Education:  "high",
-		AboutMe:    "I am cool",
+func (s *Service) Feed(w http.ResponseWriter, r *http.Request) {
+	var feed models.Feed
+	var err error
+	feed.Data, err = s.SelectUsers()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can`t select users"))
+		return
 	}
 
-	body, err := json.Marshal(user)
+	body, err := json.Marshal(feed.Data)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -261,7 +262,7 @@ func (s *Service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.SelectUser(photo.Telephone)
+	user, err := s.SelectUserByID(photo.UID)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -269,9 +270,25 @@ func (s *Service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user.LinkImages = append(user.LinkImages, photo.LinkImage)
+	user.LinkImages = append(user.LinkImages, photo.Path)
+
+	err = s.InsertPhoto(photo)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
+
+	body, err := json.Marshal(photo)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
 
 func (s *Service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
@@ -365,6 +382,24 @@ func (s *Service) Comment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = s.InsertComment(comment)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
+}
+
+func (s *Service) Chat(w http.ResponseWriter, r *http.Request) {
+	chat := models.Chat{}
+	err := json.NewDecoder(r.Body).Decode(&chat)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't decode data"))
+		return
+	}
+
+	err = s.InsertChat(chat)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("insert DB error"))

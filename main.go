@@ -57,11 +57,12 @@ func (app *application) initServer() {
 	// app.serv.HandleFunc("/api/v1/upload", s.UploadAvatar).Methods(http.MethodPost)
 	// app.serv.HandleFunc("/api/v1/add_photo", s.AddPhoto).Methods(http.MethodPost)
 	// app.serv.HandleFunc("/api/v1/me", s.MeHandler).Methods(http.MethodGet)
-	// app.serv.HandleFunc("/api/v1/feed", s.FeedHandler).Methods(http.MethodGet)
+	// app.serv.HandleFunc("/api/v1/feed", s.Feed).Methods(http.MethodGet)
 
 	// app.serv.HandleFunc("/api/v1/like", s.Like).Methods(http.MethodPost)
 	// app.serv.HandleFunc("/api/v1/dislike", s.Dislike).Methods(http.MethodPost)
 	// app.serv.HandleFunc("/api/v1/comment", s.Comment).Methods(http.MethodPost)
+	// app.serv.HandleFunc("/api/v1/chat", s.Chat).Methods(http.MethodPost)
 
 	http.Handle(path, http.StripPrefix(path, http.FileServer(http.Dir("."+path))))
 
@@ -73,11 +74,12 @@ func (app *application) initServer() {
 	http.HandleFunc("/api/v1/upload", s.UploadAvatar)
 	http.HandleFunc("/api/v1/add_photo", s.AddPhoto)
 	http.HandleFunc("/api/v1/me", s.MeHandler)
-	http.HandleFunc("/api/v1/feed", s.FeedHandler)
+	http.HandleFunc("/api/v1/feed", s.Feed)
 
 	http.HandleFunc("/api/v1/like", s.Like)
 	http.HandleFunc("/api/v1/dislike", s.Dislike)
 	http.HandleFunc("/api/v1/comment", s.Comment)
+	http.HandleFunc("/api/v1/chat", s.Chat)
 
 	// serv := &http.Server{
 	// 	Addr:         ":8080",

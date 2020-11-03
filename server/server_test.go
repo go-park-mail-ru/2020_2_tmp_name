@@ -82,7 +82,7 @@ func TestSignup(t *testing.T) {
 		t.Errorf("wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	resultData := []byte(`{"name":"andrey","telephone":"12345","password":"","age":19,"day":"01","month":"01","year":"2001","sex":"male","account_id":1,"linkImages":null,"job":"frontend-developer","education":"high","aboutMe":""}`)
+	resultData := []byte(`{"name":"andrey","telephone":"12345","password":"","age":19,"day":"01","month":"01","year":"2001","sex":"male","linkImages":null,"job":"frontend-developer","education":"high","aboutMe":""}`)
 
 	if !bytes.Equal(r.Body.Bytes(), resultData) {
 		t.Errorf("wrong response: got %v want %v", string(r.Body.Bytes()), string(resultData))
@@ -116,14 +116,14 @@ func TestSettings(t *testing.T) {
 	}
 }
 
-func TestFeedHandler(t *testing.T) {
+func TestFeed(t *testing.T) {
 	req, err := http.NewRequest("GET", "/feed", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	r := httptest.NewRecorder()
-	handler := http.HandlerFunc(NewServer().FeedHandler)
+	handler := http.HandlerFunc(NewServer().Feed)
 	handler.ServeHTTP(r, req)
 	if status := r.Code; status != http.StatusOK {
 		t.Errorf("wrong status code: got %v want %v", status, http.StatusOK)

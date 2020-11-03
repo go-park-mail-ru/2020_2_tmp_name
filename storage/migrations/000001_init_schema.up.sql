@@ -1,5 +1,5 @@
 CREATE TABLE "users" (
-  "id" int4 PRIMARY KEY,
+  "id" SERIAL PRIMARY KEY,
   "name" varchar NOT NULL,
   "telephone" varchar NOT NULL,
   "password" varchar NOT NULL,
@@ -12,32 +12,32 @@ CREATE TABLE "users" (
 );
 
 CREATE TABLE "groups" (
-  "id" int4 PRIMARY KEY,
+  "id" SERIAL PRIMARY KEY,
   "for_love" boolean,
   "for_friends" boolean,
   "for_sex" boolean
 );
 
 CREATE TABLE "likes" (
-  "id" int4 PRIMARY KEY,
+  "id" SERIAL PRIMARY KEY,
   "user_id1" int4,
   "user_id2" int4
 );
 
 CREATE TABLE "dislikes" (
-  "id" int4 PRIMARY KEY,
+  "id" SERIAL PRIMARY KEY,
   "user_id1" int4,
   "user_id2" int4
 );
 
 CREATE TABLE "chat" (
-  "id" int4 PRIMARY KEY,
+  "id" SERIAL PRIMARY KEY,
   "user_id1" int4,
   "user_id2" int4
 );
 
 CREATE TABLE "message" (
-  "id" int4 PRIMARY KEY,
+  "id" SERIAL PRIMARY KEY,
   "path" varchar NOT NULL,
   "time_delivery" timestamptz NOT NULL DEFAULT (now()),
   "chat_id" int4,
@@ -45,13 +45,13 @@ CREATE TABLE "message" (
 );
 
 CREATE TABLE "photo" (
-  "id" int4 PRIMARY KEY,
+  "id" SERIAL PRIMARY KEY,
   "path" varchar NOT NULL,
   "user_id" int4
 );
 
 CREATE TABLE "comments" (
-  "id" int4 PRIMARY KEY,
+  "id" SERIAL PRIMARY KEY,
   "photo_id" int4,
   "text" text
 );

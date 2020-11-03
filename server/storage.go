@@ -11,14 +11,14 @@ func (s *Service) CheckUser(telephone string) bool {
 	return count > 0
 }
 
-func (s *Service) InsertUser(user models.User, id int) error {
+func (s *Service) InsertUser(user models.User) error {
 	password, err := HashPassword(user.Password)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	_, err = s.DB.Exec(`INSERT INTO users(id, name, telephone, password, date_birth, sex, job, education, about_me)
-						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`, id,
+	_, err = s.DB.Exec(`INSERT INTO users(name, telephone, password, date_birth, sex, job, education, about_me)
+						VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`,
 		user.Name,
 		user.Telephone,
 		password,
@@ -37,15 +37,52 @@ func (s *Service) InsertUser(user models.User, id int) error {
 
 func (s *Service) SelectUser(telephone string) (models.User, error) {
 	var u models.User
-	row := s.DB.QueryRow(`SELECT name, telephone, password, date_birth, sex, job, education, about_me FROM users
+	row := s.DB.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
 						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe)
+	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe)
 	if err != nil {
 		log.Println(err)
-		var eu models.User
-		return eu, err
+		return u, err
 	}
 	return u, nil
+}
+
+func (s *Service) SelectUserByID(uid int) (models.User, error) {
+	var u models.User
+	row := s.DB.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
+						WHERE  id=$1;`, uid)
+	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe)
+	if err != nil {
+		log.Println(err)
+		return u, err
+	}
+	return u, nil
+}
+
+func (s *Service) SelectUsers() ([]models.UserFeed, error) {
+	var users []models.UserFeed
+	rows, err := s.DB.Query(`SELECT id, name, date_birth, job, education, about_me FROM users`)
+	if err != nil {
+		log.Println(err)
+		return users, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var u models.UserFeed
+		err := rows.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		users = append(users, u)
+	}
+	users = users[0:5]
+	users[0].LinkImages = append(users[0].LinkImages, "/static/avatars/3.jpg")
+	users[1].LinkImages = append(users[1].LinkImages, "/static/avatars/4.jpg")
+	users[2].LinkImages = append(users[2].LinkImages, "/static/avatars/9.jpg")
+	users[3].LinkImages = append(users[3].LinkImages, "/static/avatars/6.jpg")
+	users[4].LinkImages = append(users[4].LinkImages, "/static/avatars/7.jpg")
+	return users, nil
 }
 
 func (s *Service) UpdateUser(user models.User) error {
@@ -118,7 +155,7 @@ func (s *Service) CheckUserBySession(sid string) string {
 }
 
 func (s *Service) InsertLike(like models.Like) error {
-	_, err := s.DB.Exec(`INSERT INTO likes VALUES ($1, $2, $3);`, like.ID, like.Uid1, like.Uid2)
+	_, err := s.DB.Exec(`INSERT INTO likes(user_id1, user_id2) VALUES ($1, $2);`, like.Uid1, like.Uid2)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -127,7 +164,7 @@ func (s *Service) InsertLike(like models.Like) error {
 }
 
 func (s *Service) InsertDislike(dislike models.Dislike) error {
-	_, err := s.DB.Exec(`INSERT INTO dislikes VALUES ($1, $2, $3);`, dislike.ID, dislike.Uid1, dislike.Uid2)
+	_, err := s.DB.Exec(`INSERT INTO dislikes(user_id1, user_id2) VALUES ($1, $2);`, dislike.Uid1, dislike.Uid2)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -136,7 +173,25 @@ func (s *Service) InsertDislike(dislike models.Dislike) error {
 }
 
 func (s *Service) InsertComment(comment models.Comment) error {
-	_, err := s.DB.Exec(`INSERT INTO comments VALUES ($1, $2, $3);`, comment.ID, comment.PhotoID, comment.Text)
+	_, err := s.DB.Exec(`INSERT INTO comments(user_id1, user_id2) VALUES ($1, $2);`, comment.PhotoID, comment.Text)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s *Service) InsertChat(chat models.Chat) error {
+	_, err := s.DB.Exec(`INSERT INTO chat(user_id1, user_id2) VALUES ($1, $2);`, chat.Uid1, chat.Uid2)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func (s *Service) InsertPhoto(photo models.Photo) error {
+	_, err := s.DB.Exec(`INSERT INTO photo(path, user_id) VALUES ($1, $2);`, photo.Path, photo.UID)
 	if err != nil {
 		log.Println(err)
 		return err
