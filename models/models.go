@@ -10,7 +10,7 @@ type LoginData struct {
 type Photo struct {
 	ID   int    `json:"-"`
 	Path string `json:"path"`
-	UID  int    `json:"-"`
+	UID  int    `json:"user_id"`
 }
 
 type Comment struct {
@@ -32,17 +32,18 @@ type Dislike struct {
 }
 
 type Chat struct {
-	ID   int `json:"-"`
-	Uid1 int `json:"user_id1"`
-	Uid2 int `json:"user_id2"`
+	ID      int    `json:"-"`
+	Uid1    int    `json:"user_id1"`
+	Uid2    int    `json:"user_id2"`
+	LastMsg string `json:"last_msg"`
 }
 
 type Message struct {
 	ID           int       `json:"-"`
 	Text         string    `json:"text"`
-	TimeDelivery time.Time `json:"time_delivery"`
+	TimeDelivery time.Time `json:"-"`
 	ChatID       int       `json:"chat_id"`
-	UserID       int       `json:"user_id"`
+	UserID       int       `json:"-"`
 }
 
 type Error struct {

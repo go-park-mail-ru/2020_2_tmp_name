@@ -249,9 +249,7 @@ func (s *Service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := r.Cookies()[0]
-	telephone := s.CheckUserBySession(cookie.Value)
-	user, err := s.SelectUserFeed(telephone)
+	user, err := s.SelectUserByID(photo.UID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("Can't select user"))
@@ -260,7 +258,7 @@ func (s *Service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 
 	user.LinkImages = append(user.LinkImages, photo.Path)
 
-	err = s.InsertPhoto(photo.Path, user.ID)
+	err = s.InsertPhoto(photo.Path, photo.UID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("insert DB error"))
@@ -281,7 +279,7 @@ func (s *Service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(1024 * 1024)
-	file, handler, err := r.FormFile("photo")
+	file, _, err := r.FormFile("photo")
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -300,7 +298,13 @@ func (s *Service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 
 	r.FormValue("photo")
 	os.Chdir("/home/ubuntu/go/src/2020_2_tmp_name/static/avatars")
-	f, err := os.OpenFile(handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+	photoID, err := uuid.NewRandom()
+
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	f, err := os.OpenFile(photoID.String(), os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -310,7 +314,7 @@ func (s *Service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 	os.Chdir(str)
 
-	body, err := json.Marshal("")
+	body, err := json.Marshal(photoID.String())
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -415,6 +419,17 @@ func (s *Service) Comment(w http.ResponseWriter, r *http.Request) {
 		w.Write(JSONError("insert DB error"))
 		return
 	}
+
+	body, err := json.Marshal(comment)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
 
 func (s *Service) Chat(w http.ResponseWriter, r *http.Request) {
@@ -433,6 +448,17 @@ func (s *Service) Chat(w http.ResponseWriter, r *http.Request) {
 		w.Write(JSONError("insert DB error"))
 		return
 	}
+
+	body, err := json.Marshal(chat)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
 
 func (s *Service) Message(w http.ResponseWriter, r *http.Request) {
@@ -460,4 +486,44 @@ func (s *Service) Message(w http.ResponseWriter, r *http.Request) {
 		w.Write(JSONError("insert DB error"))
 		return
 	}
+
+	body, err := json.Marshal(message)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (s *Service) Chats(w http.ResponseWriter, r *http.Request) {
+	chat := models.Chat{}
+	err := json.NewDecoder(r.Body).Decode(&chat)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't decode data"))
+		return
+	}
+
+	chats, err := s.SelectChatsByID(chat.Uid1, chat.Uid2)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("select DB error"))
+		return
+	}
+
+	body, err := json.Marshal(chats)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
