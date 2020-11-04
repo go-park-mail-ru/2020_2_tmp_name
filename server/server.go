@@ -500,16 +500,16 @@ func (s *Service) Message(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) Chats(w http.ResponseWriter, r *http.Request) {
-	chat := models.Chat{}
-	err := json.NewDecoder(r.Body).Decode(&chat)
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(JSONError("Can't decode data"))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
 		return
 	}
 
-	chats, err := s.SelectChatsByID(chat.Uid1, chat.Uid2)
+	chats, err := s.SelectChatsByID(user.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("select DB error"))

@@ -269,46 +269,42 @@ func (s *Service) InsertPhoto(path string, uid int) error {
 	return nil
 }
 
-func (s *Service) SelectChatsByID(uid1, uid2 int) ([]models.Chat, error) {
+func (s *Service) SelectChatsByID(uid int) ([]models.Chat, error) {
 	var chats []models.Chat
-	if uid2 != 0 {
-		rows, err := s.DB.Query(`SELECT id, user_id1 FROM chat WHERE user_id2=$1;`, uid2)
+	rows, err := s.DB.Query(`SELECT id, user_id1 FROM chat WHERE user_id2=$1;`, uid)
+	if err != nil {
+		log.Println(err)
+		return chats, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var chat models.Chat
+		err := rows.Scan(&chat.ID, &chat.Uid1)
 		if err != nil {
 			log.Println(err)
-			return chats, err
+			continue
 		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var chat models.Chat
-			err := rows.Scan(&chat.ID, &chat.Uid1)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			chat.Uid2 = uid2
-			chats = append(chats, chat)
-		}
+		chat.Uid2 = uid
+		chats = append(chats, chat)
 	}
 
-	if uid1 != 0 {
-		rows, err := s.DB.Query(`SELECT id, user_id2 FROM chat WHERE user_id1=$1;`, uid1)
+	rows, err = s.DB.Query(`SELECT id, user_id2 FROM chat WHERE user_id1=$1;`, uid)
+	if err != nil {
+		log.Println(err)
+		return chats, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var chat models.Chat
+		err := rows.Scan(&chat.ID, &chat.Uid2)
 		if err != nil {
 			log.Println(err)
-			return chats, err
+			continue
 		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var chat models.Chat
-			err := rows.Scan(&chat.ID, &chat.Uid2)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			chat.Uid1 = uid1
-			chats = append(chats, chat)
-		}
+		chat.Uid1 = uid
+		chats = append(chats, chat)
 	}
 
 	var chatsWithMsg []models.Chat
