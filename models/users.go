@@ -28,13 +28,13 @@ type UserSafe struct {
 }
 
 type UserFeed struct {
-	ID         int       `json:"id"`
-	Name       string    `json:"name"`
-	DateBirth  time.Time `json:"date_birth"`
-	LinkImages []string  `json:"linkImages"`
-	Job        string    `json:"job"`
-	Education  string    `json:"education"`
-	AboutMe    string    `json:"aboutMe"`
+	ID         int      `json:"id"`
+	Name       string   `json:"name"`
+	DateBirth  int      `json:"date_birth"`
+	LinkImages []string `json:"linkImages"`
+	Job        string   `json:"job"`
+	Education  string   `json:"education"`
+	AboutMe    string   `json:"aboutMe"`
 }
 
 type Feed struct {

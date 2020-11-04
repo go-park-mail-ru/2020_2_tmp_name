@@ -8,7 +8,7 @@ type LoginData struct {
 type Photo struct {
 	ID   int    `json:"-"`
 	Path string `json:"path"`
-	UID  int    `json:"user_id"`
+	UID  int    `json:"-"`
 }
 
 type Comment struct {
@@ -19,13 +19,13 @@ type Comment struct {
 
 type Like struct {
 	ID   int `json:"-"`
-	Uid1 int `json:"user_id1"`
+	Uid1 int `json:"-"`
 	Uid2 int `json:"user_id2"`
 }
 
 type Dislike struct {
 	ID   int `json:"-"`
-	Uid1 int `json:"user_id1"`
+	Uid1 int `json:"-"`
 	Uid2 int `json:"user_id2"`
 }
 

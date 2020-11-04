@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"park_2020/2020_2_tmp_name/models"
+	"time"
 )
 
 func (s *Service) CheckUser(telephone string) bool {
@@ -44,6 +45,34 @@ func (s *Service) SelectUser(telephone string) (models.User, error) {
 		log.Println(err)
 		return u, err
 	}
+
+	u.LinkImages, err = s.SelectImages(u.ID)
+	if err != nil {
+		log.Println(err)
+		return u, err
+	}
+
+	return u, nil
+}
+
+func (s *Service) SelectUserFeed(telephone string) (models.UserFeed, error) {
+	var u models.UserFeed
+	var date time.Time
+	row := s.DB.QueryRow(`SELECT id, name, date_birth, job, education, about_me FROM users
+						WHERE  telephone=$1;`, telephone)
+	err := row.Scan(&u.ID, &u.Name, &date, &u.Education, &u.Job, &u.AboutMe)
+	if err != nil {
+		log.Println(err)
+		return u, err
+	}
+
+	u.DateBirth = diff(date, time.Now())
+	u.LinkImages, err = s.SelectImages(u.ID)
+	if err != nil {
+		log.Println(err)
+		return u, err
+	}
+
 	return u, nil
 }
 
@@ -56,6 +85,13 @@ func (s *Service) SelectUserByID(uid int) (models.User, error) {
 		log.Println(err)
 		return u, err
 	}
+
+	u.LinkImages, err = s.SelectImages(u.ID)
+	if err != nil {
+		log.Println(err)
+		return u, err
+	}
+
 	return u, nil
 }
 
@@ -67,22 +103,47 @@ func (s *Service) SelectUsers() ([]models.UserFeed, error) {
 		return users, err
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		var u models.UserFeed
-		err := rows.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe)
+		var date time.Time
+		err := rows.Scan(&u.ID, &u.Name, &date, &u.Education, &u.Job, &u.AboutMe)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
+
+		u.DateBirth = diff(date, time.Now())
+		u.LinkImages, err = s.SelectImages(u.ID)
+		if err != nil {
+			log.Println(err)
+			return users, err
+		}
+
 		users = append(users, u)
 	}
-	users = users[0:5]
-	users[0].LinkImages = append(users[0].LinkImages, "/static/avatars/3.jpg")
-	users[1].LinkImages = append(users[1].LinkImages, "/static/avatars/4.jpg")
-	users[2].LinkImages = append(users[2].LinkImages, "/static/avatars/9.jpg")
-	users[3].LinkImages = append(users[3].LinkImages, "/static/avatars/6.jpg")
-	users[4].LinkImages = append(users[4].LinkImages, "/static/avatars/7.jpg")
+
 	return users, nil
+}
+
+func (s *Service) SelectImages(uid int) ([]string, error) {
+	var images []string
+	rows, err := s.DB.Query(`SELECT path FROM photo WHERE  user_id=$1;`, uid)
+	if err != nil {
+		log.Println(err)
+		return images, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var image string
+		err := rows.Scan(&image)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		images = append(images, image)
+	}
+	return images, nil
 }
 
 func (s *Service) UpdateUser(user models.User) error {
@@ -154,8 +215,8 @@ func (s *Service) CheckUserBySession(sid string) string {
 	return count
 }
 
-func (s *Service) InsertLike(like models.Like) error {
-	_, err := s.DB.Exec(`INSERT INTO likes(user_id1, user_id2) VALUES ($1, $2);`, like.Uid1, like.Uid2)
+func (s *Service) InsertLike(uid1, uid2 int) error {
+	_, err := s.DB.Exec(`INSERT INTO likes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -163,8 +224,8 @@ func (s *Service) InsertLike(like models.Like) error {
 	return nil
 }
 
-func (s *Service) InsertDislike(dislike models.Dislike) error {
-	_, err := s.DB.Exec(`INSERT INTO dislikes(user_id1, user_id2) VALUES ($1, $2);`, dislike.Uid1, dislike.Uid2)
+func (s *Service) InsertDislike(uid1, uid2 int) error {
+	_, err := s.DB.Exec(`INSERT INTO dislikes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -190,8 +251,8 @@ func (s *Service) InsertChat(chat models.Chat) error {
 	return nil
 }
 
-func (s *Service) InsertPhoto(photo models.Photo) error {
-	_, err := s.DB.Exec(`INSERT INTO photo(path, user_id) VALUES ($1, $2);`, photo.Path, photo.UID)
+func (s *Service) InsertPhoto(path string, uid int) error {
+	_, err := s.DB.Exec(`INSERT INTO photo(path, user_id) VALUES ($1, $2);`, path, uid)
 	if err != nil {
 		log.Println(err)
 		return err

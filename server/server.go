@@ -194,30 +194,17 @@ func (s *Service) Settings(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func UserToFeed(user models.User) (userFeed models.UserFeed) {
-	userFeed.ID = user.ID
-	userFeed.Name = user.Name
-	userFeed.DateBirth = user.DateBirth
-	userFeed.LinkImages = user.LinkImages
-	userFeed.Job = user.Job
-	userFeed.Education = user.Education
-	userFeed.AboutMe = user.AboutMe
-	return
-}
-
 func (s *Service) MeHandler(w http.ResponseWriter, r *http.Request) {
 	cookie := r.Cookies()[0]
 	telephone := s.CheckUserBySession(cookie.Value)
-	user, err := s.SelectUser(telephone)
+	user, err := s.SelectUserFeed(telephone)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("Can't select user"))
 		return
 	}
 
-	userFeed := UserToFeed(user)
-
-	body, err := json.Marshal(userFeed)
+	body, err := json.Marshal(user)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -262,17 +249,18 @@ func (s *Service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.SelectUserByID(photo.UID)
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("Can't select user"))
 		return
 	}
 
 	user.LinkImages = append(user.LinkImages, photo.Path)
 
-	err = s.InsertPhoto(photo)
+	err = s.InsertPhoto(photo.Path, user.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("insert DB error"))
@@ -345,12 +333,32 @@ func (s *Service) Like(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.InsertLike(like)
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	err = s.InsertLike(user.ID, like.Uid2)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("insert DB error"))
 		return
 	}
+
+	body, err := json.Marshal(like)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
 
 func (s *Service) Dislike(w http.ResponseWriter, r *http.Request) {
@@ -363,12 +371,32 @@ func (s *Service) Dislike(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.InsertDislike(dislike)
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	err = s.InsertDislike(user.ID, dislike.Uid2)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("insert DB error"))
 		return
 	}
+
+	body, err := json.Marshal(dislike)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
 
 func (s *Service) Comment(w http.ResponseWriter, r *http.Request) {
