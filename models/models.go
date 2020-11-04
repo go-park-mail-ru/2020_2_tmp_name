@@ -9,7 +9,7 @@ type LoginData struct {
 
 type Photo struct {
 	ID        int    `json:"-"`
-	Path      string `json:"path"`
+	Path      string `json:"linkImages"`
 	Telephone string `json:"telephone"`
 }
 

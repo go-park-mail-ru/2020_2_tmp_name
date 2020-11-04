@@ -227,7 +227,7 @@ func (s *Service) Feed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := json.Marshal(feed.Data)
+	body, err := json.Marshal(feed)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
