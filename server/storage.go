@@ -271,40 +271,47 @@ func (s *Service) InsertPhoto(path string, uid int) error {
 
 func (s *Service) SelectChatsByID(uid1, uid2 int) ([]models.Chat, error) {
 	var chats []models.Chat
-	rows, err := s.DB.Query(`SELECT id, user_id1 FROM chat WHERE user_id2=$1;`, uid2)
-	if err != nil {
-		log.Println(err)
-		return chats, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var chat models.Chat
-		err := rows.Scan(&chat.ID, &chat.Uid1)
+	if uid2 != 0 {
+		rows, err := s.DB.Query(`SELECT id, user_id1 FROM chat WHERE user_id2=$1;`, uid2)
 		if err != nil {
 			log.Println(err)
-			continue
+			return chats, err
 		}
-		chats = append(chats, chat)
+		defer rows.Close()
+
+		for rows.Next() {
+			var chat models.Chat
+			err := rows.Scan(&chat.ID, &chat.Uid1)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			chat.Uid2 = uid2
+			chats = append(chats, chat)
+		}
 	}
 
-	rows, err = s.DB.Query(`SELECT id, user_id2 FROM chat WHERE user_id1=$1;`, uid1)
-	if err != nil {
-		log.Println(err)
-		return chats, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var chat models.Chat
-		err := rows.Scan(&chat.ID, &chat.Uid1)
+	if uid1 != 0 {
+		rows, err := s.DB.Query(`SELECT id, user_id2 FROM chat WHERE user_id1=$1;`, uid1)
 		if err != nil {
 			log.Println(err)
-			continue
+			return chats, err
 		}
-		chats = append(chats, chat)
+		defer rows.Close()
+
+		for rows.Next() {
+			var chat models.Chat
+			err := rows.Scan(&chat.ID, &chat.Uid2)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			chat.Uid1 = uid1
+			chats = append(chats, chat)
+		}
 	}
 
+	var chatsWithMsg []models.Chat
 	for _, chat := range chats {
 		row := s.DB.QueryRow(`SELECT text FROM message WHERE chat_id=$1 ORDER BY time_delivery DESC LIMIT 1;`, chat.ID)
 
@@ -313,7 +320,7 @@ func (s *Service) SelectChatsByID(uid1, uid2 int) ([]models.Chat, error) {
 			log.Println(err)
 			return chats, err
 		}
+		chatsWithMsg = append(chatsWithMsg, chat)
 	}
-
-	return chats, nil
+	return chatsWithMsg, nil
 }

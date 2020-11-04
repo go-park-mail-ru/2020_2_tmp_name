@@ -249,7 +249,7 @@ func (s *Service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.SelectUserByID(photo.UID)
+	user, err := s.SelectUserFeed(photo.Telephone)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("Can't select user"))
@@ -258,7 +258,7 @@ func (s *Service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 
 	user.LinkImages = append(user.LinkImages, photo.Path)
 
-	err = s.InsertPhoto(photo.Path, photo.UID)
+	err = s.InsertPhoto(photo.Path, user.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("insert DB error"))

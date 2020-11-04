@@ -8,9 +8,9 @@ type LoginData struct {
 }
 
 type Photo struct {
-	ID   int    `json:"-"`
-	Path string `json:"path"`
-	UID  int    `json:"user_id"`
+	ID        int    `json:"-"`
+	Path      string `json:"path"`
+	Telephone string `json:"telephone"`
 }
 
 type Comment struct {
