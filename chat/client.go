@@ -23,15 +23,6 @@ type Client struct {
 
 // Create new chat client.
 func NewClient(ws *websocket.Conn, server *Server) *Client {
-
-	if ws == nil {
-		panic("ws cannot be nil")
-	}
-
-	if server == nil {
-		panic("server cannot be nil")
-	}
-
 	maxId++
 	ch := make(chan *Message, channelBufSize)
 	doneCh := make(chan bool)

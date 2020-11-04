@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type LoginData struct {
 	Telephone string `json:"telephone"`
 	Password  string `json:"password"`
@@ -33,6 +35,14 @@ type Chat struct {
 	ID   int `json:"-"`
 	Uid1 int `json:"user_id1"`
 	Uid2 int `json:"user_id2"`
+}
+
+type Message struct {
+	ID           int       `json:"-"`
+	Text         string    `json:"text"`
+	TimeDelivery time.Time `json:"time_delivery"`
+	ChatID       int       `json:"chat_id"`
+	UserID       int       `json:"user_id"`
 }
 
 type Error struct {

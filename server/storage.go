@@ -251,6 +251,15 @@ func (s *Service) InsertChat(chat models.Chat) error {
 	return nil
 }
 
+func (s *Service) InsertMessage(text string, chatID, uid int) error {
+	_, err := s.DB.Exec(`INSERT INTO message(text, time_delivery, chat_id, user_id) VALUES ($1, $2, $3, $4);`, text, time.Now(), chatID, uid)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
 func (s *Service) InsertPhoto(path string, uid int) error {
 	_, err := s.DB.Exec(`INSERT INTO photo(path, user_id) VALUES ($1, $2);`, path, uid)
 	if err != nil {

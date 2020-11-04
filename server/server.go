@@ -434,3 +434,30 @@ func (s *Service) Chat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (s *Service) Message(w http.ResponseWriter, r *http.Request) {
+	message := models.Message{}
+	err := json.NewDecoder(r.Body).Decode(&message)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't decode data"))
+		return
+	}
+
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	err = s.InsertMessage(message.Text, message.ChatID, user.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
+}
