@@ -76,6 +76,28 @@ func (s *Service) SelectUserFeed(telephone string) (models.UserFeed, error) {
 	return u, nil
 }
 
+func (s *Service) SelectUserFeedByID(uid int) (models.UserFeed, error) {
+	var u models.UserFeed
+	var date time.Time
+	row := s.DB.QueryRow(`SELECT name, date_birth, job, education, about_me FROM users
+						WHERE  id=$1;`, uid)
+	err := row.Scan(&u.Name, &date, &u.Job, &u.Education, &u.AboutMe)
+	if err != nil {
+		log.Println(err)
+		return u, err
+	}
+	u.ID = uid
+
+	u.DateBirth = diff(date, time.Now())
+	u.LinkImages, err = s.SelectImages(u.ID)
+	if err != nil {
+		log.Println(err)
+		return u, err
+	}
+
+	return u, nil
+}
+
 func (s *Service) SelectUserByID(uid int) (models.User, error) {
 	var u models.User
 	row := s.DB.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
@@ -269,8 +291,42 @@ func (s *Service) InsertPhoto(path string, uid int) error {
 	return nil
 }
 
-func (s *Service) SelectChatsByID(uid int) ([]models.Chat, error) {
-	var chats []models.Chat
+func (s *Service) SelectMessage(uid, chid int) (models.Msg, error) {
+	var message models.Msg
+	row := s.DB.QueryRow(`SELECT text, time_delivery, user_id FROM message WHERE user_id=$1 AND chat_id=$2 order by time_delivery desc limit 1;`, uid, chid)
+	err := row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
+	if err != nil {
+		log.Println(err)
+		return message, nil
+	}
+
+	return message, nil
+}
+
+func (s *Service) SelectMessages(chid int) ([]models.Msg, error) {
+	var messages []models.Msg
+	rows, err := s.DB.Query(`SELECT text, time_delivery, user_id FROM message WHERE chat_id=$1 order by time_delivery desc limit 10;`, chid)
+	if err != nil {
+		log.Println(err)
+		return messages, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var message models.Msg
+		err := rows.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		messages = append(messages, message)
+	}
+
+	return messages, nil
+}
+
+func (s *Service) SelectChatsByID(uid int) ([]models.ChatData, error) {
+	var chats []models.ChatData
 	rows, err := s.DB.Query(`SELECT id, user_id1 FROM chat WHERE user_id2=$1;`, uid)
 	if err != nil {
 		log.Println(err)
@@ -279,13 +335,24 @@ func (s *Service) SelectChatsByID(uid int) ([]models.Chat, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var chat models.Chat
-		err := rows.Scan(&chat.ID, &chat.Uid1)
+		var chat models.ChatData
+		var uid1 int
+		err := rows.Scan(&chat.ID, &uid1)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
-		chat.Uid2 = uid
+		chat.Partner, err = s.SelectUserFeedByID(uid1)
+		if err != nil {
+			log.Println(err)
+			return chats, err
+		}
+		msg, err := s.SelectMessage(uid1, chat.ID)
+		if err != nil {
+			log.Println(err)
+			return chats, err
+		}
+		chat.Messages = append(chat.Messages, msg)
 		chats = append(chats, chat)
 	}
 
@@ -297,26 +364,47 @@ func (s *Service) SelectChatsByID(uid int) ([]models.Chat, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var chat models.Chat
-		err := rows.Scan(&chat.ID, &chat.Uid2)
+		var chat models.ChatData
+		var uid2 int
+		err := rows.Scan(&chat.ID, &uid2)
 		if err != nil {
-			log.Println(err)
+			log.Println("err")
 			continue
 		}
-		chat.Uid1 = uid
-		chats = append(chats, chat)
-	}
 
-	var chatsWithMsg []models.Chat
-	for _, chat := range chats {
-		row := s.DB.QueryRow(`SELECT text FROM message WHERE chat_id=$1 ORDER BY time_delivery DESC LIMIT 1;`, chat.ID)
-
-		err := row.Scan(&chat.LastMsg)
+		chat.Partner, err = s.SelectUserFeedByID(uid2)
 		if err != nil {
 			log.Println(err)
 			return chats, err
 		}
-		chatsWithMsg = append(chatsWithMsg, chat)
+		msg, err := s.SelectMessage(uid2, chat.ID)
+		if err != nil {
+			log.Println(err)
+			return chats, err
+		}
+		chat.Messages = append(chat.Messages, msg)
+		chats = append(chats, chat)
 	}
-	return chatsWithMsg, nil
+
+	return chats, nil
+}
+
+func (s *Service) SelectChatByID(uid, chid int) (models.ChatData, error) {
+	var chat models.ChatData
+	chat.ID = chid
+	var err error
+
+	chat.Partner, err = s.SelectUserFeedByID(uid)
+	if err != nil {
+		log.Println(err)
+		return chat, err
+	}
+
+	chat.Messages, err = s.SelectMessages(chid)
+	if err != nil {
+		log.Println(err)
+		return chat, err
+	}
+
+	return chat, nil
 }

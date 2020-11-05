@@ -65,7 +65,7 @@ func (app *application) initServer() {
 	app.serv.HandleFunc("/api/v1/chat", s.Chat).Methods(http.MethodPost)
 	app.serv.HandleFunc("/api/v1/message", s.Message).Methods(http.MethodPost)
 	app.serv.HandleFunc("/api/v1/chats", s.Chats).Methods(http.MethodGet)
-	// app.serv.HandleFunc("/api/v1/chats/{chat_id}", s.ChatID).Methods(http.MethodGet)
+	app.serv.HandleFunc("/api/v1/chats/{chat_id}", s.ChatID).Methods(http.MethodGet)
 
 	serv := &http.Server{
 		Addr:         ":8080",

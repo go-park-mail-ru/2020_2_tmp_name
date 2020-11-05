@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"park_2020/2020_2_tmp_name/models"
+	"strconv"
+	"strings"
 
 	"time"
 
@@ -517,6 +519,42 @@ func (s *Service) Chats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body, err := json.Marshal(chats)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (s *Service) ChatID(w http.ResponseWriter, r *http.Request) {
+	chid, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/chats/"))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("data transform error"))
+		return
+	}
+
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	chat, err := s.SelectChatByID(user.ID, chid)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("select DB error"))
+		return
+	}
+
+	body, err := json.Marshal(chat)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)

@@ -38,6 +38,22 @@ type Chat struct {
 	LastMsg string `json:"last_msg"`
 }
 
+type ChatData struct {
+	ID       int      `json:"id"`
+	Partner  UserFeed `json:"partner"`
+	Messages []Msg    `json:"messages"`
+}
+
+type Msg struct {
+	UserID       int       `json:"user_id"`
+	Message      string    `json:"message"`
+	TimeDelivery time.Time `json:"timeDelivery"`
+}
+
+type ChatModel struct {
+	Data []ChatData `json:"ChatModel"`
+}
+
 type Message struct {
 	ID           int       `json:"-"`
 	Text         string    `json:"text"`
