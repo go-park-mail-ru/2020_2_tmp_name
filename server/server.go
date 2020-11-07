@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"park_2020/2020_2_tmp_name/chat"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
@@ -62,7 +63,7 @@ func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if CheckPasswordHash(user.Password, loginData.Password) {
+	if !CheckPasswordHash(loginData.Password, user.Password) {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(JSONError("Wrong password"))
 		return
@@ -518,7 +519,10 @@ func (s *Service) Chats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := json.Marshal(chats)
+	var chatModel models.ChatModel
+	chatModel.Data = chats
+
+	body, err := json.Marshal(chatModel)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -564,4 +568,10 @@ func (s *Service) ChatID(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
+}
+
+func (s *Service) Gochat(w http.ResponseWriter, r *http.Request) {
+	server := chat.NewServer("/entry")
+	go server.Listen()
+	w.WriteHeader(http.StatusOK)
 }

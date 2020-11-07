@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"park_2020/2020_2_tmp_name/chat"
 	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 	"park_2020/2020_2_tmp_name/server"
@@ -34,8 +33,8 @@ func (app *application) initServer() {
 
 	s := server.NewServer()
 
-	server := chat.NewServer("/entry")
-	go server.Listen()
+	// server := chat.NewServer("/entry")
+	// go server.Listen()
 
 	var err error
 	s.DB, err = storage.DBConnection(&conf)
@@ -66,6 +65,8 @@ func (app *application) initServer() {
 	app.serv.HandleFunc("/api/v1/message", s.Message).Methods(http.MethodPost)
 	app.serv.HandleFunc("/api/v1/chats", s.Chats).Methods(http.MethodGet)
 	app.serv.HandleFunc("/api/v1/chats/{chat_id}", s.ChatID).Methods(http.MethodGet)
+
+	app.serv.HandleFunc("/api/v1/gochat", s.Gochat).Methods(http.MethodGet, http.MethodPost)
 
 	serv := &http.Server{
 		Addr:         ":8080",
