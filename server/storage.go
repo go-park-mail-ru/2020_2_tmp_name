@@ -117,9 +117,9 @@ func (s *Service) SelectUserByID(uid int) (models.User, error) {
 	return u, nil
 }
 
-func (s *Service) SelectUsers() ([]models.UserFeed, error) {
+func (s *Service) SelectUsers(user models.User) ([]models.UserFeed, error) {
 	var users []models.UserFeed
-	rows, err := s.DB.Query(`SELECT id, name, date_birth, job, education, about_me FROM users`)
+	rows, err := s.DB.Query(`SELECT id, name, date_birth, job, education, about_me FROM users WHERE sex != $1`, user.Sex)
 	if err != nil {
 		log.Println(err)
 		return users, err

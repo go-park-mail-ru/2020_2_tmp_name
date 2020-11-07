@@ -220,9 +220,18 @@ func (s *Service) MeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) Feed(w http.ResponseWriter, r *http.Request) {
-	var feed models.Feed
 	var err error
-	feed.Data, err = s.SelectUsers()
+	var user models.User
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err = s.SelectUser(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+	var feed models.Feed
+	feed.Data, err = s.SelectUsers(user)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
