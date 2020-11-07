@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
@@ -189,37 +190,50 @@ func (s *Service) SelectImages(uid int) ([]string, error) {
 	return images, nil
 }
 
-func (s *Service) UpdateUser(user models.User) error {
+func (s *Service) UpdateUser(user models.User, uid int) error {
 	if user.Name != "" {
-		_, err := s.DB.Exec(`UPDATE users SET name=$1`, user.Name)
+		_, err := s.DB.Exec(`UPDATE users SET name=$1 WHERE id = $2;`, user.Name, uid)
 		if err != nil {
 			log.Println(err)
 			return err
 		}
 	}
 	if user.Telephone != "" {
-		_, err := s.DB.Exec(`UPDATE users SET telephone=$1`, user.Telephone)
+		_, err := s.DB.Exec(`UPDATE users SET telephone=$1 WHERE id = $2;`, user.Telephone, uid)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+	}
+	if user.Password != "" {
+		password, err := HashPassword(user.Password)
+		fmt.Println(password)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+		_, err = s.DB.Exec(`UPDATE users SET password=$1 WHERE id = $2;`, password, uid)
 		if err != nil {
 			log.Println(err)
 			return err
 		}
 	}
 	if user.Job != "" {
-		_, err := s.DB.Exec(`UPDATE users SET job=$1;`, user.Job)
+		_, err := s.DB.Exec(`UPDATE users SET job=$1 WHERE id = $2;`, user.Job, uid)
 		if err != nil {
 			log.Println(err)
 			return err
 		}
 	}
 	if user.Education != "" {
-		_, err := s.DB.Exec(`UPDATE users SET education=$1;`, user.Education)
+		_, err := s.DB.Exec(`UPDATE users SET education=$1 WHERE id = $2;`, user.Education, uid)
 		if err != nil {
 			log.Println(err)
 			return err
 		}
 	}
 	if user.AboutMe != "" {
-		_, err := s.DB.Exec(`UPDATE users SET about_me=$1;`, user.AboutMe)
+		_, err := s.DB.Exec(`UPDATE users SET about_me=$1 WHERE id = $2;`, user.AboutMe, uid)
 		if err != nil {
 			log.Println(err)
 			return err
