@@ -51,7 +51,7 @@ type Msg struct {
 }
 
 type ChatModel struct {
-	Data []ChatData `json:"ChatModel"`
+	Data []ChatData `json:"data"`
 }
 
 type Message struct {

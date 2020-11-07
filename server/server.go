@@ -75,11 +75,11 @@ func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	if check = s.CheckSession(loginData.Telephone); check {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User already authorized"))
-		return
-	}
+	// if check = s.CheckSession(loginData.Telephone); check {
+	// 	w.WriteHeader(http.StatusUnauthorized)
+	// 	w.Write(JSONError("User already authorized"))
+	// 	return
+	// }
 
 	err = s.InsertSession(SID.String(), loginData.Telephone)
 	if err != nil {
