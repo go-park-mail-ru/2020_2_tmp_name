@@ -425,13 +425,23 @@ func (s *Service) Comment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.InsertComment(comment)
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	err = s.InsertComment(comment, user.ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("insert DB error"))
 		return
 	}
 
+	comment.TimeDelivery = time.Now().Format("15:04")
 	body, err := json.Marshal(comment)
 	if err != nil {
 		log.Println(err)

@@ -255,8 +255,9 @@ func (s *Service) InsertDislike(uid1, uid2 int) error {
 	return nil
 }
 
-func (s *Service) InsertComment(comment models.Comment) error {
-	_, err := s.DB.Exec(`INSERT INTO comments(user_id1, user_id2) VALUES ($1, $2);`, comment.PhotoID, comment.Text)
+func (s *Service) InsertComment(comment models.Comment, uid int) error {
+	_, err := s.DB.Exec(`INSERT INTO comments(user_id1, user_id2, time_delivery, text) VALUES ($1, $2, $3, $4);`,
+		uid, comment.Uid2, time.Now().Format("15:04"), comment.Text)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -274,7 +275,7 @@ func (s *Service) InsertChat(chat models.Chat) error {
 }
 
 func (s *Service) InsertMessage(text string, chatID, uid int) error {
-	_, err := s.DB.Exec(`INSERT INTO message(text, time_delivery, chat_id, user_id) VALUES ($1, $2, $3, $4);`, text, time.Now(), chatID, uid)
+	_, err := s.DB.Exec(`INSERT INTO message(text, time_delivery, chat_id, user_id) VALUES ($1, $2, $3, $4);`, text, time.Now().Format("15:04"), chatID, uid)
 	if err != nil {
 		log.Println(err)
 		return err

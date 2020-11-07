@@ -39,7 +39,7 @@ CREATE TABLE "chat" (
 CREATE TABLE "message" (
   "id" SERIAL PRIMARY KEY,
   "path" varchar NOT NULL,
-  "time_delivery" timestamptz NOT NULL DEFAULT (now()),
+  "time_delivery" text,
   "chat_id" int4,
   "user_id" int4
 );
@@ -52,7 +52,9 @@ CREATE TABLE "photo" (
 
 CREATE TABLE "comments" (
   "id" SERIAL PRIMARY KEY,
-  "photo_id" int4,
+  "user_id1" int4,
+  "user_id2" int4,
+  "time_delivery" text,
   "text" text
 );
 

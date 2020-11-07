@@ -14,9 +14,11 @@ type Photo struct {
 }
 
 type Comment struct {
-	ID      int    `json:"-"`
-	PhotoID int    `json:"photo_id"`
-	Text    string `json:"text"`
+	ID           int    `json:"-"`
+	Uid1         int    `json:"-"`
+	Uid2         int    `json:"user_id2"`
+	TimeDelivery string `json:"timeDelivery"`
+	Text         string `json:"text"`
 }
 
 type Like struct {
@@ -45,9 +47,9 @@ type ChatData struct {
 }
 
 type Msg struct {
-	UserID       int       `json:"user_id"`
-	Message      string    `json:"message"`
-	TimeDelivery time.Time `json:"timeDelivery"`
+	UserID       int    `json:"user_id"`
+	Message      string `json:"message"`
+	TimeDelivery string `json:"timeDelivery"`
 }
 
 type ChatModel struct {
