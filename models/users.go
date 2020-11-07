@@ -27,6 +27,17 @@ type UserSafe struct {
 	AboutMe    string    `json:"aboutMe"`
 }
 
+type UserMe struct {
+	ID         int      `json:"id"`
+	Name       string   `json:"name"`
+	Telephone  string   `json:"telephone"`
+	DateBirth  int      `json:"date_birth"`
+	LinkImages []string `json:"linkImages"`
+	Job        string   `json:"job"`
+	Education  string   `json:"education"`
+	AboutMe    string   `json:"aboutMe"`
+}
+
 type UserFeed struct {
 	ID         int      `json:"id"`
 	Name       string   `json:"name"`

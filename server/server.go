@@ -75,12 +75,6 @@ func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	// if check = s.CheckSession(loginData.Telephone); check {
-	// 	w.WriteHeader(http.StatusUnauthorized)
-	// 	w.Write(JSONError("User already authorized"))
-	// 	return
-	// }
-
 	err = s.InsertSession(SID.String(), loginData.Telephone)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -200,7 +194,7 @@ func (s *Service) Settings(w http.ResponseWriter, r *http.Request) {
 func (s *Service) MeHandler(w http.ResponseWriter, r *http.Request) {
 	cookie := r.Cookies()[0]
 	telephone := s.CheckUserBySession(cookie.Value)
-	user, err := s.SelectUserFeed(telephone)
+	user, err := s.SelectUserMe(telephone)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("Can't select user"))

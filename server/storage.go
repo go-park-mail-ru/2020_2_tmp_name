@@ -55,6 +55,27 @@ func (s *Service) SelectUser(telephone string) (models.User, error) {
 	return u, nil
 }
 
+func (s *Service) SelectUserMe(telephone string) (models.UserMe, error) {
+	var u models.UserMe
+	var date time.Time
+	row := s.DB.QueryRow(`SELECT id, name, telephone, date_birth, job, education, about_me FROM users
+						WHERE  telephone=$1;`, telephone)
+	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &date, &u.Education, &u.Job, &u.AboutMe)
+	if err != nil {
+		log.Println(err)
+		return u, err
+	}
+
+	u.DateBirth = diff(date, time.Now())
+	u.LinkImages, err = s.SelectImages(u.ID)
+	if err != nil {
+		log.Println(err)
+		return u, err
+	}
+
+	return u, nil
+}
+
 func (s *Service) SelectUserFeed(telephone string) (models.UserFeed, error) {
 	var u models.UserFeed
 	var date time.Time
@@ -205,12 +226,6 @@ func (s *Service) UpdateUser(user models.User) error {
 		}
 	}
 	return nil
-}
-
-func (s *Service) CheckSession(telephone string) bool {
-	var count int
-	s.DB.QueryRow(`SELECT COUNT(value) FROM sessions WHERE value=$1;`, telephone).Scan(&count)
-	return count > 0
 }
 
 func (s *Service) InsertSession(sid, telephone string) error {
