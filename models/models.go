@@ -15,10 +15,30 @@ type Photo struct {
 
 type Comment struct {
 	ID           int    `json:"-"`
-	Uid1         int    `json:"-"`
+	Uid1         int    `json:"user_id1"`
 	Uid2         int    `json:"user_id2"`
 	TimeDelivery string `json:"timeDelivery"`
-	Text         string `json:"text"`
+	CommentText         string `json:"commentText"`
+}
+
+type CommentId struct {
+	UserId int `json:"-"`
+	CommentText string `json:"commentText"`
+	TimeDelivery string `json:"timeDelivery"`
+}
+
+type CommentsById struct {
+	Comments []CommentById `json:"comments"`
+}
+
+type CommentsData struct {
+	Data CommentsById `json:"data"`
+}
+
+type CommentById struct {
+	User UserFeed `json:"user"`
+	CommentText string `json:"commentText"`
+	TimeDelivery string `json:"timeDelivery"`
 }
 
 type Like struct {

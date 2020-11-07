@@ -272,7 +272,7 @@ func (s *Service) InsertDislike(uid1, uid2 int) error {
 
 func (s *Service) InsertComment(comment models.Comment, uid int) error {
 	_, err := s.DB.Exec(`INSERT INTO comments(user_id1, user_id2, time_delivery, text) VALUES ($1, $2, $3, $4);`,
-		uid, comment.Uid2, time.Now().Format("15:04"), comment.Text)
+		uid, comment.Uid2, time.Now().Format("15:04"), comment.CommentText)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -423,4 +423,39 @@ func (s *Service) SelectChatByID(uid, chid int) (models.ChatData, error) {
 	}
 
 	return chat, nil
+}
+
+func (s *Service) SelectComments(userId int) (models.CommentsById, error) {
+	var result models.CommentsById
+	var comments []models.CommentId
+	comments = make([]models.CommentId, 0, 1)
+
+	rows, err := s.DB.Query(`SELECT user_id1, text, time_delivery FROM comments
+						WHERE  user_id2=$1;`, userId)
+	if err != nil {
+		return result, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var comment models.CommentId
+		err := rows.Scan(&comment.UserId, &comment.CommentText, &comment.TimeDelivery)
+		if err != nil {
+			return result, err
+		}
+		comments = append(comments, comment)
+	}
+
+	for _, comment := range comments {
+		user, err := s.SelectUserFeedByID(comment.UserId)
+		if err != nil {
+			return result, err
+		}
+		var res models.CommentById
+		res.User = user
+		res.CommentText = comment.CommentText
+		res.TimeDelivery = comment.TimeDelivery
+		result.Comments = append(result.Comments, res)
+	}
+	return result, nil
 }

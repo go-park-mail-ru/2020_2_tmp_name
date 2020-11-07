@@ -448,6 +448,38 @@ func (s *Service) Comment(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
+func (s *Service) CommentsById(w http.ResponseWriter, r *http.Request) {
+	user_id, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/chats/"))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("data transform error"))
+		return
+	}
+
+	comments, err := s.SelectComments(user_id)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Select error"))
+		return
+	}
+
+	var data models.CommentsData
+	data.Data = comments
+
+	body, err := json.Marshal(data)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+
 func (s *Service) Chat(w http.ResponseWriter, r *http.Request) {
 	chat := models.Chat{}
 	err := json.NewDecoder(r.Body).Decode(&chat)

@@ -61,6 +61,7 @@ func (app *application) initServer() {
 	app.serv.HandleFunc("/api/v1/like", s.Like).Methods(http.MethodPost)
 	app.serv.HandleFunc("/api/v1/dislike", s.Dislike).Methods(http.MethodPost)
 	app.serv.HandleFunc("/api/v1/comment", s.Comment).Methods(http.MethodPost)
+	app.serv.HandleFunc("/api/v1/comments/{user_id}", s.CommentsById).Methods(http.MethodGet)
 	app.serv.HandleFunc("/api/v1/chat", s.Chat).Methods(http.MethodPost)
 	app.serv.HandleFunc("/api/v1/message", s.Message).Methods(http.MethodPost)
 	app.serv.HandleFunc("/api/v1/chats", s.Chats).Methods(http.MethodGet)
