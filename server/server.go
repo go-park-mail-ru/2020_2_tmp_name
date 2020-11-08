@@ -1,36 +1,32 @@
 package server
 
 import (
+	"database/sql"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"park_2020/2020_2_tmp_name/chat"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
+
 	"time"
 
 	"github.com/google/uuid"
 )
 
-var uid int
-
-type service struct {
-	sessions map[string]string
-	users    map[string]*models.User
+type Service struct {
+	DB *sql.DB
 }
 
-func (s *service) HealthHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Service) HealthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func NewServer() *service {
-	return &service{
-		sessions: make(map[string]string, 10),
-		users:    make(map[string]*models.User, 10),
-	}
+func NewServer() *Service {
+	return &Service{}
 }
 
 func JSONError(message string) []byte {
@@ -41,7 +37,7 @@ func JSONError(message string) []byte {
 	return jsonError
 }
 
-func (s *service) Login(w http.ResponseWriter, r *http.Request) {
+func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
 	loginData := models.LoginData{}
 
 	err := json.NewDecoder(r.Body).Decode(&loginData)
@@ -52,24 +48,24 @@ func (s *service) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := s.users[loginData.Telephone]
-	if !ok {
+	var check bool
+
+	if check = s.CheckUser(loginData.Telephone); !check {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(JSONError("No user"))
 		return
 	}
 
-	if user.Password != loginData.Password {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("Wrong password"))
+	user, err := s.SelectUser(loginData.Telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
 		return
 	}
 
-	body, err := json.Marshal(loginData)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(JSONError("Marshal error"))
+	if !CheckPasswordHash(loginData.Password, user.Password) {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("Wrong password"))
 		return
 	}
 
@@ -79,22 +75,34 @@ func (s *service) Login(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	s.sessions[SID.String()] = user.Telephone
+	err = s.InsertSession(SID.String(), loginData.Telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
 
 	cookie := &http.Cookie{
 		Name:    "session_id",
 		Value:   SID.String(),
 		Expires: time.Now().Add(10 * time.Hour),
-		// Raw:"mycookie=SomeValue; Path=/mysite;",
 	}
 	cookie.HttpOnly = false
 	cookie.Secure = false
+
+	body, err := json.Marshal(loginData)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
 
 	http.SetCookie(w, cookie)
 	w.Write(body)
 }
 
-func (s *service) Logout(w http.ResponseWriter, r *http.Request) {
+func (s *Service) Logout(w http.ResponseWriter, r *http.Request) {
 	session, err := r.Cookie("session_id")
 	if err == http.ErrNoCookie {
 		log.Println(err)
@@ -103,13 +111,14 @@ func (s *service) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, ok := s.sessions[session.Value]; !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("No session"))
+	err = s.DeleteSession(session.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("delete DB error"))
 		return
 	}
 
-	body, err := json.Marshal("")
+	body, err := json.Marshal("logout success")
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -124,7 +133,7 @@ func (s *service) Logout(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func (s *service) Signup(w http.ResponseWriter, r *http.Request) {
+func (s *Service) Signup(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -134,23 +143,20 @@ func (s *service) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uid++
-	user.AccountID = uid
+	var check bool
 
-	if _, ok := s.users[user.Telephone]; ok {
+	if check = s.CheckUser(user.Telephone); check {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(JSONError("User alredy exists"))
 		return
 	}
 
-	year, err := strconv.Atoi(user.Year)
+	err = s.InsertUser(user)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(JSONError("Error convert to int"))
+		w.Write(JSONError("insert DB error"))
 		return
 	}
-	user.Age = time.Now().Year() - year
 
 	body, err := json.Marshal(user)
 	if err != nil {
@@ -160,12 +166,11 @@ func (s *service) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.users[user.Telephone] = &user
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
 
-func (s *service) Settings(w http.ResponseWriter, r *http.Request) {
+func (s *Service) Settings(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -175,43 +180,25 @@ func (s *service) Settings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-}
-
-func (s *service) MeHandler(w http.ResponseWriter, r *http.Request) {
-	cookies := r.Cookies()
-	var cookie string
-	cookie = fmt.Sprintf("%s", cookies[0])
-	cookie = strings.TrimPrefix(cookie, "session_id=")
-
-	var res string
-	var ok bool
-	if res, ok = s.sessions[cookie]; !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("No session"))
-		return
-	}
-
-	body, err := json.Marshal(s.users[res])
+	err = s.UpdateUser(user)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(JSONError("Marshal error"))
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Update user's params error"))
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(body)
 }
 
-func (s *service) FeedHandler(w http.ResponseWriter, r *http.Request) {
-	user := models.UserFeed{
-		Name:       "andrey",
-		Age:        39,
-		LinkImages: []string{"/static/avatars/3.jpg", "/static/avatars/4.jpg", "/static/avatars/5.jpg"},
-		Job:        "developer",
-		Education:  "high",
-		AboutMe:    "I am cool",
+func (s *Service) MeHandler(w http.ResponseWriter, r *http.Request) {
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserMe(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
 	}
 
 	body, err := json.Marshal(user)
@@ -226,7 +213,39 @@ func (s *service) FeedHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func (s *service) AddPhoto(w http.ResponseWriter, r *http.Request) {
+func (s *Service) Feed(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var user models.User
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err = s.SelectUser(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+	var feed models.Feed
+	feed.Data, err = s.SelectUsers(user)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can`t select users"))
+		return
+	}
+
+	body, err := json.Marshal(feed)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (s *Service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 	photo := models.Photo{}
 	err := json.NewDecoder(r.Body).Decode(&photo)
 	if err != nil {
@@ -236,15 +255,23 @@ func (s *service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, ok := s.users[photo.Telephone]; !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User alredy exists"))
+	user, err := s.SelectUserFeed(photo.Telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
 		return
 	}
 
-	s.users[photo.Telephone].LinkImages = append(s.users[photo.Telephone].LinkImages, photo.LinkImage)
+	user.LinkImages = append(user.LinkImages, photo.Path)
 
-	body, err := json.Marshal("Add photo")
+	err = s.InsertPhoto(photo.Path, user.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
+
+	body, err := json.Marshal(photo)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -256,7 +283,7 @@ func (s *service) AddPhoto(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func (s *service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
+func (s *Service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(1024 * 1024)
 	file, _, err := r.FormFile("photo")
 	if err != nil {
@@ -278,7 +305,7 @@ func (s *service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	r.FormValue("photo")
 	os.Chdir("/home/ubuntu/go/src/2020_2_tmp_name/static/avatars")
 	photoID, err := uuid.NewRandom()
-	
+
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -304,4 +331,292 @@ func (s *service) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	io.Copy(f, file)
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
+}
+
+func (s *Service) Like(w http.ResponseWriter, r *http.Request) {
+	like := models.Like{}
+	err := json.NewDecoder(r.Body).Decode(&like)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't decode data"))
+		return
+	}
+
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	err = s.InsertLike(user.ID, like.Uid2)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
+
+	body, err := json.Marshal(like)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (s *Service) Dislike(w http.ResponseWriter, r *http.Request) {
+	dislike := models.Dislike{}
+	err := json.NewDecoder(r.Body).Decode(&dislike)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't decode data"))
+		return
+	}
+
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	err = s.InsertDislike(user.ID, dislike.Uid2)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
+
+	body, err := json.Marshal(dislike)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (s *Service) Comment(w http.ResponseWriter, r *http.Request) {
+	comment := models.Comment{}
+	err := json.NewDecoder(r.Body).Decode(&comment)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't decode data"))
+		return
+	}
+
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	err = s.InsertComment(comment, user.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
+
+	comment.TimeDelivery = time.Now().Format("15:04")
+	body, err := json.Marshal(comment)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (s *Service) CommentsById(w http.ResponseWriter, r *http.Request) {
+	user_id, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/chats/"))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("data transform error"))
+		return
+	}
+
+	comments, err := s.SelectComments(user_id)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Select error"))
+		return
+	}
+
+	var data models.CommentsData
+	data.Data = comments
+
+	body, err := json.Marshal(data)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+
+func (s *Service) Chat(w http.ResponseWriter, r *http.Request) {
+	chat := models.Chat{}
+	err := json.NewDecoder(r.Body).Decode(&chat)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't decode data"))
+		return
+	}
+
+	err = s.InsertChat(chat)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
+
+	body, err := json.Marshal(chat)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (s *Service) Message(w http.ResponseWriter, r *http.Request) {
+	message := models.Message{}
+	err := json.NewDecoder(r.Body).Decode(&message)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError("Can't decode data"))
+		return
+	}
+
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	err = s.InsertMessage(message.Text, message.ChatID, user.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("insert DB error"))
+		return
+	}
+
+	body, err := json.Marshal(message)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (s *Service) Chats(w http.ResponseWriter, r *http.Request) {
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	chats, err := s.SelectChatsByID(user.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("select DB error"))
+		return
+	}
+
+	var chatModel models.ChatModel
+	chatModel.Data = chats
+
+	body, err := json.Marshal(chatModel)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (s *Service) ChatID(w http.ResponseWriter, r *http.Request) {
+	chid, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/chats/"))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("data transform error"))
+		return
+	}
+
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	chat, err := s.SelectChatByID(user.ID, chid)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("select DB error"))
+		return
+	}
+
+	body, err := json.Marshal(chat)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Marshal error"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (s *Service) Gochat(w http.ResponseWriter, r *http.Request) {
+	server := chat.NewServer("/entry")
+	go server.Listen()
+	w.WriteHeader(http.StatusOK)
 }

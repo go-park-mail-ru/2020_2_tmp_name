@@ -1,11 +1,6 @@
 package models
 
-type Account struct {
-	AccountID int    `json:"account_id"`
-	Login     string `json:"login"`
-	Password  string `json:"password"`
-	Telephone string `json:"telephone"`
-}
+import "time"
 
 type LoginData struct {
 	Telephone string `json:"telephone"`
@@ -13,48 +8,80 @@ type LoginData struct {
 }
 
 type Photo struct {
+	ID        int    `json:"-"`
+	Path      string `json:"linkImages"`
 	Telephone string `json:"telephone"`
-	LinkImage string `json:"link_image"`
 }
 
-type User struct {
-	Name       string   `json:"name"`
-	Telephone  string   `json:"telephone"`
-	Password   string   `json:"password"`
-	Age        int      `json:"age"`
-	Day        string   `json:"day"`
-	Month      string   `json:"month"`
-	Year       string   `json:"year"`
-	Sex        string   `json:"sex"`
-	AccountID  int      `json:"account_id"`
-	LinkImages []string `json:"linkImages"`
-	Job        string   `json:"job"`
-	Education  string   `json:"education"`
-	AboutMe    string   `json:"aboutMe"`
+type Comment struct {
+	ID           int    `json:"-"`
+	Uid1         int    `json:"user_id1"`
+	Uid2         int    `json:"user_id2"`
+	TimeDelivery string `json:"timeDelivery"`
+	CommentText         string `json:"commentText"`
 }
 
-type UserSafe struct {
-	Name       string   `json:"name"`
-	Telephone  string   `json:"telephone"`
-	Age        int      `json:"age"`
-	Day        string   `json:"day"`
-	Month      string   `json:"month"`
-	Year       string   `json:"year"`
-	Sex        string   `json:"sex"`
-	AccountID  int      `json:"account_id"`
-	LinkImages []string `json:"linkImages"`
-	Job        string   `json:"job"`
-	Education  string   `json:"education"`
-	AboutMe    string   `json:"aboutMe"`
+type CommentId struct {
+	UserId int `json:"-"`
+	CommentText string `json:"commentText"`
+	TimeDelivery string `json:"timeDelivery"`
 }
 
-type UserFeed struct {
-	Name       string   `json:"name"`
-	Age        int      `json:"age"`
-	LinkImages []string `json:"linkImages"`
-	Job        string   `json:"job"`
-	Education  string   `json:"education"`
-	AboutMe    string   `json:"aboutMe"`
+type CommentsById struct {
+	Comments []CommentById `json:"comments"`
+}
+
+type CommentsData struct {
+	Data CommentsById `json:"data"`
+}
+
+type CommentById struct {
+	User UserFeed `json:"user"`
+	CommentText string `json:"commentText"`
+	TimeDelivery string `json:"timeDelivery"`
+}
+
+type Like struct {
+	ID   int `json:"-"`
+	Uid1 int `json:"-"`
+	Uid2 int `json:"user_id2"`
+}
+
+type Dislike struct {
+	ID   int `json:"-"`
+	Uid1 int `json:"-"`
+	Uid2 int `json:"user_id2"`
+}
+
+type Chat struct {
+	ID      int    `json:"-"`
+	Uid1    int    `json:"user_id1"`
+	Uid2    int    `json:"user_id2"`
+	LastMsg string `json:"last_msg"`
+}
+
+type ChatData struct {
+	ID       int      `json:"id"`
+	Partner  UserFeed `json:"partner"`
+	Messages []Msg    `json:"messages"`
+}
+
+type Msg struct {
+	UserID       int    `json:"user_id"`
+	Message      string `json:"message"`
+	TimeDelivery string `json:"timeDelivery"`
+}
+
+type ChatModel struct {
+	Data []ChatData `json:"data"`
+}
+
+type Message struct {
+	ID           int       `json:"-"`
+	Text         string    `json:"text"`
+	TimeDelivery time.Time `json:"-"`
+	ChatID       int       `json:"chat_id"`
+	UserID       int       `json:"-"`
 }
 
 type Error struct {
