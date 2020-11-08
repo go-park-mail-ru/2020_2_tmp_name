@@ -1,8 +1,12 @@
-// Copyright 2013 The Gorilla WebSocket Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+package server
 
-package chat
+import (
+	"encoding/json"
+	"log"
+	"park_2020/2020_2_tmp_name/models"
+
+	"github.com/gorilla/websocket"
+)
 
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
@@ -33,10 +37,11 @@ var MyHub *Hub
 
 func (h *Hub) Run() {
 	for {
+		var client *Client
 		select {
-		case client := <-h.register:
+		case client = <-h.register:
 			h.clients[client] = true
-		case client := <-h.unregister:
+		case client = <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
@@ -50,6 +55,29 @@ func (h *Hub) Run() {
 					delete(h.clients, client)
 				}
 			}
+		}
+
+		s := NewServer()
+		_, message, err := client.conn.ReadMessage()
+		_, ok := err.(*websocket.CloseError)
+
+		if err != nil && !ok {
+			log.Println(err)
+
+		} else if (err != nil && ok) || err == nil {
+			var msg models.Message
+			err = json.Unmarshal(message, &msg)
+			if err != nil {
+				log.Println(err)
+			}
+
+			err = s.InsertMessage(msg.Text, msg.ChatID, msg.UserID)
+			if err != nil {
+				log.Println(err)
+			}
+
+		} else {
+			h.register <- client
 		}
 	}
 }

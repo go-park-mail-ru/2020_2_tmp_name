@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"park_2020/2020_2_tmp_name/chat"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
@@ -488,7 +487,6 @@ func (s *Service) CommentsById(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-
 func (s *Service) Chat(w http.ResponseWriter, r *http.Request) {
 	chat := models.Chat{}
 	err := json.NewDecoder(r.Body).Decode(&chat)
@@ -634,6 +632,6 @@ func (s *Service) Gochat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	chat.ServeWs(chat.MyHub, w, r, user.ID)
+	ServeWs(MyHub, w, r, user.ID)
 	w.WriteHeader(http.StatusOK)
 }
