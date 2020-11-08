@@ -1,102 +1,138 @@
+// Copyright 2013 The Gorilla WebSocket Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package chat
 
 import (
-	"fmt"
-	"io"
+	"bytes"
 	"log"
+	"net/http"
+	"time"
 
-	"golang.org/x/net/websocket"
+	"github.com/gorilla/websocket"
 )
 
-const channelBufSize = 100
+const (
+	// Time allowed to write a message to the peer.
+	writeWait = 10 * time.Second
 
-var maxId int = 0
+	// Time allowed to read the next pong message from the peer.
+	pongWait = 60 * time.Second
 
-// Chat client.
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod = (pongWait * 9) / 10
+
+	// Maximum message size allowed from peer.
+	maxMessageSize = 512
+)
+
+var (
+	newline = []byte{'\n'}
+	space   = []byte{' '}
+)
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+// Client is a middleman between the websocket connection and the hub.
 type Client struct {
-	id     int
-	ws     *websocket.Conn
-	server *Server
-	ch     chan *Message
-	doneCh chan bool
+	ID  int
+	hub *Hub
+
+	// The websocket connection.
+	conn *websocket.Conn
+
+	// Buffered channel of outbound messages.
+	send chan []byte
 }
 
-// Create new chat client.
-func NewClient(ws *websocket.Conn, server *Server) *Client {
-	maxId++
-	ch := make(chan *Message, channelBufSize)
-	doneCh := make(chan bool)
-
-	return &Client{maxId, ws, server, ch, doneCh}
-}
-
-func (c *Client) Conn() *websocket.Conn {
-	return c.ws
-}
-
-func (c *Client) Write(msg *Message) {
-	select {
-	case c.ch <- msg:
-	default:
-		c.server.Del(c)
-		err := fmt.Errorf("client %d is disconnected.", c.id)
-		c.server.Err(err)
-	}
-}
-
-func (c *Client) Done() {
-	c.doneCh <- true
-}
-
-// Listen Write and Read request via chanel
-func (c *Client) Listen() {
-	go c.listenWrite()
-	c.listenRead()
-}
-
-// Listen write request via chanel
-func (c *Client) listenWrite() {
-	log.Println("Listening write to client")
+// readPump pumps messages from the websocket connection to the hub.
+//
+// The application runs readPump in a per-connection goroutine. The application
+// ensures that there is at most one reader on a connection by executing all
+// reads from this goroutine.
+func (c *Client) readPump() {
+	defer func() {
+		c.hub.unregister <- c
+		c.conn.Close()
+	}()
+	c.conn.SetReadLimit(maxMessageSize)
+	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
-		select {
-
-		// send message to the client
-		case msg := <-c.ch:
-			log.Println("Send:", msg)
-			websocket.JSON.Send(c.ws, msg)
-
-		// receive done request
-		case <-c.doneCh:
-			c.server.Del(c)
-			c.doneCh <- true // for listenRead method
-			return
+		_, message, err := c.conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
+			}
+			break
 		}
+		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		c.hub.broadcast <- message
 	}
 }
 
-// Listen read request via chanel
-func (c *Client) listenRead() {
-	log.Println("Listening read from client")
+// writePump pumps messages from the hub to the websocket connection.
+//
+// A goroutine running writePump is started for each connection. The
+// application ensures that there is at most one writer to a connection by
+// executing all writes from this goroutine.
+func (c *Client) writePump() {
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		c.conn.Close()
+	}()
 	for {
 		select {
+		case message, ok := <-c.send:
+			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if !ok {
+				// The hub closed the channel.
+				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
 
-		// receive done request
-		case <-c.doneCh:
-			c.server.Del(c)
-			c.doneCh <- true // for listenWrite method
-			return
+			w, err := c.conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				return
+			}
+			w.Write(message)
 
-		// read data from websocket connection
-		default:
-			var msg Message
-			err := websocket.JSON.Receive(c.ws, &msg)
-			if err == io.EOF {
-				c.doneCh <- true
-			} else if err != nil {
-				c.server.Err(err)
-			} else {
-				c.server.SendAll(&msg)
+			// Add queued chat messages to the current websocket message.
+			n := len(c.send)
+			for i := 0; i < n; i++ {
+				w.Write(newline)
+				w.Write(<-c.send)
+			}
+
+			if err := w.Close(); err != nil {
+				return
+			}
+		case <-ticker.C:
+			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
 			}
 		}
 	}
+}
+
+// serveWs handles websocket requests from the peer.
+func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, uid int) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	client.hub.register <- client
+
+	// Allow collection of memory referenced by the caller by doing all work in
+	// new goroutines.
+	go client.writePump()
+	go client.readPump()
 }

@@ -34,8 +34,8 @@ func (app *application) initServer() {
 
 	s := server.NewServer()
 
-	server := chat.NewServer("/entry")
-	go server.Listen()
+	chat.MyHub = chat.NewHub()
+	go chat.MyHub.Run()
 
 	var err error
 	s.DB, err = storage.DBConnection(&conf)

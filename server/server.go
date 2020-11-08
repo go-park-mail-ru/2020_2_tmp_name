@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"park_2020/2020_2_tmp_name/chat"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
@@ -592,5 +593,15 @@ func (s *Service) ChatID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) Gochat(w http.ResponseWriter, r *http.Request) {
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	chat.ServeWs(chat.MyHub, w, r, user.ID)
 	w.WriteHeader(http.StatusOK)
 }
