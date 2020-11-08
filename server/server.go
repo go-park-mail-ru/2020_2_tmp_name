@@ -458,7 +458,7 @@ func (s *Service) Comment(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) CommentsById(w http.ResponseWriter, r *http.Request) {
-	user_id, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/chats/"))
+	user_id, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/comments/"))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("data transform error"))
@@ -487,7 +487,6 @@ func (s *Service) CommentsById(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
-
 
 func (s *Service) Chat(w http.ResponseWriter, r *http.Request) {
 	chat := models.Chat{}

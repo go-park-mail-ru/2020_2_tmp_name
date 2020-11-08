@@ -18,12 +18,12 @@ type Comment struct {
 	Uid1         int    `json:"user_id1"`
 	Uid2         int    `json:"user_id2"`
 	TimeDelivery string `json:"timeDelivery"`
-	CommentText         string `json:"commentText"`
+	CommentText  string `json:"commentText"`
 }
 
 type CommentId struct {
-	UserId int `json:"-"`
-	CommentText string `json:"commentText"`
+	UserId       int    `json:"-"`
+	CommentText  string `json:"commentText"`
 	TimeDelivery string `json:"timeDelivery"`
 }
 
@@ -36,9 +36,9 @@ type CommentsData struct {
 }
 
 type CommentById struct {
-	User UserFeed `json:"user"`
-	CommentText string `json:"commentText"`
-	TimeDelivery string `json:"timeDelivery"`
+	User         UserFeed `json:"user"`
+	CommentText  string   `json:"commentText"`
+	TimeDelivery string   `json:"timeDelivery"`
 }
 
 type Like struct {
