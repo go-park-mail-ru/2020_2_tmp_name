@@ -424,7 +424,7 @@ func (s *Service) SelectChatByID(uid, chid int) (models.ChatData, error) {
 	chat.ID = chid
 	var err error
 
-	chat.Partner, err = s.SelectUserFeedByID(uid)
+	chat.Partner, err = s.SelectUserByChat(uid, chid)
 	if err != nil {
 		log.Println(err)
 		return chat, err
@@ -437,6 +437,30 @@ func (s *Service) SelectChatByID(uid, chid int) (models.ChatData, error) {
 	}
 
 	return chat, nil
+}
+
+func (s *Service) SelectUserByChat(uid, chid int) (models.UserFeed, error) {
+	var user models.UserFeed
+	var id1, id2, id int
+
+	row := s.DB.QueryRow(`SELECT user_id1, user_id2 FROM chat WHERE id=$1;`, chid)
+
+	err := row.Scan(&id1, &id2)
+	if err != nil {
+		return user, err
+	}
+	if id1 != uid {
+		id = id1
+	} else {
+		id = id2
+	}
+
+	user, err = s.SelectUserFeedByID(id)
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
 }
 
 func (s *Service) SelectComments(userId int) (models.CommentsById, error) {
