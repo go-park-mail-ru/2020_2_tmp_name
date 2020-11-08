@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"park_2020/2020_2_tmp_name/chat"
 	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 	"park_2020/2020_2_tmp_name/server"
@@ -33,8 +34,8 @@ func (app *application) initServer() {
 
 	s := server.NewServer()
 
-	// server := chat.NewServer("/entry")
-	// go server.Listen()
+	chat.MyHub = chat.NewHub()
+	go chat.MyHub.Run()
 
 	var err error
 	s.DB, err = storage.DBConnection(&conf)

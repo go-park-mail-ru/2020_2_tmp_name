@@ -171,8 +171,8 @@ func (s *Service) Signup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) Settings(w http.ResponseWriter, r *http.Request) {
-	user := models.User{}
-	err := json.NewDecoder(r.Body).Decode(&user)
+	userData := models.User{}
+	err := json.NewDecoder(r.Body).Decode(&userData)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -180,7 +180,16 @@ func (s *Service) Settings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.UpdateUser(user)
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	err = s.UpdateUser(userData, user.ID)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -616,7 +625,15 @@ func (s *Service) ChatID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) Gochat(w http.ResponseWriter, r *http.Request) {
-	server := chat.NewServer("/entry")
-	go server.Listen()
+	cookie := r.Cookies()[0]
+	telephone := s.CheckUserBySession(cookie.Value)
+	user, err := s.SelectUserFeed(telephone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError("Can't select user"))
+		return
+	}
+
+	chat.ServeWs(chat.MyHub, w, r, user.ID)
 	w.WriteHeader(http.StatusOK)
 }
