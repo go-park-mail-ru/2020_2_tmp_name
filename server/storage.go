@@ -303,10 +303,11 @@ func (s *Service) InsertComment(comment models.Comment, uid int) error {
 }
 
 func (s *Service) CheckChat(chat models.Chat) bool {
-	row := s.DB.QueryRow(`SELECT user_id1, user_id2 FROM chats 
-							WHERE user_id1 == $1 AND user_id2 == $2 
-							OR user_id1 == $2 AND user_id2 == $1`, chat.Uid1, chat.Uid2)
-	err := row.Scan()
+	var id1, id2 int
+	row := s.DB.QueryRow(`SELECT user_id1, user_id2 FROM chat 
+							WHERE user_id1 = $1 AND user_id2 = $2 
+							OR user_id1 = $2 AND user_id2 = $1`, chat.Uid1, chat.Uid2)
+	err := row.Scan(&id1, &id2)
 	return err == nil
 }
 
