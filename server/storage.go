@@ -306,8 +306,8 @@ func (s *Service) CheckChat(chat models.Chat) bool {
 	row := s.DB.QueryRow(`SELECT user_id1, user_id2 FROM chats 
 							WHERE user_id1 == $1 AND user_id2 == $2 
 							OR user_id1 == $2 AND user_id2 == $1`, chat.Uid1, chat.Uid2)
-		err := row.Scan();
-		return err == nil
+	err := row.Scan()
+	return err == nil
 }
 
 func (s *Service) InsertChat(chat models.Chat) error {
