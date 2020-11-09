@@ -18,6 +18,7 @@ import (
 
 type Service struct {
 	DB *sql.DB
+	Hub *Hub
 }
 
 func (s *Service) HealthHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +26,10 @@ func (s *Service) HealthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewServer() *Service {
-	return &Service{}
+	hub := NewHub()
+	return &Service{
+		Hub: hub,
+	}
 }
 
 func JSONError(message string) []byte {
@@ -365,6 +369,23 @@ func (s *Service) Like(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError("insert DB error"))
 		return
+	}
+	
+	if res := s.Match(user.ID, like.Uid2); !res {
+		log.Println("There is not match")
+	} else {
+		var chat models.Chat
+		chat.Uid1 = user.ID
+		chat.Uid2 = like.Uid2
+		if !s.CheckChat(chat) {
+			err := s.InsertChat(chat)
+			if err != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write(JSONError("Insert error"))
+				return
+			} 
+		}
 	}
 
 	body, err := json.Marshal(like)

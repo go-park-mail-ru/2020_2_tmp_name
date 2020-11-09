@@ -139,6 +139,14 @@ func (s *Service) SelectUserByID(uid int) (models.User, error) {
 	return u, nil
 }
 
+func (s *Service) Match (uid1, uid2 int) (bool) {
+	var id1, id2 int
+	row := s.DB.QueryRow(`Select user_id1, user_id2 FROM likes 
+							WHERE user_id1 = $1 AND user_id2 = $2;`, uid2, uid1)
+	err := row.Scan(&id1, &id2)
+	return err == nil
+}
+
 func (s *Service) SelectUsers(user models.User) ([]models.UserFeed, error) {
 	var users []models.UserFeed
 	rows, err := s.DB.Query(`SELECT id, name, date_birth, job, education, about_me FROM users WHERE sex != $1`, user.Sex)
@@ -292,6 +300,14 @@ func (s *Service) InsertComment(comment models.Comment, uid int) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Service) CheckChat(chat models.Chat) bool {
+	row := s.DB.QueryRow(`SELECT user_id1, user_id2 FROM chats 
+							WHERE user_id1 == $1 AND user_id2 == $2 
+							OR user_id1 == $2 AND user_id2 == $1`, chat.Uid1, chat.Uid2)
+		err := row.Scan();
+		return err == nil
 }
 
 func (s *Service) InsertChat(chat models.Chat) error {

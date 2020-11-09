@@ -35,24 +35,24 @@ func NewHub() *Hub {
 
 var MyHub *Hub
 
-func (h *Hub) Run() {
+func (s *Service) Run() {
 	for {
 		var client *Client
 		select {
-		case client = <-h.register:
-			h.clients[client] = true
-		case client = <-h.unregister:
-			if _, ok := h.clients[client]; ok {
-				delete(h.clients, client)
+		case client = <-s.Hub.register:
+			s.Hub.clients[client] = true
+		case client = <-s.Hub.unregister:
+			if _, ok := s.Hub.clients[client]; ok {
+				delete(s.Hub.clients, client)
 				close(client.send)
 			}
-		case message := <-h.broadcast:
-			for client := range h.clients {
+		case message := <-s.Hub.broadcast:
+			for client := range s.Hub.clients {
 				select {
 				case client.send <- message:
 				default:
 					close(client.send)
-					delete(h.clients, client)
+					delete(s.Hub.clients, client)
 				}
 			}
 		}
@@ -77,7 +77,7 @@ func (h *Hub) Run() {
 			}
 
 		} else {
-			h.register <- client
+			s.Hub.register <- client
 		}
 	}
 }

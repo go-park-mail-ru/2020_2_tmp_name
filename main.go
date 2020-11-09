@@ -34,7 +34,7 @@ func (app *application) initServer() {
 	s := server.NewServer()
 
 	server.MyHub = server.NewHub()
-	go server.MyHub.Run()
+	go s.Run()
 
 	var err error
 	s.DB, err = storage.DBConnection(&conf)
