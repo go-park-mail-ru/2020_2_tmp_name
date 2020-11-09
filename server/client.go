@@ -144,7 +144,6 @@ func (s *Service) ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, uid 
 	}
 
 	client.hub.register <- client
-
 	go client.writePump()
 	go client.readPump()
 }
