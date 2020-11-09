@@ -1,13 +1,5 @@
 package server
 
-import (
-	"encoding/json"
-	"log"
-	"park_2020/2020_2_tmp_name/models"
-
-	"github.com/gorilla/websocket"
-)
-
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
@@ -55,29 +47,6 @@ func (s *Service) Run() {
 					delete(s.Hub.clients, client)
 				}
 			}
-		}
-
-		s := NewServer()
-		_, message, err := client.conn.ReadMessage()
-		_, ok := err.(*websocket.CloseError)
-
-		if err != nil && !ok {
-			log.Println(err)
-
-		} else if (err != nil && ok) || err == nil {
-			var msg models.Message
-			err = json.Unmarshal(message, &msg)
-			if err != nil {
-				log.Println(err)
-			}
-
-			err = s.InsertMessage(msg.Text, msg.ChatID, msg.UserID)
-			if err != nil {
-				log.Println(err)
-			}
-
-		} else {
-			s.Hub.register <- client
 		}
 	}
 }

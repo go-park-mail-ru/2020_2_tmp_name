@@ -2,8 +2,10 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"log"
 	"net/http"
+	"park_2020/2020_2_tmp_name/models"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -110,15 +112,38 @@ func (c *Client) writePump() {
 }
 
 // serveWs handles websocket requests from the peer.
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, uid int) {
+func (s *Service) ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, uid int) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &Client{ID: uid, hub: hub, conn: conn, send: make(chan []byte, 256)}
-	client.hub.register <- client
 
+	client := &Client{ID: uid, hub: hub, conn: conn, send: make(chan []byte, 256)}
+	_, message, err := client.conn.ReadMessage()
+	_, ok := err.(*websocket.CloseError)
+
+	if err != nil && !ok {
+		log.Println(err)
+
+	} else if (err != nil && ok) || err == nil {
+		var msg models.Msg
+		err = json.Unmarshal(message, &msg)
+		if err != nil {
+			log.Println(err)
+		}
+
+		err = s.InsertMessage(msg.Message, msg.ChatID, msg.UserID)
+		if err != nil {
+			log.Println(err)
+		}
+
+	}
+	if err == nil {
+		s.Hub.register <- client
+	}
+
+	client.hub.register <- client
 	go client.writePump()
 	go client.readPump()
 }

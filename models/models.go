@@ -68,6 +68,7 @@ type ChatData struct {
 
 type Msg struct {
 	UserID       int    `json:"user_id"`
+	ChatID       int    `json:"chat_id"`
 	Message      string `json:"message"`
 	TimeDelivery string `json:"timeDelivery"`
 }

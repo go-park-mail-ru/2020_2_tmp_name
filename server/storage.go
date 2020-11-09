@@ -139,7 +139,7 @@ func (s *Service) SelectUserByID(uid int) (models.User, error) {
 	return u, nil
 }
 
-func (s *Service) Match (uid1, uid2 int) (bool) {
+func (s *Service) Match(uid1, uid2 int) bool {
 	var id1, id2 int
 	row := s.DB.QueryRow(`Select user_id1, user_id2 FROM likes 
 							WHERE user_id1 = $1 AND user_id2 = $2;`, uid2, uid1)
@@ -303,10 +303,11 @@ func (s *Service) InsertComment(comment models.Comment, uid int) error {
 }
 
 func (s *Service) CheckChat(chat models.Chat) bool {
-	row := s.DB.QueryRow(`SELECT user_id1, user_id2 FROM chats 
-							WHERE user_id1 == $1 AND user_id2 == $2 
-							OR user_id1 == $2 AND user_id2 == $1`, chat.Uid1, chat.Uid2)
-	err := row.Scan()
+	var id1, id2 int
+	row := s.DB.QueryRow(`SELECT user_id1, user_id2 FROM chat 
+							WHERE user_id1 = $1 AND user_id2 = $2 
+							OR user_id1 = $2 AND user_id2 = $1`, chat.Uid1, chat.Uid2)
+	err := row.Scan(&id1, &id2)
 	return err == nil
 }
 
@@ -339,7 +340,7 @@ func (s *Service) InsertPhoto(path string, uid int) error {
 
 func (s *Service) SelectMessage(uid, chid int) (models.Msg, error) {
 	var message models.Msg
-	row := s.DB.QueryRow(`SELECT text, time_delivery, user_id FROM message WHERE user_id=$1 AND chat_id=$2 order by time_delivery desc limit 1;`, uid, chid)
+	row := s.DB.QueryRow(`SELECT text, time_delivery, user_id FROM message WHERE user_id=$1 AND chat_id=$2 order by id desc limit 1;`, uid, chid)
 	err := row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
 	if err != nil {
 		log.Println(err)
@@ -351,7 +352,7 @@ func (s *Service) SelectMessage(uid, chid int) (models.Msg, error) {
 
 func (s *Service) SelectMessages(chid int) ([]models.Msg, error) {
 	var messages []models.Msg
-	rows, err := s.DB.Query(`SELECT text, time_delivery, user_id FROM message WHERE chat_id=$1 order by time_delivery desc limit 10;`, chid)
+	rows, err := s.DB.Query(`SELECT text, time_delivery, user_id FROM message WHERE chat_id=$1 order by id asc limit 10;`, chid)
 	if err != nil {
 		log.Println(err)
 		return messages, err
