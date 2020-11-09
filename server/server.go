@@ -17,7 +17,7 @@ import (
 )
 
 type Service struct {
-	DB *sql.DB
+	DB  *sql.DB
 	Hub *Hub
 }
 
@@ -370,7 +370,7 @@ func (s *Service) Like(w http.ResponseWriter, r *http.Request) {
 		w.Write(JSONError("insert DB error"))
 		return
 	}
-	
+
 	if res := s.Match(user.ID, like.Uid2); !res {
 		log.Println("There is not match")
 	} else {
@@ -384,7 +384,7 @@ func (s *Service) Like(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write(JSONError("Insert error"))
 				return
-			} 
+			}
 		}
 	}
 
@@ -653,6 +653,6 @@ func (s *Service) Gochat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ServeWs(MyHub, w, r, user.ID)
+	s.ServeWs(MyHub, w, r, user.ID)
 	w.WriteHeader(http.StatusOK)
 }
