@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"park_2020/2020_2_tmp_name/domain"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
@@ -140,20 +139,11 @@ func (u *userUsecase) AddPhoto(photo models.Photo) error {
 }
 
 func (u *userUsecase) UploadAvatar() (uuid.UUID, error) {
-	var photoID uuid.UUID
-	str, err := os.Getwd()
+	photoID, err := uuid.NewRandom()
 	if err != nil {
 		return photoID, domain.ErrInternalServerError
 	}
 
-	os.Chdir("/home/ubuntu/go/src/2020_2_tmp_name/static/avatars")
-
-	photoID, err = uuid.NewRandom()
-	if err != nil {
-		return photoID, domain.ErrInternalServerError
-	}
-
-	os.Chdir(str)
 	return photoID, nil
 }
 

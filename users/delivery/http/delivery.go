@@ -275,6 +275,16 @@ func (u *UserHandler) UploadAvatarHandler(w http.ResponseWriter, r *http.Request
 	defer file.Close()
 	r.FormValue("photo")
 
+	str, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(getStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	os.Chdir("/home/ubuntu/go/src/2020_2_tmp_name/static/avatars")
+
 	photoID, err := u.UUsecase.UploadAvatar()
 	if err != nil {
 		log.Println(err)
@@ -291,6 +301,8 @@ func (u *UserHandler) UploadAvatarHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 	defer f.Close()
+
+	os.Chdir(str)
 
 	body, err := json.Marshal(photoID.String())
 	if err != nil {
