@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -26,6 +27,34 @@ func init() {
 	models.LoadConfig(&conf)
 }
 
+func DBConnection(conf *models.Config) *sql.DB {
+	connString := fmt.Sprintf("host=%v user=%v password=%v dbname=%v sslmode=disable",
+		conf.SQLDataBase.Server,
+		conf.SQLDataBase.UserID,
+		conf.SQLDataBase.Password,
+		conf.SQLDataBase.Database,
+	)
+
+	db, err := sql.Open("postgres", connString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db.SetMaxOpenConns(10)
+
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return db
+}
+
+type Service struct {
+	DB  *sql.DB
+	Hub *server.Hub
+}
+
 func (app *application) initServer() {
 	headersOk := handlers.AllowedHeaders([]string{"Content-Type", "Content-Disposition"})
 	originsOk := handlers.AllowedOrigins([]string{"http://95.163.213.222:3000"})
@@ -37,37 +66,9 @@ func (app *application) initServer() {
 	go s.Run()
 
 	var err error
-	s.DB, err = storage.DBConnection(&conf)
-	if err != nil {
-		log.Fatalln("database connection failed")
-	}
+	s.DB = storage.DBConnection(&conf)
 
 	middleware.MyCORSMethodMiddleware(app.serv)
-
-	path := "/static/avatars/"
-	http.Handle("/", app.serv)
-	app.serv.PathPrefix(path).Handler(http.StripPrefix(path, http.FileServer(http.Dir("."+path))))
-
-	app.serv.HandleFunc("/health", s.HealthHandler).Methods(http.MethodGet)
-	app.serv.HandleFunc("/api/v1/login", s.Login).Methods(http.MethodGet, http.MethodPost)
-	app.serv.HandleFunc("/api/v1/logout", s.Logout).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/signup", s.Signup).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/settings", s.Settings).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/upload", s.UploadAvatar).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/add_photo", s.AddPhoto).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/me", s.MeHandler).Methods(http.MethodGet)
-	app.serv.HandleFunc("/api/v1/feed", s.Feed).Methods(http.MethodGet)
-
-	app.serv.HandleFunc("/api/v1/like", s.Like).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/dislike", s.Dislike).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/comment", s.Comment).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/comments/{user_id}", s.CommentsById).Methods(http.MethodGet)
-	app.serv.HandleFunc("/api/v1/chat", s.Chat).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/message", s.Message).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/chats", s.Chats).Methods(http.MethodGet)
-	app.serv.HandleFunc("/api/v1/chats/{chat_id}", s.ChatID).Methods(http.MethodGet)
-
-	app.serv.HandleFunc("/api/v1/gochat", s.Gochat).Methods(http.MethodGet, http.MethodPost)
 
 	serv := &http.Server{
 		Addr:         ":8080",
