@@ -9,11 +9,16 @@ import (
 
 	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
-	"park_2020/2020_2_tmp_name/server"
-	"park_2020/2020_2_tmp_name/storage"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
+
+	_ "github.com/lib/pq"
+
+	_userHttpDelivery "park_2020/2020_2_tmp_name/users/delivery/http"
+	_userRepo "park_2020/2020_2_tmp_name/users/repository/postgres"
+	_userUcase "park_2020/2020_2_tmp_name/users/usecase"
 )
 
 type application struct {
@@ -50,29 +55,28 @@ func DBConnection(conf *models.Config) *sql.DB {
 	return db
 }
 
-type Service struct {
-	DB  *sql.DB
-	Hub *server.Hub
-}
-
 func (app *application) initServer() {
 	headersOk := handlers.AllowedHeaders([]string{"Content-Type", "Content-Disposition"})
 	originsOk := handlers.AllowedOrigins([]string{"http://95.163.213.222:3000"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE"})
 
-	s := server.NewServer()
-
-	server.MyHub = server.NewHub()
-	go s.Run()
-
 	var err error
-	s.DB = storage.DBConnection(&conf)
+	dbConn := DBConnection(&conf)
 
-	middleware.MyCORSMethodMiddleware(app.serv)
+	router := mux.NewRouter()
+
+	u := _userRepo.NewPostgresUserRepository(dbConn)
+
+	timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
+	uu := _userUcase.NewUserUsecase(u, timeoutContext)
+
+	_userHttpDelivery.NewUserHandler(router, uu)
+
+	middleware.MyCORSMethodMiddleware(router)
 
 	serv := &http.Server{
 		Addr:         ":8080",
-		Handler:      handlers.CORS(originsOk, headersOk, methodsOk, handlers.AllowCredentials())(app.serv),
+		Handler:      handlers.CORS(originsOk, headersOk, methodsOk, handlers.AllowCredentials())(router),
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}

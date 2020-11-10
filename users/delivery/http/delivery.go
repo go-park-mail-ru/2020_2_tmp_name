@@ -31,6 +31,8 @@ func NewUserHandler(r *mux.Router, us domain.UserUsecase) {
 	http.Handle("/", r)
 	r.PathPrefix(path).Handler(http.StripPrefix(path, http.FileServer(http.Dir("."+path))))
 
+	http.HandleFunc("/health", handler.HealthHandler)
+
 	r.HandleFunc("/health", handler.HealthHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/login", handler.LoginHandler).Methods(http.MethodGet, http.MethodPost)
 	r.HandleFunc("/api/v1/logout", handler.LogoutHandler).Methods(http.MethodPost)
@@ -67,7 +69,6 @@ func JSONError(message string) []byte {
 
 func (u *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	loginData := models.LoginData{}
-
 	err := json.NewDecoder(r.Body).Decode(&loginData)
 	if err != nil {
 		log.Println(err)

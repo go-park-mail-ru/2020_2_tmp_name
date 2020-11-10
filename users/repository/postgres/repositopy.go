@@ -1,4 +1,4 @@
-package posgres
+package postgres
 
 import (
 	"database/sql"
@@ -269,8 +269,8 @@ func (p *postgresUserRepository) InsertPhoto(path string, uid int) error {
 func (p *postgresUserRepository) SelectMessage(uid, chid int) (models.Msg, error) {
 	var message models.Msg
 	row := p.Conn.QueryRow(`SELECT text, time_delivery, user_id FROM message WHERE user_id=$1 AND chat_id=$2 order by id desc limit 1;`, uid, chid)
-	err := row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
-	return message, err
+	row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
+	return message, nil
 }
 
 func (p *postgresUserRepository) SelectMessages(chid int) ([]models.Msg, error) {
@@ -325,7 +325,6 @@ func (p *postgresUserRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 		return chats, err
 	}
 	defer rows.Close()
-
 	for rows.Next() {
 		var chat models.ChatData
 		var uid2 int
