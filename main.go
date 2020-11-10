@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -8,11 +9,16 @@ import (
 
 	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
-	"park_2020/2020_2_tmp_name/server"
-	"park_2020/2020_2_tmp_name/storage"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
+
+	_ "github.com/lib/pq"
+
+	_userHttpDelivery "park_2020/2020_2_tmp_name/users/delivery/http"
+	_userRepo "park_2020/2020_2_tmp_name/users/repository/postgres"
+	_userUcase "park_2020/2020_2_tmp_name/users/usecase"
 )
 
 type application struct {
@@ -26,52 +32,51 @@ func init() {
 	models.LoadConfig(&conf)
 }
 
+func DBConnection(conf *models.Config) *sql.DB {
+	connString := fmt.Sprintf("host=%v user=%v password=%v dbname=%v sslmode=disable",
+		conf.SQLDataBase.Server,
+		conf.SQLDataBase.UserID,
+		conf.SQLDataBase.Password,
+		conf.SQLDataBase.Database,
+	)
+
+	db, err := sql.Open("postgres", connString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db.SetMaxOpenConns(10)
+
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return db
+}
+
 func (app *application) initServer() {
 	headersOk := handlers.AllowedHeaders([]string{"Content-Type", "Content-Disposition"})
 	originsOk := handlers.AllowedOrigins([]string{"http://95.163.213.222:3000"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE"})
 
-	s := server.NewServer()
-
-	server.MyHub = server.NewHub()
-	go s.Run()
-
 	var err error
-	s.DB, err = storage.DBConnection(&conf)
-	if err != nil {
-		log.Fatalln("database connection failed")
-	}
+	dbConn := DBConnection(&conf)
 
-	middleware.MyCORSMethodMiddleware(app.serv)
+	router := mux.NewRouter()
 
-	path := "/static/avatars/"
-	http.Handle("/", app.serv)
-	app.serv.PathPrefix(path).Handler(http.StripPrefix(path, http.FileServer(http.Dir("."+path))))
+	u := _userRepo.NewPostgresUserRepository(dbConn)
 
-	app.serv.HandleFunc("/health", s.HealthHandler).Methods(http.MethodGet)
-	app.serv.HandleFunc("/api/v1/login", s.Login).Methods(http.MethodGet, http.MethodPost)
-	app.serv.HandleFunc("/api/v1/logout", s.Logout).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/signup", s.Signup).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/settings", s.Settings).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/upload", s.UploadAvatar).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/add_photo", s.AddPhoto).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/me", s.MeHandler).Methods(http.MethodGet)
-	app.serv.HandleFunc("/api/v1/feed", s.Feed).Methods(http.MethodGet)
+	timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
+	uu := _userUcase.NewUserUsecase(u, timeoutContext)
 
-	app.serv.HandleFunc("/api/v1/like", s.Like).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/dislike", s.Dislike).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/comment", s.Comment).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/comments/{user_id}", s.CommentsById).Methods(http.MethodGet)
-	app.serv.HandleFunc("/api/v1/chat", s.Chat).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/message", s.Message).Methods(http.MethodPost)
-	app.serv.HandleFunc("/api/v1/chats", s.Chats).Methods(http.MethodGet)
-	app.serv.HandleFunc("/api/v1/chats/{chat_id}", s.ChatID).Methods(http.MethodGet)
+	_userHttpDelivery.NewUserHandler(router, uu)
 
-	app.serv.HandleFunc("/api/v1/gochat", s.Gochat).Methods(http.MethodGet, http.MethodPost)
+	middleware.MyCORSMethodMiddleware(router)
 
 	serv := &http.Server{
 		Addr:         ":8080",
-		Handler:      handlers.CORS(originsOk, headersOk, methodsOk, handlers.AllowCredentials())(app.serv),
+		Handler:      handlers.CORS(originsOk, headersOk, methodsOk, handlers.AllowCredentials())(router),
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}

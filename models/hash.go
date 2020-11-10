@@ -1,4 +1,4 @@
-package server
+package models
 
 import (
 	"time"
@@ -16,7 +16,7 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func diff(start, end time.Time) int {
+func Diff(start, end time.Time) int {
 	y1, M1, d1 := start.Date()
 	y2, M2, d2 := end.Date()
 
