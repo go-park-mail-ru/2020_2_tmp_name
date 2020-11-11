@@ -2,15 +2,26 @@ package usecase
 
 import (
 	"errors"
-	"github.com/golang/mock/gomock"
 	"park_2020/2020_2_tmp_name/domain"
 	"park_2020/2020_2_tmp_name/domain/mock"
 	"park_2020/2020_2_tmp_name/models"
 
-	"github.com/stretchr/testify/require"
+	"github.com/golang/mock/gomock"
+
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
+
+func TestNewUserUsecase(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	var u domain.UserRepository
+	uu := NewUserUsecase(u, time.Duration(10*time.Second))
+	require.NotEmpty(t, uu)
+}
 
 func TestSignUpSuccess(t *testing.T) {
 	user := models.User{
@@ -32,7 +43,7 @@ func TestSignUpSuccess(t *testing.T) {
 	mock.EXPECT().CheckUser(user.Telephone).Return(false)
 	mock.EXPECT().InsertUser(user).Return(nil)
 
-	us := userUsecase {
+	us := userUsecase{
 		userRepo: mock,
 	}
 
@@ -63,7 +74,7 @@ func TestUserUsecase_SignupFail(t *testing.T) {
 	secondCall := mock.EXPECT().CheckUser(user.Telephone).After(firstCall).Return(false)
 	mock.EXPECT().InsertUser(user).After(secondCall).Return(errors.New("Fail to insert"))
 
-	us := userUsecase {
+	us := userUsecase{
 		userRepo: mock,
 	}
 
@@ -162,7 +173,6 @@ func TestUserUsecase_SettingsFail(t *testing.T) {
 		userRepo: mock,
 	}
 
-
 	for i := 0; i < 2; i++ {
 		err := us.Settings(cookie, user)
 		require.Equal(t, domain.ErrInternalServerError, err)
@@ -193,7 +203,6 @@ func TestUserUsecase_LikeSuccess(t *testing.T) {
 	}
 	cookie := "Something-like-uuid"
 	telephone := "909-277-47-21"
-
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -233,6 +242,12 @@ func TestUserUsecase_LikeFail(t *testing.T) {
 		Education:  "BMSTU",
 		AboutMe:    "",
 	}
+	chat := models.Chat{
+		ID:      0,
+		Uid1:    userFeed.ID,
+		Uid2:    like.Uid2,
+		LastMsg: "",
+	}
 
 	cookie := "Something-like-uuid"
 	telephone := "909-277-47-21"
@@ -240,25 +255,25 @@ func TestUserUsecase_LikeFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-
 	mock := mock.NewMockUserRepository(ctrl)
-	mock.EXPECT().CheckUserBySession(cookie).Times(2).Return(telephone)
+	mock.EXPECT().CheckUserBySession(cookie).Times(3).Return(telephone)
 	gomock.InOrder(
 		mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, errors.New("error select user")),
 		mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, nil),
 		mock.EXPECT().InsertLike(userFeed.ID, like.Uid2).Return(errors.New("error of insert")),
-		//mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, nil),
-		//mock.EXPECT().InsertLike(userFeed.ID, like.Uid2).Return( nil),
-		//mock.EXPECT().Match(userFeed.ID, like.Uid2).Return(true),
-		//mock.EXPECT().CheckChat(chat).Return(true),
-		)
+		mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, nil),
+		mock.EXPECT().InsertLike(userFeed.ID, like.Uid2).Return(nil),
+		mock.EXPECT().Match(userFeed.ID, like.Uid2).Return(true),
+		mock.EXPECT().CheckChat(chat).Return(false),
+		mock.EXPECT().InsertChat(chat).Return(errors.New("error of insert")),
+	)
 
 	us := userUsecase{
 		userRepo: mock,
 	}
 
-	for i := 0; i < 2; i++ {
-		err := us.Like(cookie,like)
+	for i := 0; i < 3; i++ {
+		err := us.Like(cookie, like)
 		require.Equal(t, domain.ErrInternalServerError, err)
 	}
 }
@@ -330,14 +345,14 @@ func TestUserUsecase_DislikeFail(t *testing.T) {
 		mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, errors.New("error")),
 		mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, nil),
 		mock.EXPECT().InsertDislike(userFeed.ID, dislike.Uid2).Return(errors.New("error")),
-		)
+	)
 
 	us := userUsecase{
 		userRepo: mock,
 	}
 
 	for i := 0; i < 2; i++ {
-		err := us.Dislike(cookie,dislike)
+		err := us.Dislike(cookie, dislike)
 		require.Equal(t, domain.ErrInternalServerError, err)
 	}
 
@@ -347,7 +362,7 @@ func TestUserUsecase_CommentSuccess(t *testing.T) {
 	cookie := "Something-like-uuid"
 	telephone := "909-277-47-21"
 
-	userFeed := models.UserFeed {
+	userFeed := models.UserFeed{
 		ID:         0,
 		Name:       "Misha",
 		DateBirth:  0,
@@ -357,7 +372,7 @@ func TestUserUsecase_CommentSuccess(t *testing.T) {
 		AboutMe:    "",
 	}
 
-	comment := models.Comment {
+	comment := models.Comment{
 		ID:           0,
 		Uid1:         1,
 		Uid2:         2,
@@ -387,7 +402,7 @@ func TestUserUsecase_CommentFail(t *testing.T) {
 	cookie := "Something-like-uuid"
 	telephone := "909-277-47-21"
 
-	userFeed := models.UserFeed {
+	userFeed := models.UserFeed{
 		ID:         0,
 		Name:       "Misha",
 		DateBirth:  0,
@@ -397,7 +412,7 @@ func TestUserUsecase_CommentFail(t *testing.T) {
 		AboutMe:    "",
 	}
 
-	comment := models.Comment {
+	comment := models.Comment{
 		ID:           0,
 		Uid1:         1,
 		Uid2:         2,
@@ -421,7 +436,7 @@ func TestUserUsecase_CommentFail(t *testing.T) {
 	}
 
 	for i := 0; i < 2; i++ {
-		err := us.Comment(cookie,comment)
+		err := us.Comment(cookie, comment)
 		require.Equal(t, domain.ErrInternalServerError, err)
 	}
 
@@ -467,7 +482,6 @@ func TestUserUsecase_CommentsByIDFail(t *testing.T) {
 
 	_, err := us.CommentsByID(id)
 
-
 	require.Equal(t, domain.ErrInternalServerError, err)
 }
 
@@ -475,7 +489,7 @@ func TestUserUsecase_MessageSuccess(t *testing.T) {
 	cookie := "Something-like-uuid"
 	telephone := "909-277-47-21"
 
-	userFeed := models.UserFeed {
+	userFeed := models.UserFeed{
 		ID:         0,
 		Name:       "Misha",
 		DateBirth:  0,
@@ -516,7 +530,7 @@ func TestUserUsecase_MessageFail(t *testing.T) {
 	cookie := "Something-like-uuid"
 	telephone := "909-277-47-21"
 
-	userFeed := models.UserFeed {
+	userFeed := models.UserFeed{
 		ID:         0,
 		Name:       "Misha",
 		DateBirth:  0,
@@ -550,11 +564,10 @@ func TestUserUsecase_MessageFail(t *testing.T) {
 	}
 
 	for i := 0; i < 2; i++ {
-		err := us.Message(cookie,message)
+		err := us.Message(cookie, message)
 		require.Equal(t, domain.ErrInternalServerError, err)
 	}
 }
-
 
 func TestLoginFail(t *testing.T) {
 	login := models.LoginData{
@@ -640,7 +653,23 @@ func TestAddPhotoSuccess(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestMe(t *testing.T) {
+func TestUploadAvatarSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	uid, err := us.UploadAvatar()
+
+	require.NoError(t, err)
+	require.NotEqual(t, uid.String(), "")
+}
+
+func TestMeSuccess(t *testing.T) {
 	sid := "something-like-this"
 
 	user := models.UserFeed{
@@ -670,6 +699,29 @@ func TestMe(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, me, user)
+}
+
+func TestMeFail(t *testing.T) {
+	sid := "something-like-this"
+
+	user := models.UserFeed{}
+
+	telephone := "944-739-32-28"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
+	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, domain.ErrInternalServerError)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	_, err := us.Me(sid)
+
+	require.NotEqual(t, err, nil)
 }
 
 func TestFeed(t *testing.T) {
@@ -872,3 +924,33 @@ func TestСhatID(t *testing.T) {
 	require.Equal(t, result, chat)
 }
 
+func TestGochat(t *testing.T) {
+	sid := "something-like-this"
+	user := models.UserFeed{
+		ID:         1,
+		Name:       "Andrey",
+		DateBirth:  20,
+		LinkImages: nil,
+		Job:        "",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	telephone := "944-739-32-28"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
+	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, nil)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	result, err := us.Gochat(sid)
+
+	require.NoError(t, err)
+	require.Equal(t, result, user)
+}
