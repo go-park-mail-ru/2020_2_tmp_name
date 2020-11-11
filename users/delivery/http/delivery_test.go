@@ -1,131 +1,27 @@
-package http
+package http_test
 
 import (
-	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	userHttp "park_2020/2020_2_tmp_name/users/delivery/http"
 )
 
-func TestHealth(t *testing.T) {
+func TestHealthCheckHandler(t *testing.T) {
 	req, err := http.NewRequest("GET", "/health", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	r := httptest.NewRecorder()
-	handler := http.HandlerFunc(NewServer().HealthHandler)
-	handler.ServeHTTP(r, req)
-	if status := r.Code; status != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", status, http.StatusOK)
-	}
-}
+	userHandler := &userHttp.UserHandler{}
 
-func TestLogin(t *testing.T) {
-	var byteData = []byte(`{
-			"login" : "amavrin",
-			"password" : "qwerty"
-		}`)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(userHandler.HealthHandler)
+	handler.ServeHTTP(rr, req)
 
-	body := bytes.NewReader(byteData)
-
-	req, err := http.NewRequest("POST", "/login", body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	r := httptest.NewRecorder()
-	handler := http.HandlerFunc(NewServer().Login)
-	handler.ServeHTTP(r, req)
-	if status := r.Code; status != http.StatusUnauthorized {
-		t.Errorf("wrong status code: got %v want %v", status, http.StatusUnauthorized)
-	}
-}
-
-func TestLogout(t *testing.T) {
-	req, err := http.NewRequest("POST", "/logout", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	r := httptest.NewRecorder()
-	handler := http.HandlerFunc(NewServer().Logout)
-	handler.ServeHTTP(r, req)
-	if status := r.Code; status != http.StatusUnauthorized {
-		t.Errorf("wrong status code: got %v want %v", status, http.StatusOK)
-	}
-}
-
-func TestSignup(t *testing.T) {
-	var byteData = []byte(`{
-		"name" : "andrey",
-		"telephone" : "12345",
-		"day": "01",
-		"month" : "01",
-		"year" : "2001",
-		"sex": "male",
-		"job" : "frontend-developer",
-		"education" : "high"
-	}`)
-
-	body := bytes.NewReader(byteData)
-
-	req, err := http.NewRequest("POST", "/signup", body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	r := httptest.NewRecorder()
-	handler := http.HandlerFunc(NewServer().Signup)
-	handler.ServeHTTP(r, req)
-	if status := r.Code; status != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", status, http.StatusOK)
-	}
-
-	resultData := []byte(`{"name":"andrey","telephone":"12345","password":"","age":19,"day":"01","month":"01","year":"2001","sex":"male","linkImages":null,"job":"frontend-developer","education":"high","aboutMe":""}`)
-
-	if !bytes.Equal(r.Body.Bytes(), resultData) {
-		t.Errorf("wrong response: got %v want %v", string(r.Body.Bytes()), string(resultData))
-	}
-}
-
-func TestSettings(t *testing.T) {
-	var byteData = []byte(`{
-		"name" : "andrey",
-		"telephone" : "12345",
-		"day": "01",
-		"month" : "01",
-		"year" : "2001",
-		"sex": "male",
-		"job" : "mobile-deleloper",
-		"education" : "high"
-	}`)
-
-	body := bytes.NewReader(byteData)
-
-	req, err := http.NewRequest("POST", "/settings", body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	r := httptest.NewRecorder()
-	handler := http.HandlerFunc(NewServer().Settings)
-	handler.ServeHTTP(r, req)
-	if status := r.Code; status != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", status, http.StatusOK)
-	}
-}
-
-func TestFeed(t *testing.T) {
-	req, err := http.NewRequest("GET", "/feed", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	r := httptest.NewRecorder()
-	handler := http.HandlerFunc(NewServer().Feed)
-	handler.ServeHTTP(r, req)
-	if status := r.Code; status != http.StatusOK {
-		t.Errorf("wrong status code: got %v want %v", status, http.StatusOK)
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
 	}
 }
