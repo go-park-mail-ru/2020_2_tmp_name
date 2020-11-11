@@ -1,75 +1,187 @@
-package usecase_test
+package usecase
 
 import (
 	"park_2020/2020_2_tmp_name/domain/mock"
 	"park_2020/2020_2_tmp_name/models"
-	userHttp "park_2020/2020_2_tmp_name/users/delivery/http"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
-func TestLogin(t *testing.T) {
-	telephone := "944-739-32-28"
-	loginData := &models.LoginData{
-		Telephone: telephone,
+func TestLoginFail(t *testing.T) {
+	login := models.LoginData{
+		Telephone: "944-739-32-28",
 		Password:  "password",
 	}
 
-	retModel := "string"
+	user := models.User{
+		ID:         0,
+		Name:       "Andrey",
+		Telephone:  "944-739-32-28",
+		Password:   "password",
+		DateBirth:  time.Time{},
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Login(*loginData).Times(1).Return(retModel, nil)
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().CheckUser(login.Telephone).Times(1).Return(true)
+	mock.EXPECT().SelectUser(login.Telephone).Times(1).Return(user, nil)
 
-	uh := userHttp.UserHandler{
-		UUsecase: mock,
+	us := userUsecase{
+		userRepo: mock,
 	}
 
-	models, err := uh.UUsecase.Login(*loginData)
+	_, err := us.Login(login)
 
-	require.NoError(t, err)
-	require.NotEqual(t, models, "")
+	require.NotEqual(t, err, nil)
 }
 
 func TestLogout(t *testing.T) {
-	session := "hhxjxjjcxjj-hjxjxjx-xjjxjxjxj"
+	sid := "something-like-this"
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Logout(session).Times(1).Return(nil)
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().DeleteSession(sid).Times(1).Return(nil)
 
-	uh := userHttp.UserHandler{
-		UUsecase: mock,
+	us := userUsecase{
+		userRepo: mock,
 	}
 
-	err := uh.UUsecase.Logout(session)
+	err := us.Logout(sid)
 	require.NoError(t, err)
 }
 
-func TestSettings(t *testing.T) {
-	cookie := "hdisjsjs-sjsosksisi-jxjsjs"
-	user := &models.User{
-		Telephone: "958-475-21-69",
-		Password:  "password",
+func TestAddPhotoSuccess(t *testing.T) {
+	photo := models.Photo{
+		Path:      "path",
+		Telephone: "944-739-32-28",
+	}
+
+	user := models.UserFeed{
+		ID:         0,
+		Name:       "Andrey",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "",
+		Education:  "BMSTU",
+		AboutMe:    "",
 	}
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Settings(cookie, *user).Times(1).Return(nil)
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().SelectUserFeed(photo.Telephone).Times(1).Return(user, nil)
+	mock.EXPECT().InsertPhoto(photo.Path, user.ID).Times(1).Return(nil)
 
-	uh := userHttp.UserHandler{
-		UUsecase: mock,
+	us := userUsecase{
+		userRepo: mock,
 	}
 
-	err := uh.UUsecase.Settings(cookie, *user)
+	err := us.AddPhoto(photo)
 
 	require.NoError(t, err)
+}
+
+func TestMe(t *testing.T) {
+	sid := "something-like-this"
+
+	user := models.UserFeed{
+		ID:         0,
+		Name:       "Andrey",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	telephone := "944-739-32-28"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
+	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, nil)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	me, err := us.Me(sid)
+
+	require.NoError(t, err)
+	require.Equal(t, me, user)
+}
+
+func TestFeed(t *testing.T) {
+	sid := "something-like-this"
+
+	user := models.User{
+		ID:         0,
+		Name:       "Andrey",
+		Telephone:  "944-739-32-28",
+		Password:   "password",
+		DateBirth:  time.Time{},
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	var users []models.UserFeed
+	user1 := models.UserFeed{
+		ID:         0,
+		Name:       "Masha",
+		DateBirth:  20,
+		LinkImages: nil,
+		Job:        "",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	user2 := models.UserFeed{
+		ID:         0,
+		Name:       "Dasha",
+		DateBirth:  20,
+		LinkImages: nil,
+		Job:        "",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	users = append(users, user1)
+	users = append(users, user2)
+
+	telephone := "944-739-32-28"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
+	mock.EXPECT().SelectUser(telephone).Times(1).Return(user, nil)
+	mock.EXPECT().SelectUsers(user).Times(1).Return(users, nil)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	feed, err := us.Feed(sid)
+
+	require.NoError(t, err)
+	require.Equal(t, feed, users)
 }
