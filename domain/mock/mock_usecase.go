@@ -108,10 +108,10 @@ func (mr *MockUserUsecaseMockRecorder) Comment(arg0, arg1 interface{}) *gomock.C
 }
 
 // CommentsByID mocks base method
-func (m *MockUserUsecase) CommentsByID(arg0 int) (models.CommentsById, error) {
+func (m *MockUserUsecase) CommentsByID(arg0 int) (models.CommentsData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CommentsByID", arg0)
-	ret0, _ := ret[0].(models.CommentsById)
+	ret0, _ := ret[0].(models.CommentsData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

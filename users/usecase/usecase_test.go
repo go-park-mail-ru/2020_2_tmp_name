@@ -233,6 +233,12 @@ func TestUserUsecase_LikeFail(t *testing.T) {
 		Education:  "BMSTU",
 		AboutMe:    "",
 	}
+	chat := models.Chat{
+		ID:      0,
+		Uid1:    userFeed.ID,
+		Uid2:    like.Uid2,
+		LastMsg: "",
+	}
 
 	cookie := "Something-like-uuid"
 	telephone := "909-277-47-21"
@@ -242,22 +248,23 @@ func TestUserUsecase_LikeFail(t *testing.T) {
 
 
 	mock := mock.NewMockUserRepository(ctrl)
-	mock.EXPECT().CheckUserBySession(cookie).Times(2).Return(telephone)
+	mock.EXPECT().CheckUserBySession(cookie).Times(3).Return(telephone)
 	gomock.InOrder(
 		mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, errors.New("error select user")),
 		mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, nil),
 		mock.EXPECT().InsertLike(userFeed.ID, like.Uid2).Return(errors.New("error of insert")),
-		//mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, nil),
-		//mock.EXPECT().InsertLike(userFeed.ID, like.Uid2).Return( nil),
-		//mock.EXPECT().Match(userFeed.ID, like.Uid2).Return(true),
-		//mock.EXPECT().CheckChat(chat).Return(true),
+		mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, nil),
+		mock.EXPECT().InsertLike(userFeed.ID, like.Uid2).Return(nil),
+		mock.EXPECT().Match(userFeed.ID, like.Uid2).Return(true),
+		mock.EXPECT().CheckChat(chat).Return(false),
+		mock.EXPECT().InsertChat(chat).Return(errors.New("error of insert")),
 		)
 
 	us := userUsecase{
 		userRepo: mock,
 	}
 
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 3; i++ {
 		err := us.Like(cookie,like)
 		require.Equal(t, domain.ErrInternalServerError, err)
 	}
