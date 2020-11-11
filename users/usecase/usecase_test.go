@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLoginHandler(t *testing.T) {
+func TestLogin(t *testing.T) {
 	telephone := "944-739-32-28"
 	loginData := &models.LoginData{
 		Telephone: telephone,
@@ -33,5 +33,43 @@ func TestLoginHandler(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotEqual(t, models, "")
+}
 
+func TestLogout(t *testing.T) {
+	session := "hhxjxjjcxjj-hjxjxjx-xjjxjxjxj"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserUsecase(ctrl)
+	mock.EXPECT().Logout(session).Times(1).Return(nil)
+
+	uh := userHttp.UserHandler{
+		UUsecase: mock,
+	}
+
+	err := uh.UUsecase.Logout(session)
+	require.NoError(t, err)
+}
+
+func TestSettings(t *testing.T) {
+	cookie := "hdisjsjs-sjsosksisi-jxjsjs"
+	user := &models.User{
+		Telephone: "958-475-21-69",
+		Password:  "password",
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserUsecase(ctrl)
+	mock.EXPECT().Settings(cookie, *user).Times(1).Return(nil)
+
+	uh := userHttp.UserHandler{
+		UUsecase: mock,
+	}
+
+	err := uh.UUsecase.Settings(cookie, *user)
+
+	require.NoError(t, err)
 }
