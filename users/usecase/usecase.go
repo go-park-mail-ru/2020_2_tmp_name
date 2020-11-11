@@ -160,7 +160,7 @@ func (u *userUsecase) Like(cookie string, like models.Like) error {
 	}
 
 	if res := u.userRepo.Match(user.ID, like.Uid2); !res {
-		fmt.Println("There is not match")
+		fmt.Println("There is not match") //надо выпилить
 	} else {
 		var chat models.Chat
 		chat.Uid1 = user.ID
@@ -203,15 +203,16 @@ func (u *userUsecase) Comment(cookie string, comment models.Comment) error {
 	return nil
 }
 
-func (u *userUsecase) CommentsByID(id int) (models.CommentsById, error) {
+func (u *userUsecase) CommentsByID(id int) (models.CommentsData, error) {
 	comments, err := u.userRepo.SelectComments(id)
-	if err != nil {
-		return comments, domain.ErrInternalServerError
-	}
-
 	var data models.CommentsData
 	data.Data = comments
-	return comments, nil
+
+	if err != nil {
+		return data, domain.ErrInternalServerError
+	}
+
+	return data, nil
 }
 
 func (u *userUsecase) Chat(chat models.Chat) error {
