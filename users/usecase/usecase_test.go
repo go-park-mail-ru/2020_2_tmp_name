@@ -569,6 +569,53 @@ func TestUserUsecase_MessageFail(t *testing.T) {
 	}
 }
 
+func TestUserUsecase_ChatSuccess(t *testing.T) {
+	chat := models.Chat{
+		ID:      0,
+		Uid1:    4,
+		Uid2:    3,
+		LastMsg: "Save me from tests",
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().InsertChat(chat).Times(1).Return(nil)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	err := us.Chat(chat)
+
+	require.NoError(t, err)
+	require.Equal(t, nil, err)
+}
+
+func TestUserUsecase_ChatFail(t *testing.T) {
+	chat := models.Chat{
+		ID:      0,
+		Uid1:    4,
+		Uid2:    3,
+		LastMsg: "Save me from tests",
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().InsertChat(chat).Times(1).Return(domain.ErrInternalServerError)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	err := us.Chat(chat)
+
+	require.NotEqual(t, nil, err)
+}
+
 func TestLoginFail(t *testing.T) {
 	login := models.LoginData{
 		Telephone: "944-739-32-28",
@@ -651,6 +698,69 @@ func TestAddPhotoSuccess(t *testing.T) {
 	err := us.AddPhoto(photo)
 
 	require.NoError(t, err)
+}
+
+func TestAddPhotoFail(t *testing.T) {
+	photo := models.Photo{
+		Path:      "path",
+		Telephone: "944-739-32-28",
+	}
+
+	user := models.UserFeed{
+		ID:         1,
+		Name:       "Andrey",
+		DateBirth:  20,
+		LinkImages: nil,
+		Job:        "",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().SelectUserFeed(photo.Telephone).Times(1).Return(user, domain.ErrInternalServerError)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	err := us.AddPhoto(photo)
+
+	require.NotEqual(t, err, nil)
+}
+
+func TestAddPhotoFailSelect(t *testing.T) {
+	photo := models.Photo{
+		Path:      "path",
+		Telephone: "944-739-32-28",
+	}
+
+	user := models.UserFeed{
+		ID:         1,
+		Name:       "Andrey",
+		DateBirth:  20,
+		LinkImages: nil,
+		Job:        "",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().SelectUserFeed(photo.Telephone).Times(1).Return(user, nil)
+	mock.EXPECT().InsertPhoto(photo.Path, user.ID).Times(1).Return(domain.ErrInternalServerError)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	err := us.AddPhoto(photo)
+
+	require.NotEqual(t, err, nil)
 }
 
 func TestUploadAvatarSuccess(t *testing.T) {
@@ -953,4 +1063,26 @@ func TestGochat(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, result, user)
+}
+
+func TestGochatFail(t *testing.T) {
+	sid := "something-like-this"
+	user := models.UserFeed{}
+
+	telephone := "944-739-32-28"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
+	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, domain.ErrInternalServerError)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	_, err := us.Gochat(sid)
+
+	require.NotEqual(t, err, nil)
 }
