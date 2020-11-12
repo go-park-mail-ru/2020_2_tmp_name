@@ -893,6 +893,67 @@ func TestFeed(t *testing.T) {
 	require.Equal(t, feed, users)
 }
 
+func TestFeedFail(t *testing.T) {
+	sid := "something-like-this"
+
+	user := models.User{}
+
+	var users []models.UserFeed
+	user1 := models.UserFeed{}
+
+	user2 := models.UserFeed{}
+
+	users = append(users, user1, user2)
+
+	telephone := "944-739-32-28"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
+	mock.EXPECT().SelectUser(telephone).Times(1).Return(user, domain.ErrInternalServerError)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	_, err := us.Feed(sid)
+
+	require.NotEqual(t, err, nil)
+}
+
+func TestFeedSelectFail(t *testing.T) {
+	sid := "something-like-this"
+
+	user := models.User{}
+
+	var users []models.UserFeed
+	user1 := models.UserFeed{}
+
+	user2 := models.UserFeed{}
+
+	users = append(users, user1, user2)
+
+	telephone := "944-739-32-28"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
+	mock.EXPECT().SelectUser(telephone).Times(1).Return(user, nil)
+	mock.EXPECT().SelectUsers(user).Times(1).Return(users, domain.ErrInternalServerError)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	_, err := us.Feed(sid)
+
+	require.NotEqual(t, err, nil)
+}
+
 func TestСhats(t *testing.T) {
 	sid := "something-like-this"
 	var chatModel models.ChatModel
@@ -1032,6 +1093,63 @@ func TestСhatID(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, result, chat)
+}
+
+func TestСhatIDFail(t *testing.T) {
+	sid := "something-like-this"
+	var chid = 1
+	user := models.UserFeed{}
+
+	telephone := "944-739-32-28"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
+	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, domain.ErrInternalServerError)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	_, err := us.ChatID(sid, chid)
+
+	require.NotEqual(t, err, nil)
+}
+
+func TestСhatSelectIDFail(t *testing.T) {
+	sid := "something-like-this"
+	var chid = 1
+	user := models.UserFeed{}
+
+	msg1 := models.Msg{}
+
+	msg2 := models.Msg{}
+
+	chat := models.ChatData{
+		ID:       1,
+		Partner:  models.UserFeed{},
+		Messages: []models.Msg{msg1, msg2},
+	}
+
+	telephone := "944-739-32-28"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
+	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, nil)
+	mock.EXPECT().SelectChatByID(user.ID, chid).Times(1).Return(chat, domain.ErrInternalServerError)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	_, err := us.ChatID(sid, chid)
+
+	require.NotEqual(t, err, nil)
 }
 
 func TestGochat(t *testing.T) {
