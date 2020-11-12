@@ -321,9 +321,6 @@ func (u *userUsecase) readPump() {
 		u.client.Hub.Unregister <- u.client
 		u.client.Conn.Close()
 	}()
-	u.client.Conn.SetReadLimit(maxMessageSize)
-	u.client.Conn.SetReadDeadline(time.Now().Add(pongWait))
-	u.client.Conn.SetPongHandler(func(string) error { u.client.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, message, err := u.client.Conn.ReadMessage()
 		if err != nil {
@@ -347,7 +344,6 @@ func (u *userUsecase) writePump() {
 	for {
 		select {
 		case message, ok := <-u.client.Send:
-			u.client.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				u.client.Conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
