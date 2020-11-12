@@ -157,8 +157,7 @@ func (p *postgresUserRepository) SelectImages(uid int) ([]string, error) {
 
 	for rows.Next() {
 		var image string
-		var id, uid int
-		err := rows.Scan(&id, &image, &uid)
+		err := rows.Scan(&image)
 		if err != nil {
 			continue
 		}
@@ -287,7 +286,7 @@ func (p *postgresUserRepository) SelectMessages(chid int) ([]models.Msg, error) 
 	for rows.Next() {
 		var message models.Msg
 		var id int
-		err := rows.Scan(&id, &message.Message, &message.TimeDelivery, &message.ChatID,&message.UserID)
+		err := rows.Scan(&id, &message.Message, &message.TimeDelivery, &message.ChatID, &message.UserID)
 		if err != nil {
 			continue
 		}

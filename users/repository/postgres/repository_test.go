@@ -2,18 +2,21 @@ package postgres
 
 import (
 	"database/sql"
-	// "database/sql"
+	"fmt"
+
 	"database/sql/driver"
+	"math/rand"
+	"park_2020/2020_2_tmp_name/models"
+	"testing"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/bxcodec/faker"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
-	"math/rand"
-	"park_2020/2020_2_tmp_name/models"
-	"testing"
 )
 
 type anyPassword struct{}
+
 func (a anyPassword) Match(v driver.Value) bool {
 	_, ok := v.(string)
 	return ok
@@ -22,7 +25,7 @@ func (a anyPassword) Match(v driver.Value) bool {
 func TestPostgresUserRepository_InsertUser(t *testing.T) {
 	type insertUserTestCase struct {
 		inputUser models.User
-		err error
+		err       error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -54,7 +57,7 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 	testCases := []insertUserTestCase{
 		{
 			inputUser: inputUser,
-			err: nil,
+			err:       nil,
 		},
 	}
 
@@ -99,7 +102,7 @@ func TestPostgresUserRepository_InsertLike(t *testing.T) {
 	type insertLikeTestCase struct {
 		uid1 int
 		uid2 int
-		err error
+		err  error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -129,7 +132,7 @@ func TestPostgresUserRepository_InsertLike(t *testing.T) {
 		{
 			uid1: uid1,
 			uid2: uid2,
-			err: nil,
+			err:  nil,
 		},
 	}
 
@@ -162,7 +165,7 @@ func TestPostgresUserRepository_InsertDisLike(t *testing.T) {
 	type insertDisLikeTestCase struct {
 		uid1 int
 		uid2 int
-		err error
+		err  error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -192,7 +195,7 @@ func TestPostgresUserRepository_InsertDisLike(t *testing.T) {
 		{
 			uid1: uid1,
 			uid2: uid2,
-			err: nil,
+			err:  nil,
 		},
 	}
 
@@ -222,6 +225,7 @@ func TestPostgresUserRepository_InsertDisLike(t *testing.T) {
 }
 
 type anyTime struct{}
+
 func (a anyTime) Match(v driver.Value) bool {
 	_, ok := v.(string)
 	return ok
@@ -229,7 +233,7 @@ func (a anyTime) Match(v driver.Value) bool {
 func TestPostgresUserRepository_InsertComment(t *testing.T) {
 	type insertCommentTestCase struct {
 		comment models.Comment
-		err error
+		err     error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -257,7 +261,7 @@ func TestPostgresUserRepository_InsertComment(t *testing.T) {
 	testCases := []insertCommentTestCase{
 		{
 			comment: comment,
-			err: nil,
+			err:     nil,
 		},
 	}
 
@@ -292,9 +296,9 @@ func TestPostgresUserRepository_InsertComment(t *testing.T) {
 
 func TestPostgresUserRepository_InsertSession(t *testing.T) {
 	type insertSessionTestCase struct {
-		 key string
-		 value string
-		 err error
+		key   string
+		value string
+		err   error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -320,9 +324,9 @@ func TestPostgresUserRepository_InsertSession(t *testing.T) {
 
 	testCases := []insertSessionTestCase{
 		{
-			key: key,
+			key:   key,
 			value: value,
-			err: nil,
+			err:   nil,
 		},
 	}
 
@@ -354,7 +358,7 @@ func TestPostgresUserRepository_InsertSession(t *testing.T) {
 func TestPostgresUserRepository_InsertChat(t *testing.T) {
 	type insertChatTestCase struct {
 		chat models.Chat
-		err error
+		err  error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -379,7 +383,7 @@ func TestPostgresUserRepository_InsertChat(t *testing.T) {
 	testCases := []insertChatTestCase{
 		{
 			chat: chat,
-			err: nil,
+			err:  nil,
 		},
 	}
 
@@ -411,7 +415,7 @@ func TestPostgresUserRepository_InsertChat(t *testing.T) {
 func TestPostgresUserRepository_InsertMessage(t *testing.T) {
 	type insertMessageTestCase struct {
 		message models.Message
-		err error
+		err     error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -438,7 +442,7 @@ func TestPostgresUserRepository_InsertMessage(t *testing.T) {
 	testCases := []insertMessageTestCase{
 		{
 			message: message,
-			err: nil,
+			err:     nil,
 		},
 	}
 
@@ -473,9 +477,9 @@ func TestPostgresUserRepository_InsertMessage(t *testing.T) {
 
 func TestPostgresUserRepository_InsertPhoto(t *testing.T) {
 	type insertPhotoTestCase struct {
-		uid int
+		uid  int
 		path string
-		err error
+		err  error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -503,9 +507,9 @@ func TestPostgresUserRepository_InsertPhoto(t *testing.T) {
 
 	testCases := []insertPhotoTestCase{
 		{
-			uid: uid,
+			uid:  uid,
 			path: path,
-			err: nil,
+			err:  nil,
 		},
 	}
 
@@ -537,7 +541,7 @@ func TestPostgresUserRepository_InsertPhoto(t *testing.T) {
 func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 	type updateUserTestCase struct {
 		user models.User
-		err error
+		err  error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -566,12 +570,12 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 	testCases := []updateUserTestCase{
 		{
 			user: user,
-			err: nil,
+			err:  nil,
 		},
 	}
 
 	type query struct {
-		q string
+		q    string
 		data interface{}
 	}
 
@@ -632,9 +636,9 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 
 func TestPostgresUserRepository_SelectImages(t *testing.T) {
 	type insertPhotoTestCase struct {
-		uid int
+		uid  int
 		path []string
-		err error
+		err  error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -645,12 +649,10 @@ func TestPostgresUserRepository_SelectImages(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
 	columns := []string{
-		"id",
 		"path",
-		"user_id",
 	}
 
-	query := `SELECT photo.path FROM photo WHERE user_id=$1;`
+	query := `SELECT path FROM photo WHERE user_id=$1;`
 
 	var uid int
 	err = faker.FakeData(&uid)
@@ -662,14 +664,14 @@ func TestPostgresUserRepository_SelectImages(t *testing.T) {
 
 	testCases := []insertPhotoTestCase{
 		{
-			uid: uid,
+			uid:  uid,
 			path: path,
-			err: sql.ErrNoRows,
+			err:  sql.ErrNoRows,
 		},
 		{
-			uid: uid,
+			uid:  uid,
 			path: path,
-			err: nil,
+			err:  nil,
 		},
 	}
 
@@ -678,8 +680,8 @@ func TestPostgresUserRepository_SelectImages(t *testing.T) {
 			mock.ExpectQuery(query).WithArgs(testCase.uid).WillReturnError(testCase.err)
 		} else {
 			rows := sqlmock.NewRows(columns)
-			for i, image := range testCase.path {
-				rows.AddRow(i, image, testCase.uid)
+			for _, image := range testCase.path {
+				rows.AddRow(image)
 			}
 			mock.ExpectQuery(query).WithArgs(testCase.uid).WillReturnRows(rows)
 		}
@@ -701,8 +703,8 @@ func TestPostgresUserRepository_SelectImages(t *testing.T) {
 func TestPostgresUserRepository_SelectMessages(t *testing.T) {
 	type insertMessageTestCase struct {
 		messages []models.Msg
-		chatId int
-		err error
+		chatId   int
+		err      error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -729,13 +731,13 @@ func TestPostgresUserRepository_SelectMessages(t *testing.T) {
 	testCases := []insertMessageTestCase{
 		{
 			messages: messages,
-			chatId: messages[rand.Int() % len(messages)].ChatID,
-			err: sql.ErrNoRows,
+			chatId:   messages[rand.Int()%len(messages)].ChatID,
+			err:      sql.ErrNoRows,
 		},
 		{
 			messages: messages,
-			chatId: messages[rand.Int() % len(messages)].ChatID,
-			err: nil,
+			chatId:   messages[rand.Int()%len(messages)].ChatID,
+			err:      nil,
 		},
 	}
 
@@ -766,7 +768,7 @@ func TestPostgresUserRepository_SelectMessages(t *testing.T) {
 func TestPostgresUserRepository_SelectMessage(t *testing.T) {
 	type insertMessageTestCase struct {
 		messages models.Msg
-		err error
+		err      error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -793,11 +795,11 @@ func TestPostgresUserRepository_SelectMessage(t *testing.T) {
 	testCases := []insertMessageTestCase{
 		{
 			messages: messages,
-			err: sql.ErrNoRows,
+			err:      sql.ErrNoRows,
 		},
 		{
 			messages: messages,
-			err: nil,
+			err:      nil,
 		},
 	}
 
@@ -829,163 +831,97 @@ func TestPostgresUserRepository_SelectMessage(t *testing.T) {
 	}
 }
 
-//func TestPostgresUserRepository_SelectComments(t *testing.T) {
-//	type selectCommentTestCase struct {
-//		userId int
-//		comment models.CommentsById
-//		err error
-//	}
-//
-//	db, dbMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-//	if err != nil {
-//		t.Fatalf("error '%s' when opening a stub database connection", err)
-//	}
-//	defer db.Close()
-//	sqlxDB := sqlx.NewDb(db, "sqlmock")
-//
-//	columns := []string{
-//		"id",
-//		"user_id1",
-//		"user_id2",
-//		"time_delivery",
-//		"text",
-//	}
-//
-//	query := `SELECT user_id1, text, time_delivery FROM comments WHERE user_id2=$1;`
-//
-//	var comment models.CommentsById
-//	err = faker.FakeData(&comment)
-//	require.NoError(t, err)
-//
-//	testCases := []selectCommentTestCase{
-//		{
-//			userId: comment.Comments[rand.Int() % len(comment.Comments)].User.ID,
-//			comment: comment,
-//			err: nil,
-//		},
-//		{
-//			userId: 0,
-//			comment: comment,
-//			err: sql.ErrNoRows,
-//		},
-//	}
-//
-//	ctrl := gomock.NewController(t)
-//	defer ctrl.Finish()
-//
-//	for _, testCase := range testCases {
-//		if testCase.err == nil {
-//			rows := sqlmock.NewRows(columns)
-//			for i, com := range testCase.comment.Comments {
-//				rows.AddRow(i, com.User.ID + 1, com.User.ID, com.TimeDelivery, com.CommentText)
-//			}
-//			dbMock.ExpectQuery(query).WithArgs(testCase.userId).WillReturnRows(rows)
-//		} else {
-//			dbMock.ExpectQuery(query).WithArgs(testCase.userId).WillReturnError(testCase.err)
-//		}
-//
-//		repo := NewPostgresUserRepository(sqlxDB.DB)
-//
-//		com, err := repo.SelectComments(testCase.userId)
-//		require.Equal(t, testCase.err, err)
-//
-//		require.Equal(t, testCase.comment, com)
-//
-//		err = dbMock.ExpectationsWereMet()
-//		require.NoError(t, err, "unfulfilled expectations: %s", err)
-//	}
-//}
+func TestPostgresUserRepository_SelectUser(t *testing.T) {
+	type insertUserTestCase struct {
+		telephone  string
+		outputUser models.User
+		err        error
+	}
 
-//func TestPostgresUserRepository_SelectUser(t *testing.T) {
-//	type insertUserTestCase struct {
-//		telephone string
-//		outputUser models.User
-//		err error
-//	}
-//
-//	db, dbMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-//	if err != nil {
-//		t.Fatalf("error '%s' when opening a stub database connection", err)
-//	}
-//	defer db.Close()
-//	sqlxDB := sqlx.NewDb(db, "sqlmock")
-//
-//	columns := []string{
-//		"id",
-//		"name",
-//		"telephone",
-//		"password",
-//		"date_birth",
-//		"sex",
-//		"education",
-//		"job",
-//		"about_me",
-//	}
-//
-//	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
-//			  WHERE  telephone=$1;`
-//
-//	var telephone string
-//	err = faker.FakeData(&telephone)
-//	require.NoError(t, err)
-//
-//	var outputUser models.User
-//	err = faker.FakeData(&outputUser)
-//	require.NoError(t, err)
-//	outputUser.Telephone = telephone
-//
-//	testCases := []insertUserTestCase{
-//		{
-//			telephone: "telephone",
-//			outputUser: outputUser,
-//			err: sql.ErrNoRows,
-//		},
-//		{
-//			telephone: telephone,
-//			outputUser: outputUser,
-//			err: nil,
-//		},
-//	}
-//
-//	ctrl := gomock.NewController(t)
-//	defer ctrl.Finish()
-//
-//	for i, testCase := range testCases {
-//		msg := fmt.Sprintf("case %d aaaaaaaaaaaa", i)
-//		data := []driver.Value{
-//			testCase.outputUser.ID,
-//			testCase.outputUser.Name,
-//			testCase.outputUser.Telephone,
-//			testCase.outputUser.Password,
-//			testCase.outputUser.DateBirth,
-//			testCase.outputUser.Sex,
-//			testCase.outputUser.Education,
-//			testCase.outputUser.Job,
-//			testCase.outputUser.AboutMe,
-//		}
-//
-//		mock := mock.NewMockUserRepository(ctrl)
-//
-//		if testCase.err == nil {
-//			rows := sqlmock.NewRows(columns).AddRow(data...)
-//			dbMock.ExpectQuery(query).WithArgs(outputUser.Telephone).WillReturnRows(rows)
-//
-//			mock.EXPECT().SelectImages(testCase.outputUser.ID).Return(testCase.outputUser.LinkImages, testCase.err)
-//		} else {
-//			dbMock.ExpectQuery(query).WithArgs(outputUser.Telephone).WillReturnError(testCase.err)
-//		}
-//
-//
-//		repo := NewPostgresUserRepository(sqlxDB.DB)
-//
-//		user, err := repo.SelectUser(testCase.outputUser.Telephone)
-//		require.Equal(t, testCase.err, err)
-//		if err == nil {
-//			require.Equal(t, testCase.outputUser, user)
-//		}
-//
-//		err = dbMock.ExpectationsWereMet()
-//		require.NoError(t, err, "unfulfilled expectations: %s\n%s", err, msg)
-//	}
-//}
+	db, dbMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
+	columns := []string{
+		"id",
+		"name",
+		"telephone",
+		"password",
+		"date_birth",
+		"sex",
+		"education",
+		"job",
+		"about_me",
+	}
+
+	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
+			  WHERE  telephone=$1;`
+
+	var telephone string
+	err = faker.FakeData(&telephone)
+	require.NoError(t, err)
+
+	var outputUser models.User
+	err = faker.FakeData(&outputUser)
+	require.NoError(t, err)
+	outputUser.Telephone = telephone
+
+	testCases := []insertUserTestCase{
+		{
+			telephone:  "telephone",
+			outputUser: outputUser,
+			err:        sql.ErrNoRows,
+		},
+		{
+			telephone:  telephone,
+			outputUser: outputUser,
+			err:        nil,
+		},
+	}
+
+	for i, testCase := range testCases {
+		msg := fmt.Sprintf("case %d aaaaaaaaaaaa", i)
+		data := []driver.Value{
+			testCase.outputUser.ID,
+			testCase.outputUser.Name,
+			testCase.outputUser.Telephone,
+			testCase.outputUser.Password,
+			testCase.outputUser.DateBirth,
+			testCase.outputUser.Sex,
+			testCase.outputUser.Education,
+			testCase.outputUser.Job,
+			testCase.outputUser.AboutMe,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			dbMock.ExpectQuery(query).WithArgs(outputUser.Telephone).WillReturnRows(rows)
+
+			subQuery := `SELECT path FROM photo WHERE user_id=$1;`
+			subColumns := []string{
+				"path",
+			}
+			subRows := sqlmock.NewRows(subColumns)
+			for _, img := range testCase.outputUser.LinkImages {
+				subRows.AddRow(img)
+			}
+			dbMock.ExpectQuery(subQuery).WithArgs(testCase.outputUser.ID).WillReturnRows(subRows)
+		} else {
+			dbMock.ExpectQuery(query).WithArgs(outputUser.Telephone).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresUserRepository(sqlxDB.DB)
+
+		user, err := repo.SelectUser(testCase.outputUser.Telephone)
+		require.Equal(t, testCase.err, err)
+		if err == nil {
+			require.Equal(t, testCase.outputUser, user)
+		}
+
+		err = dbMock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s\n%s", err, msg)
+	}
+}
