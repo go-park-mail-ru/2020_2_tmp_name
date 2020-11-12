@@ -149,7 +149,7 @@ func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFee
 
 func (p *postgresUserRepository) SelectImages(uid int) ([]string, error) {
 	var images []string
-	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE  user_id=$1;`, uid)
+	rows, err := p.Conn.Query(`SELECT photo.path FROM photo WHERE user_id=$1;`, uid)
 	if err != nil {
 		return images, err
 	}
@@ -157,7 +157,8 @@ func (p *postgresUserRepository) SelectImages(uid int) ([]string, error) {
 
 	for rows.Next() {
 		var image string
-		err := rows.Scan(&image)
+		var id, uid int
+		err := rows.Scan(&id, &image, &uid)
 		if err != nil {
 			continue
 		}
@@ -269,8 +270,9 @@ func (p *postgresUserRepository) InsertPhoto(path string, uid int) error {
 func (p *postgresUserRepository) SelectMessage(uid, chid int) (models.Msg, error) {
 	var message models.Msg
 	row := p.Conn.QueryRow(`SELECT text, time_delivery, user_id FROM message WHERE user_id=$1 AND chat_id=$2 order by id desc limit 1;`, uid, chid)
-	row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
-	return message, nil
+	var id int
+	err := row.Scan(&id, &message.Message, &message.TimeDelivery, &message.ChatID, &message.UserID)
+	return message, err
 }
 
 func (p *postgresUserRepository) SelectMessages(chid int) ([]models.Msg, error) {
@@ -283,7 +285,8 @@ func (p *postgresUserRepository) SelectMessages(chid int) ([]models.Msg, error) 
 
 	for rows.Next() {
 		var message models.Msg
-		err := rows.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
+		var id int
+		err := rows.Scan(&id, &message.Message, &message.TimeDelivery, &message.ChatID,&message.UserID)
 		if err != nil {
 			continue
 		}
@@ -404,6 +407,7 @@ func (p *postgresUserRepository) SelectComments(userId int) (models.CommentsById
 		comments = append(comments, comment)
 	}
 
+	// TODO: вынести в отдельную функцию бизнес-логики
 	for _, comment := range comments {
 		user, err := p.SelectUserFeedByID(comment.UserId)
 		if err != nil {
