@@ -5,6 +5,8 @@ import (
 	"park_2020/2020_2_tmp_name/domain"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
+
+	"fmt"
 )
 
 type postgresUserRepository struct {
@@ -157,8 +159,8 @@ func (p *postgresUserRepository) SelectImages(uid int) ([]string, error) {
 
 	for rows.Next() {
 		var image string
-		var id, uid int
-		err := rows.Scan(&id, &image, &uid)
+		// var id, uid int
+		err := rows.Scan(&image)
 		if err != nil {
 			continue
 		}
@@ -269,11 +271,9 @@ func (p *postgresUserRepository) InsertPhoto(path string, uid int) error {
 
 func (p *postgresUserRepository) SelectMessage(uid, chid int) (models.Msg, error) {
 	var message models.Msg
-	row := p.Conn.QueryRow(`SELECT text, time_delivery, user_id FROM message WHERE user_id=$1 AND chat_id=$2 order by id desc limit 1;`, uid, chid)
-	var id int
-	err := row.Scan(&id, &message.Message, &message.TimeDelivery, &message.ChatID, &message.UserID)
-	return message, err
-
+    row := p.Conn.QueryRow(`SELECT text, time_delivery, user_id FROM message WHERE user_id=$1 AND chat_id=$2 order by id desc limit 1;`, uid, chid)
+    row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
+    return message, nil
 }
 
 func (p *postgresUserRepository) SelectMessages(chid int) ([]models.Msg, error) {
@@ -286,8 +286,8 @@ func (p *postgresUserRepository) SelectMessages(chid int) ([]models.Msg, error) 
 
 	for rows.Next() {
 		var message models.Msg
-		var id int
-		err := rows.Scan(&id, &message.Message, &message.TimeDelivery, &message.ChatID,&message.UserID)
+		// var id int
+		err := rows.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
 		if err != nil {
 			continue
 		}
@@ -314,10 +314,12 @@ func (p *postgresUserRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 		}
 		chat.Partner, err = p.SelectUserFeedByID(uid1)
 		if err != nil {
+			fmt.Println("Select user feed")
 			return chats, err
 		}
 		msg, err := p.SelectMessage(uid1, chat.ID)
 		if err != nil {
+			fmt.Println("Select message")
 			return chats, err
 		}
 		chat.Messages = append(chat.Messages, msg)
@@ -339,10 +341,12 @@ func (p *postgresUserRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 
 		chat.Partner, err = p.SelectUserFeedByID(uid2)
 		if err != nil {
+			fmt.Println("Select user feed2")
 			return chats, err
 		}
 		msg, err := p.SelectMessage(uid2, chat.ID)
 		if err != nil {
+			fmt.Println("Select message2")
 			return chats, err
 		}
 		chat.Messages = append(chat.Messages, msg)
