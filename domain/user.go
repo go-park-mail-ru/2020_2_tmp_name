@@ -58,4 +58,5 @@ type UserRepository interface {
 	SelectChatByID(uid, chid int) (models.ChatData, error)
 	SelectUserByChat(uid, chid int) (models.UserFeed, error)
 	SelectComments(userId int) (models.CommentsById, error)
+	SelectUserFeedByID(uid int) (models.UserFeed, error)
 }
