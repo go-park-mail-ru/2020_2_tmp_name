@@ -22,7 +22,7 @@ type UserUsecase interface {
 	Like(cookie string, like models.Like) error
 	Dislike(cookie string, dislike models.Dislike) error
 	Comment(cookie string, comment models.Comment) error
-	CommentsByID(id int) (models.CommentsById, error)
+	CommentsByID(id int) (models.CommentsData, error)
 	Chat(chat models.Chat) error
 	Message(cookie string, message models.Message) error
 	Chats(cookie string) (models.ChatModel, error)

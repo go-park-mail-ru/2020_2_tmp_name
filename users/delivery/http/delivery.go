@@ -572,8 +572,6 @@ func getStatusCode(err error) int {
 
 	logrus.Error(err)
 	switch err {
-	case domain.ErrInternalServerError:
-		return http.StatusInternalServerError
 	case domain.ErrNotFound:
 		return http.StatusNotFound
 	case domain.ErrConflict:

@@ -988,3 +988,4 @@ func TestPostgresUserRepository_SelectMessage(t *testing.T) {
 //		require.NoError(t, err, "unfulfilled expectations: %s\n%s", err, msg)
 //	}
 //}
+
