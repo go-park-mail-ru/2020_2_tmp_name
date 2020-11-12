@@ -73,7 +73,7 @@ func (p *postgresUserRepository) SelectUserMe(telephone string) (models.UserMe, 
 func (p *postgresUserRepository) SelectUserFeed(telephone string) (models.UserFeed, error) {
 	var u models.UserFeed
 	var date time.Time
-	row := p.Conn.QueryRow(`SELECT id, name, date_birth, job, education, about_me FROM users
+	row := p.Conn.QueryRow(`SELECT id, name, date_birth, education, job, about_me FROM users
 						WHERE  telephone=$1;`, telephone)
 	err := row.Scan(&u.ID, &u.Name, &date, &u.Education, &u.Job, &u.AboutMe)
 	if err != nil {
@@ -124,7 +124,7 @@ func (p *postgresUserRepository) Match(uid1, uid2 int) bool {
 
 func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFeed, error) {
 	var users []models.UserFeed
-	rows, err := p.Conn.Query(`SELECT id, name, date_birth, job, education, about_me FROM users WHERE sex != $1`, user.Sex)
+	rows, err := p.Conn.Query(`SELECT id, name, date_birth, education, job,  about_me FROM users WHERE sex != $1`, user.Sex)
 	if err != nil {
 		return users, err
 	}
