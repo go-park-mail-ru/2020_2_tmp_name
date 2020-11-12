@@ -101,6 +101,7 @@ func (u *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.WriteHeader(http.StatusOK)
 	http.SetCookie(w, cookie)
 	w.Write(body)
 }
