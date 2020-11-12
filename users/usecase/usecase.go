@@ -3,7 +3,6 @@ package usecase
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"park_2020/2020_2_tmp_name/domain"
@@ -159,9 +158,7 @@ func (u *userUsecase) Like(cookie string, like models.Like) error {
 		return domain.ErrInternalServerError
 	}
 
-	if res := u.userRepo.Match(user.ID, like.Uid2); !res {
-		fmt.Println("There is not match")
-	} else {
+	if res := u.userRepo.Match(user.ID, like.Uid2); res {
 		var chat models.Chat
 		chat.Uid1 = user.ID
 		chat.Uid2 = like.Uid2
@@ -203,15 +200,16 @@ func (u *userUsecase) Comment(cookie string, comment models.Comment) error {
 	return nil
 }
 
-func (u *userUsecase) CommentsByID(id int) (models.CommentsById, error) {
+func (u *userUsecase) CommentsByID(id int) (models.CommentsData, error) {
 	comments, err := u.userRepo.SelectComments(id)
-	if err != nil {
-		return comments, domain.ErrInternalServerError
-	}
-
 	var data models.CommentsData
 	data.Data = comments
-	return comments, nil
+
+	if err != nil {
+		return data, domain.ErrInternalServerError
+	}
+
+	return data, nil
 }
 
 func (u *userUsecase) Chat(chat models.Chat) error {
@@ -358,7 +356,6 @@ func (u *userUsecase) writePump() {
 			}
 			w.Write(message)
 
-			// Add queued chat messages to the current websocket message.
 			n := len(u.client.Send)
 			for i := 0; i < n; i++ {
 				w.Write(newline)

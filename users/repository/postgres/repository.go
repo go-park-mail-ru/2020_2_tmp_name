@@ -149,7 +149,7 @@ func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFee
 
 func (p *postgresUserRepository) SelectImages(uid int) ([]string, error) {
 	var images []string
-	rows, err := p.Conn.Query(`SELECT photo.path FROM photo WHERE user_id=$1;`, uid)
+	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE  user_id=$1;`, uid)
 	if err != nil {
 		return images, err
 	}
@@ -273,6 +273,7 @@ func (p *postgresUserRepository) SelectMessage(uid, chid int) (models.Msg, error
 	var id int
 	err := row.Scan(&id, &message.Message, &message.TimeDelivery, &message.ChatID, &message.UserID)
 	return message, err
+
 }
 
 func (p *postgresUserRepository) SelectMessages(chid int) ([]models.Msg, error) {

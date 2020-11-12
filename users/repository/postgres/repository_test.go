@@ -830,6 +830,7 @@ func TestPostgresUserRepository_SelectMessage(t *testing.T) {
 	}
 }
 
+<<<<<<< HEAD
 func TestPostgresUserRepository_SelectUser(t *testing.T) {
 	type insertUserTestCase struct {
 		telephone string
