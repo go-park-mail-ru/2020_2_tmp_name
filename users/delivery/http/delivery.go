@@ -101,6 +101,7 @@ func (u *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.WriteHeader(http.StatusOK)
 	http.SetCookie(w, cookie)
 	w.Write(body)
 }
@@ -185,13 +186,23 @@ func (u *UserHandler) SettingsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body, err := json.Marshal(userData)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(getStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }
 
 func (u *UserHandler) MeHandler(w http.ResponseWriter, r *http.Request) {
 	cookie := r.Cookies()[0]
 	user, err := u.UUsecase.Me(cookie.Value)
 	if err != nil {
+		log.Println(err)
 		w.WriteHeader(getStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -330,6 +341,12 @@ func (u *UserHandler) LikeHandler(w http.ResponseWriter, r *http.Request) {
 	cookie := r.Cookies()[0]
 
 	err = u.UUsecase.Like(cookie.Value, like)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(getStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
 
 	body, err := json.Marshal(like)
 	if err != nil {
@@ -572,8 +589,6 @@ func getStatusCode(err error) int {
 
 	logrus.Error(err)
 	switch err {
-	case domain.ErrInternalServerError:
-		return http.StatusInternalServerError
 	case domain.ErrNotFound:
 		return http.StatusNotFound
 	case domain.ErrConflict:
