@@ -294,7 +294,7 @@ func (u *UserHandler) UploadAvatarHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	os.Chdir("/home/ubuntu/go/src/2020_2_tmp_name/static/avatars")
+	os.Chdir("/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars")
 
 	photoID, err := u.UUsecase.UploadAvatar()
 	if err != nil {

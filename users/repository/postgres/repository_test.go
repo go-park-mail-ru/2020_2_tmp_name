@@ -715,10 +715,8 @@ func TestPostgresUserRepository_SelectMessages(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
 	columns := []string{
-		"id",
 		"text",
 		"time_delivery",
-		"chat_id",
 		"user_id",
 	}
 
@@ -731,23 +729,26 @@ func TestPostgresUserRepository_SelectMessages(t *testing.T) {
 	testCases := []insertMessageTestCase{
 		{
 			messages: messages,
-			chatId:   messages[rand.Int()%len(messages)].ChatID,
+			chatId:   messages[1 + rand.Int()%len(messages)].ChatID,
 			err:      sql.ErrNoRows,
 		},
 		{
 			messages: messages,
-			chatId:   messages[rand.Int()%len(messages)].ChatID,
+			chatId:   messages[1 + rand.Int()%len(messages)].ChatID,
 			err:      nil,
 		},
 	}
 
 	for _, testCase := range testCases {
+		for i := 0; i < len(testCase.messages); i++ {
+			testCase.messages[i].ChatID = testCase.chatId
+		}
 		if testCase.err != nil {
 			mock.ExpectQuery(query).WithArgs(testCase.chatId).WillReturnError(testCase.err)
 		} else {
 			rows := sqlmock.NewRows(columns)
-			for i, message := range testCase.messages {
-				rows.AddRow(i, message.Message, message.TimeDelivery, message.ChatID, message.UserID)
+			for _, message := range testCase.messages {
+				rows.AddRow(message.Message, message.TimeDelivery, message.UserID)
 			}
 			mock.ExpectQuery(query).WithArgs(testCase.chatId).WillReturnRows(rows)
 		}
@@ -779,10 +780,8 @@ func TestPostgresUserRepository_SelectMessage(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
 	columns := []string{
-		"id",
 		"text",
 		"time_delivery",
-		"chat_id",
 		"user_id",
 	}
 
@@ -795,10 +794,6 @@ func TestPostgresUserRepository_SelectMessage(t *testing.T) {
 	testCases := []insertMessageTestCase{
 		{
 			messages: messages,
-			err:      sql.ErrNoRows,
-		},
-		{
-			messages: messages,
 			err:      nil,
 		},
 	}
@@ -808,10 +803,8 @@ func TestPostgresUserRepository_SelectMessage(t *testing.T) {
 			mock.ExpectQuery(query).WithArgs(testCase.messages.UserID, testCase.messages.ChatID).WillReturnError(testCase.err)
 		} else {
 			data := []driver.Value{
-				1,
 				testCase.messages.Message,
 				testCase.messages.TimeDelivery,
-				testCase.messages.ChatID,
 				testCase.messages.UserID,
 			}
 			rows := sqlmock.NewRows(columns).AddRow(data...)

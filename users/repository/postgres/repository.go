@@ -271,7 +271,9 @@ func (p *postgresUserRepository) InsertPhoto(path string, uid int) error {
 func (p *postgresUserRepository) SelectMessage(uid, chid int) (models.Msg, error) {
 	var message models.Msg
     row := p.Conn.QueryRow(`SELECT text, time_delivery, user_id FROM message WHERE user_id=$1 AND chat_id=$2 order by id desc limit 1;`, uid, chid)
-    row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
+	row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
+	message.ChatID = chid
+	message.UserID = uid
     return message, nil
 }
 
@@ -289,6 +291,7 @@ func (p *postgresUserRepository) SelectMessages(chid int) ([]models.Msg, error) 
 		if err != nil {
 			continue
 		}
+		message.ChatID = chid
 		messages = append(messages, message)
 	}
 
