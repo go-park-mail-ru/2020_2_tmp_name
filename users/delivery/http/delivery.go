@@ -330,7 +330,7 @@ func (u *UserHandler) UploadAvatarHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (u *UserHandler) UserIDHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/user_id/"))
+	userID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/user/"))
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(getStatusCode(err))
