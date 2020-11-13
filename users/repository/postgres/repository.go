@@ -28,12 +28,16 @@ func (p *postgresUserRepository) InsertUser(user models.User) error {
 	if err != nil {
 		return err
 	}
+	age, err := models.Age(user.Day, user.Month, user.Year)
+	if err != nil {
+		return err
+	}
 	_, err = p.Conn.Exec(`INSERT INTO users(name, telephone, password, date_birth, sex, job, education, about_me)
 						VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`,
 		user.Name,
 		user.Telephone,
 		password,
-		user.DateBirth,
+		age,
 		user.Sex,
 		user.Job,
 		user.Education,
@@ -270,11 +274,11 @@ func (p *postgresUserRepository) InsertPhoto(path string, uid int) error {
 
 func (p *postgresUserRepository) SelectMessage(uid, chid int) (models.Msg, error) {
 	var message models.Msg
-    row := p.Conn.QueryRow(`SELECT text, time_delivery, user_id FROM message WHERE user_id=$1 AND chat_id=$2 order by id desc limit 1;`, uid, chid)
+	row := p.Conn.QueryRow(`SELECT text, time_delivery, user_id FROM message WHERE user_id=$1 AND chat_id=$2 order by id desc limit 1;`, uid, chid)
 	row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
 	message.ChatID = chid
 	message.UserID = uid
-    return message, nil
+	return message, nil
 }
 
 func (p *postgresUserRepository) SelectMessages(chid int) ([]models.Msg, error) {
