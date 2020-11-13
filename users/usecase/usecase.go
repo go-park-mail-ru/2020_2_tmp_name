@@ -9,8 +9,6 @@ import (
 	"park_2020/2020_2_tmp_name/models"
 	"time"
 
-	"fmt"
-
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
@@ -249,13 +247,11 @@ func (u *userUsecase) Chats(cookie string) (models.ChatModel, error) {
 	telephone := u.userRepo.CheckUserBySession(cookie)
 	user, err := u.userRepo.SelectUserFeed(telephone)
 	if err != nil {
-		fmt.Println("Natan debil")
 		return chatModel, domain.ErrInternalServerError
 	}
 
 	chats, err := u.userRepo.SelectChatsByID(user.ID)
 	if err != nil {
-		fmt.Println("Misha debil")
 		return chatModel, domain.ErrInternalServerError
 	}
 

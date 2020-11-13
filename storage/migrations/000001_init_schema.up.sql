@@ -3,7 +3,7 @@ CREATE TABLE "users" (
   "name" varchar NOT NULL,
   "telephone" varchar NOT NULL,
   "password" varchar NOT NULL,
-  "date_birth" date NOT NULL DEFAULT (now()),
+  "date_birth" int4,
   "sex" varchar NOT NULL,
   "education" varchar,
   "job" varchar,

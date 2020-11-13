@@ -28,10 +28,12 @@ func (p *postgresUserRepository) InsertUser(user models.User) error {
 	if err != nil {
 		return err
 	}
+
 	age, err := models.Age(user.Day, user.Month, user.Year)
 	if err != nil {
 		return err
 	}
+
 	_, err = p.Conn.Exec(`INSERT INTO users(name, telephone, password, date_birth, sex, job, education, about_me)
 						VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`,
 		user.Name,
