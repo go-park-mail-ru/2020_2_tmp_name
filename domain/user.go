@@ -19,6 +19,7 @@ type UserUsecase interface {
 	Feed(cookie string) ([]models.UserFeed, error)
 	AddPhoto(photo models.Photo) error
 	UploadAvatar() (uuid.UUID, error)
+	UserID(uid int) (models.UserFeed, error)
 	Like(cookie string, like models.Like) error
 	Dislike(cookie string, dislike models.Dislike) error
 	Comment(cookie string, comment models.Comment) error

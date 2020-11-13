@@ -8,8 +8,9 @@ import (
 	"park_2020/2020_2_tmp_name/domain"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
-	
+
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
@@ -121,6 +122,14 @@ func (u *userUsecase) Feed(cookie string) ([]models.UserFeed, error) {
 		return data, domain.ErrInternalServerError
 	}
 	return data, nil
+}
+
+func (u *userUsecase) UserID(uid int) (models.UserFeed, error) {
+	user, err := u.userRepo.SelectUserFeedByID(uid)
+	if err != nil {
+		return user, domain.ErrInternalServerError
+	}
+	return user, nil
 }
 
 func (u *userUsecase) AddPhoto(photo models.Photo) error {
