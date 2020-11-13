@@ -292,3 +292,18 @@ func (mr *MockUserUsecaseMockRecorder) UploadAvatar() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadAvatar", reflect.TypeOf((*MockUserUsecase)(nil).UploadAvatar))
 }
+
+// UserID mocks base method
+func (m *MockUserUsecase) UserID(arg0 int) (models.UserFeed, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserID", arg0)
+	ret0, _ := ret[0].(models.UserFeed)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserID indicates an expected call of UserID
+func (mr *MockUserUsecaseMockRecorder) UserID(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserID", reflect.TypeOf((*MockUserUsecase)(nil).UserID), arg0)
+}
