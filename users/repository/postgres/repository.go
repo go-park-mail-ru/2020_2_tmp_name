@@ -63,46 +63,40 @@ func (p *postgresUserRepository) SelectUser(telephone string) (models.User, erro
 
 func (p *postgresUserRepository) SelectUserMe(telephone string) (models.UserMe, error) {
 	var u models.UserMe
-	var date time.Time
 	row := p.Conn.QueryRow(`SELECT id, name, telephone, date_birth, job, education, about_me FROM users
 						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &date, &u.Education, &u.Job, &u.AboutMe)
+	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe)
 	if err != nil {
 		return u, err
 	}
 
-	u.DateBirth = models.Diff(date, time.Now())
 	u.LinkImages, err = p.SelectImages(u.ID)
 	return u, err
 }
 
 func (p *postgresUserRepository) SelectUserFeed(telephone string) (models.UserFeed, error) {
 	var u models.UserFeed
-	var date time.Time
 	row := p.Conn.QueryRow(`SELECT id, name, date_birth, education, job, about_me FROM users
 						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.ID, &u.Name, &date, &u.Education, &u.Job, &u.AboutMe)
+	err := row.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe)
 	if err != nil {
 		return u, err
 	}
 
-	u.DateBirth = models.Diff(date, time.Now())
 	u.LinkImages, err = p.SelectImages(u.ID)
 	return u, err
 }
 
 func (p *postgresUserRepository) SelectUserFeedByID(uid int) (models.UserFeed, error) {
 	var u models.UserFeed
-	var date time.Time
 	row := p.Conn.QueryRow(`SELECT name, date_birth, job, education, about_me FROM users
 						WHERE  id=$1;`, uid)
-	err := row.Scan(&u.Name, &date, &u.Job, &u.Education, &u.AboutMe)
+	err := row.Scan(&u.Name, &u.DateBirth, &u.Job, &u.Education, &u.AboutMe)
 	if err != nil {
 		return u, err
 	}
 	u.ID = uid
 
-	u.DateBirth = models.Diff(date, time.Now())
 	u.LinkImages, err = p.SelectImages(u.ID)
 	return u, err
 }
@@ -138,13 +132,11 @@ func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFee
 
 	for rows.Next() {
 		var u models.UserFeed
-		var date time.Time
-		err := rows.Scan(&u.ID, &u.Name, &date, &u.Education, &u.Job, &u.AboutMe)
+		err := rows.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe)
 		if err != nil {
 			continue
 		}
 
-		u.DateBirth = models.Diff(date, time.Now())
 		u.LinkImages, err = p.SelectImages(u.ID)
 		if err != nil {
 			return users, err
