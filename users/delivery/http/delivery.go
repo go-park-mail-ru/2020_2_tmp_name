@@ -42,6 +42,7 @@ func NewUserHandler(r *mux.Router, us domain.UserUsecase) {
 	r.HandleFunc("/api/v1/add_photo", handler.AddPhotoHandler).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/me", handler.MeHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/feed", handler.FeedHandler).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/user/{user_id}", handler.UserIDHandler).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v1/like", handler.LikeHandler).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/dislike", handler.DislikeHandler).Methods(http.MethodPost)
@@ -324,6 +325,35 @@ func (u *UserHandler) UploadAvatarHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	io.Copy(f, file)
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (u *UserHandler) UserIDHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/user_id/"))
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(getStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	user, err := u.UUsecase.UserID(userID)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(getStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	body, err := json.Marshal(user)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(getStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
