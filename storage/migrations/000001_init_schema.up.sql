@@ -38,7 +38,7 @@ CREATE TABLE "chat" (
 
 CREATE TABLE "message" (
   "id" SERIAL PRIMARY KEY,
-  "path" varchar NOT NULL,
+  "text" varchar NOT NULL,
   "time_delivery" text,
   "chat_id" int4,
   "user_id" int4
