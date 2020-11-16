@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -74,7 +73,7 @@ func (u *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&loginData)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(getStatusCode(err))
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -98,7 +97,7 @@ func (u *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := json.Marshal(loginData)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(getStatusCode(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -112,7 +111,7 @@ func (u *UserHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	session, err := r.Cookie("session_id")
 	if err == http.ErrNoCookie {
 		log.Println(err)
-		w.WriteHeader(getStatusCode(err))
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -128,7 +127,7 @@ func (u *UserHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := json.Marshal("logout success")
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(getStatusCode(err))
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -145,7 +144,7 @@ func (u *UserHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(getStatusCode(err))
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -174,7 +173,7 @@ func (u *UserHandler) SettingsHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&userData)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(getStatusCode(err))
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -251,14 +250,13 @@ func (u *UserHandler) AddPhotoHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&photo)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(getStatusCode(err))
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
 
 	err = u.UUsecase.AddPhoto(photo)
 	if err != nil {
-		fmt.Println("1")
 		log.Println(err)
 		w.WriteHeader(getStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -267,7 +265,6 @@ func (u *UserHandler) AddPhotoHandler(w http.ResponseWriter, r *http.Request) {
 
 	body, err := json.Marshal(photo)
 	if err != nil {
-		fmt.Println("2")
 		log.Println(err)
 		w.WriteHeader(getStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -282,7 +279,6 @@ func (u *UserHandler) UploadAvatarHandler(w http.ResponseWriter, r *http.Request
 	r.ParseMultipartForm(1024 * 1024)
 	file, _, err := r.FormFile("photo")
 	if err != nil {
-		fmt.Println("3")
 		log.Println(err)
 		w.WriteHeader(getStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -293,7 +289,6 @@ func (u *UserHandler) UploadAvatarHandler(w http.ResponseWriter, r *http.Request
 
 	str, err := os.Getwd()
 	if err != nil {
-		fmt.Println("4")
 		log.Println(err)
 		w.WriteHeader(getStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -304,7 +299,6 @@ func (u *UserHandler) UploadAvatarHandler(w http.ResponseWriter, r *http.Request
 
 	photoID, err := u.UUsecase.UploadAvatar()
 	if err != nil {
-		fmt.Println("5")
 		log.Println(err)
 		w.WriteHeader(getStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -313,7 +307,6 @@ func (u *UserHandler) UploadAvatarHandler(w http.ResponseWriter, r *http.Request
 
 	f, err := os.OpenFile(photoID.String(), os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
-		fmt.Println("6")
 		log.Println(err)
 		w.WriteHeader(getStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -325,7 +318,6 @@ func (u *UserHandler) UploadAvatarHandler(w http.ResponseWriter, r *http.Request
 
 	body, err := json.Marshal(photoID.String())
 	if err != nil {
-		fmt.Println("7")
 		log.Println(err)
 		w.WriteHeader(getStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -371,7 +363,7 @@ func (u *UserHandler) LikeHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&like)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(getStatusCode(err))
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -403,7 +395,7 @@ func (u *UserHandler) DislikeHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&dislike)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(getStatusCode(err))
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -435,7 +427,7 @@ func (u *UserHandler) CommentHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&comment)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(getStatusCode(err))
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -496,7 +488,7 @@ func (u *UserHandler) ChatHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&chat)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(getStatusCode(err))
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -526,7 +518,7 @@ func (u *UserHandler) MessageHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&message)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(getStatusCode(err))
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -627,6 +619,8 @@ func getStatusCode(err error) int {
 
 	logrus.Error(err)
 	switch err {
+	case domain.ErrBadRequest:
+		return http.StatusBadRequest
 	case domain.ErrNotFound:
 		return http.StatusNotFound
 	case domain.ErrConflict:

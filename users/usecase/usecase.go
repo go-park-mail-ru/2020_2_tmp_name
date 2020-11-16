@@ -61,7 +61,7 @@ func (u *userUsecase) Login(data models.LoginData) (string, error) {
 
 	err = u.userRepo.InsertSession(SID.String(), data.Telephone)
 	if err != nil {
-		return "", domain.ErrInternalServerError
+		return "", domain.ErrBadParamInput
 	}
 
 	return SID.String(), nil
