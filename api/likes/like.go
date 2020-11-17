@@ -4,8 +4,8 @@ import (
 	"park_2020/2020_2_tmp_name/models"
 )
 
-//go:generate mockgen -destination=./mock/mock_usecase.go -package=mock park_2020/2020_2_tmp_name/domain UserUsecase
-//go:generate mockgen -destination=./mock/mock_repo.go -package=mock park_2020/2020_2_tmp_name/domain UserRepository
+//go:generate mockgen -destination=./mock/mock_usecase.go -package=mock park_2020/2020_2_tmp_name/api/likes LikeUsecase
+//go:generate mockgen -destination=./mock/mock_repo.go -package=mock park_2020/2020_2_tmp_name/api/likes LikeRepository
 
 type LikeUsecase interface {
 	Like(cookie string, like models.Like) error

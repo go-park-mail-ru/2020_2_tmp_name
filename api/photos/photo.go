@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-//go:generate mockgen -destination=./mock/mock_usecase.go -package=mock park_2020/2020_2_tmp_name/domain UserUsecase
-//go:generate mockgen -destination=./mock/mock_repo.go -package=mock park_2020/2020_2_tmp_name/domain UserRepository
+//go:generate mockgen -destination=./mock/mock_usecase.go -package=mock park_2020/2020_2_tmp_name/api/photos PhotoUsecase
+//go:generate mockgen -destination=./mock/mock_repo.go -package=mock park_2020/2020_2_tmp_name/api/photos PhotoRepository
 
 type PhotoUsecase interface {
 	AddPhoto(photo models.Photo) error
