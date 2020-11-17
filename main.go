@@ -12,13 +12,28 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/spf13/viper"
 
 	_ "github.com/lib/pq"
 
-	_userHttpDelivery "park_2020/2020_2_tmp_name/users/delivery/http"
-	_userRepo "park_2020/2020_2_tmp_name/users/repository/postgres"
-	_userUcase "park_2020/2020_2_tmp_name/users/usecase"
+	_chatDelivery "park_2020/2020_2_tmp_name/api/chats/delivery/http"
+	_chatRepo "park_2020/2020_2_tmp_name/api/chats/repository/postgres"
+	_chatUcase "park_2020/2020_2_tmp_name/api/chats/usecase"
+
+	_commentDelivery "park_2020/2020_2_tmp_name/api/comments/delivery/http"
+	_commentRepo "park_2020/2020_2_tmp_name/api/comments/repository/postgres"
+	_commentUcase "park_2020/2020_2_tmp_name/api/comments/usecase"
+
+	_likeDelivery "park_2020/2020_2_tmp_name/api/likes/delivery/http"
+	_likeRepo "park_2020/2020_2_tmp_name/api/likes/repository/postgres"
+	_likeUcase "park_2020/2020_2_tmp_name/api/likes/usecase"
+
+	_photoDelivery "park_2020/2020_2_tmp_name/api/photos/delivery/http"
+	_photoRepo "park_2020/2020_2_tmp_name/api/photos/repository/postgres"
+	_photoUcase "park_2020/2020_2_tmp_name/api/photos/usecase"
+
+	_userDelivery "park_2020/2020_2_tmp_name/api/users/delivery/http"
+	_userRepo "park_2020/2020_2_tmp_name/api/users/repository/postgres"
+	_userUcase "park_2020/2020_2_tmp_name/api/users/usecase"
 )
 
 type application struct {
@@ -65,12 +80,25 @@ func (app *application) initServer() {
 
 	router := mux.NewRouter()
 
-	u := _userRepo.NewPostgresUserRepository(dbConn)
+	chr := _chatRepo.NewPostgresChatRepository(dbConn)
+	chu := _chatUcase.NewChatUsecase(chr)
+	_chatDelivery.NewChatHandler(router, chu)
 
-	timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
-	uu := _userUcase.NewUserUsecase(u, timeoutContext)
+	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
+	cu := _commentUcase.NewCommentUsecase(cr)
+	_commentDelivery.NewCommentHandler(router, cu)
 
-	_userHttpDelivery.NewUserHandler(router, uu)
+	lr := _likeRepo.NewPostgresLikeRepository(dbConn)
+	lu := _likeUcase.NewLikeUsecase(lr)
+	_likeDelivery.NewLikeHandler(router, lu)
+
+	pr := _photoRepo.NewPostgresPhotoRepository(dbConn)
+	pu := _photoUcase.NewPhotoUsecase(pr)
+	_photoDelivery.NewPhotoHandler(router, pu)
+
+	ur := _userRepo.NewPostgresUserRepository(dbConn)
+	uu := _userUcase.NewUserUsecase(ur)
+	_userDelivery.NewUserHandler(router, uu)
 
 	middleware.MyCORSMethodMiddleware(router)
 
