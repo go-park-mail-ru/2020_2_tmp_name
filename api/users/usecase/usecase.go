@@ -103,7 +103,7 @@ func (u *userUsecase) Feed(cookie string) ([]models.UserFeed, error) {
 func (u *userUsecase) UserID(uid int) (models.UserFeed, error) {
 	user, err := u.userRepo.SelectUserFeedByID(uid)
 	if err != nil {
-		return user, models.ErrInternalServerError
+		return user, models.ErrNotFound
 	}
 	return user, nil
 }
