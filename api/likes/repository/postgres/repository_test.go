@@ -70,7 +70,7 @@ func TestPostgresUserRepository_InsertLike(t *testing.T) {
 		sqlmock.NewRows(columns).AddRow(rows...)
 		mock.ExpectExec(query).WithArgs(args...).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		repo := NewPostgresUserRepository(sqlxDB.DB)
+		repo := NewPostgresLikeRepository(sqlxDB.DB)
 
 		err = repo.InsertLike(testCase.uid1, testCase.uid2)
 		require.Equal(t, testCase.err, err)
@@ -133,7 +133,7 @@ func TestPostgresUserRepository_InsertDisLike(t *testing.T) {
 		sqlmock.NewRows(columns).AddRow(rows...)
 		mock.ExpectExec(query).WithArgs(args...).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		repo := NewPostgresUserRepository(sqlxDB.DB)
+		repo := NewPostgresLikeRepository(sqlxDB.DB)
 
 		err = repo.InsertDislike(testCase.uid1, testCase.uid2)
 		require.Equal(t, testCase.err, err)

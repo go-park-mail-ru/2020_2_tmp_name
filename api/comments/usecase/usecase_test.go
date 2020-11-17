@@ -2,25 +2,24 @@ package usecase
 
 import (
 	"errors"
-	"park_2020/2020_2_tmp_name/domain"
-	"park_2020/2020_2_tmp_name/domain/mock"
+	domain "park_2020/2020_2_tmp_name/api/comments"
+	"park_2020/2020_2_tmp_name/api/comments/mock"
 	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/golang/mock/gomock"
 
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewUserUsecase(t *testing.T) {
+func TestNewCommentUsecase(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	var u domain.UserRepository
-	uu := NewUserUsecase(u, time.Duration(10*time.Second))
-	require.NotEmpty(t, uu)
+	var c domain.CommentRepository
+	cu := NewCommentUsecase(c)
+	require.NotEmpty(t, cu)
 }
 
 func TestUserUsecase_CommentSuccess(t *testing.T) {
@@ -48,16 +47,16 @@ func TestUserUsecase_CommentSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockCommentRepository(ctrl)
 	mock.EXPECT().CheckUserBySession(cookie).Times(1).Return(telephone)
 	mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, nil)
 	mock.EXPECT().InsertComment(comment, userFeed.ID).Return(nil)
 
-	us := userUsecase{
-		userRepo: mock,
+	cs := commentUsecase{
+		commentRepo: mock,
 	}
 
-	err := us.Comment(cookie, comment)
+	err := cs.Comment(cookie, comment)
 
 	require.NoError(t, err)
 	require.Equal(t, nil, err)
@@ -88,7 +87,7 @@ func TestUserUsecase_CommentFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockCommentRepository(ctrl)
 	mock.EXPECT().CheckUserBySession(cookie).Times(2).Return(telephone)
 	gomock.InOrder(
 		mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, errors.New("error")),
@@ -96,12 +95,12 @@ func TestUserUsecase_CommentFail(t *testing.T) {
 		mock.EXPECT().InsertComment(comment, userFeed.ID).Return(errors.New("error")),
 	)
 
-	us := userUsecase{
-		userRepo: mock,
+	cs := commentUsecase{
+		commentRepo: mock,
 	}
 
 	for i := 0; i < 2; i++ {
-		err := us.Comment(cookie, comment)
+		err := cs.Comment(cookie, comment)
 		require.Equal(t, models.ErrInternalServerError, err)
 	}
 
@@ -116,14 +115,14 @@ func TestUserUsecase_CommentsByIDSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockCommentRepository(ctrl)
 	mock.EXPECT().SelectComments(id).Return(comments, nil)
 
-	us := userUsecase{
-		userRepo: mock,
+	cs := commentUsecase{
+		commentRepo: mock,
 	}
 
-	data, err := us.CommentsByID(id)
+	data, err := cs.CommentsByID(id)
 
 	require.NoError(t, err)
 	require.Equal(t, Data, data)
@@ -138,14 +137,14 @@ func TestUserUsecase_CommentsByIDFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockCommentRepository(ctrl)
 	mock.EXPECT().SelectComments(id).Return(comments, errors.New("error"))
 
-	us := userUsecase{
-		userRepo: mock,
+	cs := commentUsecase{
+		commentRepo: mock,
 	}
 
-	_, err := us.CommentsByID(id)
+	_, err := cs.CommentsByID(id)
 
 	require.Equal(t, models.ErrInternalServerError, err)
 }

@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"errors"
-	"park_2020/2020_2_tmp_name/api/chats/domain"
-	"park_2020/2020_2_tmp_name/domain/mock"
+	domain "park_2020/2020_2_tmp_name/api/chats"
+	"park_2020/2020_2_tmp_name/api/chats/mock"
 	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/golang/mock/gomock"
@@ -14,16 +14,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewUserUsecase(t *testing.T) {
+func TestNewChatUsecase(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	var u domain.UserRepository
-	uu := NewUserUsecase(u, time.Duration(10*time.Second))
+	var u domain.ChatRepository
+	uu := NewChatUsecase(u)
 	require.NotEmpty(t, uu)
 }
 
-func TestUserUsecase_MessageSuccess(t *testing.T) {
+func TestChatUsecase_MessageSuccess(t *testing.T) {
 	cookie := "Something-like-uuid"
 	telephone := "909-277-47-21"
 
@@ -48,23 +48,23 @@ func TestUserUsecase_MessageSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().CheckUserBySession(cookie).Times(1).Return(telephone)
 	mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, nil)
 	mock.EXPECT().InsertMessage(message.Text, message.ChatID, userFeed.ID).Return(nil)
 
-	us := userUsecase{
-		userRepo: mock,
+	chs := chatUsecase{
+		chatRepo: mock,
 	}
 
-	err := us.Message(cookie, message)
+	err := chs.Message(cookie, message)
 
 	require.NoError(t, err)
 	require.Equal(t, nil, err)
 
 }
 
-func TestUserUsecase_MessageFail(t *testing.T) {
+func TestChatUsecase_MessageFail(t *testing.T) {
 	cookie := "Something-like-uuid"
 	telephone := "909-277-47-21"
 
@@ -89,7 +89,7 @@ func TestUserUsecase_MessageFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().CheckUserBySession(cookie).Times(2).Return(telephone)
 	gomock.InOrder(
 		mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, errors.New("error")),
@@ -97,17 +97,17 @@ func TestUserUsecase_MessageFail(t *testing.T) {
 		mock.EXPECT().InsertMessage(message.Text, message.ChatID, userFeed.ID).Return(errors.New("error")),
 	)
 
-	us := userUsecase{
-		userRepo: mock,
+	chs := chatUsecase{
+		chatRepo: mock,
 	}
 
 	for i := 0; i < 2; i++ {
-		err := us.Message(cookie, message)
+		err := chs.Message(cookie, message)
 		require.Equal(t, models.ErrInternalServerError, err)
 	}
 }
 
-func TestUserUsecase_ChatSuccess(t *testing.T) {
+func TestChatUsecase_ChatSuccess(t *testing.T) {
 	chat := models.Chat{
 		ID:      0,
 		Uid1:    4,
@@ -118,20 +118,20 @@ func TestUserUsecase_ChatSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().InsertChat(chat).Times(1).Return(nil)
 
-	us := userUsecase{
-		userRepo: mock,
+	chs := chatUsecase{
+		chatRepo: mock,
 	}
 
-	err := us.Chat(chat)
+	err := chs.Chat(chat)
 
 	require.NoError(t, err)
 	require.Equal(t, nil, err)
 }
 
-func TestUserUsecase_ChatFail(t *testing.T) {
+func TestChatUsecase_ChatFail(t *testing.T) {
 	chat := models.Chat{
 		ID:      0,
 		Uid1:    4,
@@ -142,14 +142,14 @@ func TestUserUsecase_ChatFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().InsertChat(chat).Times(1).Return(models.ErrInternalServerError)
 
-	us := userUsecase{
-		userRepo: mock,
+	chs := chatUsecase{
+		chatRepo: mock,
 	}
 
-	err := us.Chat(chat)
+	err := chs.Chat(chat)
 
 	require.NotEqual(t, nil, err)
 }
@@ -218,17 +218,17 @@ func TestСhats(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
 	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, nil)
 	mock.EXPECT().SelectChatsByID(user.ID).Times(1).Return(chats, nil)
 	chatModel.Data = chats
 
-	us := userUsecase{
-		userRepo: mock,
+	chs := chatUsecase{
+		chatRepo: mock,
 	}
 
-	result, err := us.Chats(sid)
+	result, err := chs.Chats(sid)
 
 	require.NoError(t, err)
 	require.Equal(t, result, chatModel)
@@ -280,16 +280,16 @@ func TestСhatID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
 	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, nil)
 	mock.EXPECT().SelectChatByID(user.ID, chid).Times(1).Return(chat, nil)
 
-	us := userUsecase{
-		userRepo: mock,
+	chs := chatUsecase{
+		chatRepo: mock,
 	}
 
-	result, err := us.ChatID(sid, chid)
+	result, err := chs.ChatID(sid, chid)
 
 	require.NoError(t, err)
 	require.Equal(t, result, chat)
@@ -305,15 +305,15 @@ func TestСhatIDFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
 	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, models.ErrInternalServerError)
 
-	us := userUsecase{
-		userRepo: mock,
+	chs := chatUsecase{
+		chatRepo: mock,
 	}
 
-	_, err := us.ChatID(sid, chid)
+	_, err := chs.ChatID(sid, chid)
 
 	require.NotEqual(t, err, nil)
 }
@@ -338,16 +338,16 @@ func TestСhatSelectIDFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
 	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, nil)
 	mock.EXPECT().SelectChatByID(user.ID, chid).Times(1).Return(chat, models.ErrInternalServerError)
 
-	us := userUsecase{
-		userRepo: mock,
+	chs := chatUsecase{
+		chatRepo: mock,
 	}
 
-	_, err := us.ChatID(sid, chid)
+	_, err := chs.ChatID(sid, chid)
 
 	require.NotEqual(t, err, nil)
 }
@@ -369,15 +369,15 @@ func TestGochat(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
 	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, nil)
 
-	us := userUsecase{
-		userRepo: mock,
+	chs := chatUsecase{
+		chatRepo: mock,
 	}
 
-	result, err := us.Gochat(sid)
+	result, err := chs.Gochat(sid)
 
 	require.NoError(t, err)
 	require.Equal(t, result, user)
@@ -392,15 +392,15 @@ func TestGochatFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
 	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, models.ErrInternalServerError)
 
-	us := userUsecase{
-		userRepo: mock,
+	chs := chatUsecase{
+		chatRepo: mock,
 	}
 
-	_, err := us.Gochat(sid)
+	_, err := chs.Gochat(sid)
 
 	require.NotEqual(t, err, nil)
 }

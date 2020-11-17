@@ -27,7 +27,7 @@ func (a anyTime) Match(v driver.Value) bool {
 	_, ok := v.(string)
 	return ok
 }
-func TestPostgresUserRepository_InsertChat(t *testing.T) {
+func TestPostgresChatRepository_InsertChat(t *testing.T) {
 	type insertChatTestCase struct {
 		chat models.Chat
 		err  error
@@ -74,7 +74,7 @@ func TestPostgresUserRepository_InsertChat(t *testing.T) {
 		sqlmock.NewRows(columns).AddRow(rows...)
 		mock.ExpectExec(query).WithArgs(args...).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		repo := NewPostgresUserRepository(sqlxDB.DB)
+		repo := NewPostgresChatRepository(sqlxDB.DB)
 
 		err = repo.InsertChat(testCase.chat)
 		require.Equal(t, testCase.err, err)
@@ -84,7 +84,7 @@ func TestPostgresUserRepository_InsertChat(t *testing.T) {
 	}
 }
 
-func TestPostgresUserRepository_InsertMessage(t *testing.T) {
+func TestPostgresChatRepository_InsertMessage(t *testing.T) {
 	type insertMessageTestCase struct {
 		message models.Message
 		err     error
@@ -137,7 +137,7 @@ func TestPostgresUserRepository_InsertMessage(t *testing.T) {
 		sqlmock.NewRows(columns).AddRow(rows...)
 		mock.ExpectExec(query).WithArgs(args...).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		repo := NewPostgresUserRepository(sqlxDB.DB)
+		repo := NewPostgresChatRepository(sqlxDB.DB)
 
 		err = repo.InsertMessage(testCase.message.Text, testCase.message.ChatID, testCase.message.UserID)
 		require.Equal(t, testCase.err, err)
@@ -147,7 +147,7 @@ func TestPostgresUserRepository_InsertMessage(t *testing.T) {
 	}
 }
 
-func TestPostgresUserRepository_SelectMessages(t *testing.T) {
+func TestPostgresChatRepository_SelectMessages(t *testing.T) {
 	type insertMessageTestCase struct {
 		messages []models.Msg
 		chatId   int
@@ -200,7 +200,7 @@ func TestPostgresUserRepository_SelectMessages(t *testing.T) {
 			mock.ExpectQuery(query).WithArgs(testCase.chatId).WillReturnRows(rows)
 		}
 
-		repo := NewPostgresUserRepository(sqlxDB.DB)
+		repo := NewPostgresChatRepository(sqlxDB.DB)
 
 		msgs, err := repo.SelectMessages(testCase.chatId)
 		require.Equal(t, testCase.err, err)
@@ -213,7 +213,7 @@ func TestPostgresUserRepository_SelectMessages(t *testing.T) {
 	}
 }
 
-func TestPostgresUserRepository_SelectMessage(t *testing.T) {
+func TestPostgresChatRepository_SelectMessage(t *testing.T) {
 	type insertMessageTestCase struct {
 		messages models.Msg
 		err      error
@@ -258,7 +258,7 @@ func TestPostgresUserRepository_SelectMessage(t *testing.T) {
 			mock.ExpectQuery(query).WithArgs(testCase.messages.UserID, testCase.messages.ChatID).WillReturnRows(rows)
 		}
 
-		repo := NewPostgresUserRepository(sqlxDB.DB)
+		repo := NewPostgresChatRepository(sqlxDB.DB)
 
 		msg, err := repo.SelectMessage(testCase.messages.UserID, testCase.messages.ChatID)
 		require.Equal(t, testCase.err, err)

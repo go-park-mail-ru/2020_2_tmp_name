@@ -1,25 +1,24 @@
 package usecase
 
 import (
-	"park_2020/2020_2_tmp_name/domain"
-	"park_2020/2020_2_tmp_name/domain/mock"
+	domain "park_2020/2020_2_tmp_name/api/photos"
+	"park_2020/2020_2_tmp_name/api/photos/mock"
 	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/golang/mock/gomock"
 
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewUserUsecase(t *testing.T) {
+func TestNewPhotoUsecase(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	var u domain.UserRepository
-	uu := NewUserUsecase(u, time.Duration(10*time.Second))
-	require.NotEmpty(t, uu)
+	var p domain.PhotoRepository
+	pu := NewPhotoUsecase(p)
+	require.NotEmpty(t, pu)
 }
 
 func TestAddPhotoSuccess(t *testing.T) {
@@ -41,15 +40,15 @@ func TestAddPhotoSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockPhotoRepository(ctrl)
 	mock.EXPECT().SelectUserFeed(photo.Telephone).Times(1).Return(user, nil)
 	mock.EXPECT().InsertPhoto(photo.Path, user.ID).Times(1).Return(nil)
 
-	us := userUsecase{
-		userRepo: mock,
+	ps := photoUsecase{
+		photoRepo: mock,
 	}
 
-	err := us.AddPhoto(photo)
+	err := ps.AddPhoto(photo)
 
 	require.NoError(t, err)
 }
@@ -73,14 +72,14 @@ func TestAddPhotoFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockPhotoRepository(ctrl)
 	mock.EXPECT().SelectUserFeed(photo.Telephone).Times(1).Return(user, models.ErrInternalServerError)
 
-	us := userUsecase{
-		userRepo: mock,
+	ps := photoUsecase{
+		photoRepo: mock,
 	}
 
-	err := us.AddPhoto(photo)
+	err := ps.AddPhoto(photo)
 
 	require.NotEqual(t, err, nil)
 }
@@ -104,15 +103,15 @@ func TestAddPhotoFailSelect(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockPhotoRepository(ctrl)
 	mock.EXPECT().SelectUserFeed(photo.Telephone).Times(1).Return(user, nil)
 	mock.EXPECT().InsertPhoto(photo.Path, user.ID).Times(1).Return(models.ErrInternalServerError)
 
-	us := userUsecase{
-		userRepo: mock,
+	ps := photoUsecase{
+		photoRepo: mock,
 	}
 
-	err := us.AddPhoto(photo)
+	err := ps.AddPhoto(photo)
 
 	require.NotEqual(t, err, nil)
 }
@@ -121,13 +120,13 @@ func TestUploadAvatarSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserRepository(ctrl)
+	mock := mock.NewMockPhotoRepository(ctrl)
 
-	us := userUsecase{
-		userRepo: mock,
+	ps := photoUsecase{
+		photoRepo: mock,
 	}
 
-	uid, err := us.UploadAvatar()
+	uid, err := ps.UploadAvatar()
 
 	require.NoError(t, err)
 	require.NotEqual(t, uid.String(), "")

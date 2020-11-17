@@ -19,7 +19,7 @@ func (a anyPassword) Match(v driver.Value) bool {
 	return ok
 }
 
-func TestPostgresUserRepository_InsertPhoto(t *testing.T) {
+func TestPostgresPhotoRepository_InsertPhoto(t *testing.T) {
 	type insertPhotoTestCase struct {
 		uid  int
 		path string
@@ -72,7 +72,7 @@ func TestPostgresUserRepository_InsertPhoto(t *testing.T) {
 		sqlmock.NewRows(columns).AddRow(rows...)
 		mock.ExpectExec(query).WithArgs(args...).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		repo := NewPostgresUserRepository(sqlxDB.DB)
+		repo := NewPostgresPhotoRepository(sqlxDB.DB)
 
 		err = repo.InsertPhoto(testCase.path, testCase.uid)
 		require.Equal(t, testCase.err, err)
@@ -82,7 +82,7 @@ func TestPostgresUserRepository_InsertPhoto(t *testing.T) {
 	}
 }
 
-func TestPostgresUserRepository_SelectImages(t *testing.T) {
+func TestPostgresPhotoRepository_SelectImages(t *testing.T) {
 	type insertPhotoTestCase struct {
 		uid  int
 		path []string
@@ -134,7 +134,7 @@ func TestPostgresUserRepository_SelectImages(t *testing.T) {
 			mock.ExpectQuery(query).WithArgs(testCase.uid).WillReturnRows(rows)
 		}
 
-		repo := NewPostgresUserRepository(sqlxDB.DB)
+		repo := NewPostgresPhotoRepository(sqlxDB.DB)
 
 		images, err := repo.SelectImages(testCase.uid)
 		t.Log(images)

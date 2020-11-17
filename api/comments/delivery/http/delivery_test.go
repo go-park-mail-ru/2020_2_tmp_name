@@ -6,8 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"park_2020/2020_2_tmp_name/domain"
-	"park_2020/2020_2_tmp_name/domain/mock"
+	"park_2020/2020_2_tmp_name/api/comments/mock"
 	"park_2020/2020_2_tmp_name/models"
 	"testing"
 	"time"
@@ -16,19 +15,19 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 
-	userHttp "park_2020/2020_2_tmp_name/users/delivery/http"
+	commentHttp "park_2020/2020_2_tmp_name/api/comments/delivery/http"
 )
 
-func TestNewUserHandler(t *testing.T) {
+func TestNewCommentHandler(t *testing.T) {
 	router := mux.NewRouter()
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	userHttp.NewUserHandler(router, mock)
+	mock := mock.NewMockCommentUsecase(ctrl)
+	commentHttp.NewCommentHandler(router, mock)
 }
 
-func TestUserHandler_CommentsByIdHandlerSuccess(t *testing.T) {
+func TestCommentHandler_CommentsByIdHandlerSuccess(t *testing.T) {
 	comments := models.CommentsData{}
 	outerComments := models.CommentsData{}
 	var ByteData = []byte(`{}`)
@@ -41,15 +40,15 @@ func TestUserHandler_CommentsByIdHandlerSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockCommentUsecase(ctrl)
 	mock.EXPECT().CommentsByID(12).Return(comments, nil)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	commentHandler := commentHttp.CommentHandlerType{
+		CUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.CommentsByIdHandler)
+	handler := http.HandlerFunc(commentHandler.CommentsByIdHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 	err = json.NewDecoder(rr.Body).Decode(&outerComments)
@@ -61,7 +60,7 @@ func TestUserHandler_CommentsByIdHandlerSuccess(t *testing.T) {
 	require.Equal(t, 200, status)
 }
 
-func TestUserHandler_CommentsByIdHandlerFail(t *testing.T) {
+func TestCommentHandler_CommentsByIdHandlerFail(t *testing.T) {
 	comments := models.CommentsData{}
 	var ByteData = []byte(`{}`)
 	body := bytes.NewReader(ByteData)
@@ -80,15 +79,15 @@ func TestUserHandler_CommentsByIdHandlerFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockCommentUsecase(ctrl)
 	mock.EXPECT().CommentsByID(12).Return(comments, errors.New("error"))
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	commentHandler := commentHttp.CommentHandlerType{
+		CUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.CommentsByIdHandler)
+	handler := http.HandlerFunc(commentHandler.CommentsByIdHandler)
 	for i := 0; i < 2; i++ {
 		handler.ServeHTTP(rr, requests[i])
 		status := rr.Code
@@ -98,7 +97,7 @@ func TestUserHandler_CommentsByIdHandlerFail(t *testing.T) {
 	}
 }
 
-func TestUserHandler_CommentHandlerSuccess(t *testing.T) {
+func TestCommentHandler_CommentHandlerSuccess(t *testing.T) {
 	comment := models.Comment{
 		Uid2:         10,
 		TimeDelivery: "18:54",
@@ -126,15 +125,15 @@ func TestUserHandler_CommentHandlerSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockCommentUsecase(ctrl)
 	mock.EXPECT().Comment(sid, comment).Return(nil)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	commentHandler := commentHttp.CommentHandlerType{
+		CUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.CommentHandler)
+	handler := http.HandlerFunc(commentHandler.CommentHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
@@ -142,7 +141,7 @@ func TestUserHandler_CommentHandlerSuccess(t *testing.T) {
 
 }
 
-func TestUserHandler_CommentHandlerFail(t *testing.T) {
+func TestCommentHandler_CommentHandlerFail(t *testing.T) {
 	comment := models.Comment{
 		Uid2:         10,
 		TimeDelivery: "18:54",
@@ -170,22 +169,22 @@ func TestUserHandler_CommentHandlerFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Comment(sid, comment).Return(domain.ErrInternalServerError)
+	mock := mock.NewMockCommentUsecase(ctrl)
+	mock.EXPECT().Comment(sid, comment).Return(models.ErrInternalServerError)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	commentHandler := commentHttp.CommentHandlerType{
+		CUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.CommentHandler)
+	handler := http.HandlerFunc(commentHandler.CommentHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 500, status)
 }
 
-func TestUserHandler_CommentHandlerFailDecode(t *testing.T) {
+func TestCommentHandler_CommentHandlerFailDecode(t *testing.T) {
 	var byteData = []byte(``)
 	body := bytes.NewReader(byteData)
 	req, err := http.NewRequest("POST", "/comment", body)
@@ -196,14 +195,14 @@ func TestUserHandler_CommentHandlerFailDecode(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockCommentUsecase(ctrl)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	commentHandler := commentHttp.CommentHandlerType{
+		CUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.CommentHandler)
+	handler := http.HandlerFunc(commentHandler.CommentHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 

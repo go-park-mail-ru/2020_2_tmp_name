@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
-	"park_2020/2020_2_tmp_name/domain"
-	"park_2020/2020_2_tmp_name/domain/mock"
+	"park_2020/2020_2_tmp_name/api/photos/mock"
 	"park_2020/2020_2_tmp_name/models"
 	"testing"
 
@@ -13,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 
-	userHttp "park_2020/2020_2_tmp_name/api/photos/delivery/http"
+	photoHttp "park_2020/2020_2_tmp_name/api/photos/delivery/http"
 )
 
 func TestNewUserHandler(t *testing.T) {
@@ -21,11 +20,11 @@ func TestNewUserHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	userHttp.NewUserHandler(router, mock)
+	mock := mock.NewMockPhotoUsecase(ctrl)
+	photoHttp.NewPhotoHandler(router, mock)
 }
 
-func TestUserHandler_AddPhotoHandlerSuccess(t *testing.T) {
+func TestPhotoHandler_AddPhotoHandlerSuccess(t *testing.T) {
 	photo := models.Photo{
 		Path:      "./static/avatars/4.jpg",
 		Telephone: "909-277-47-21",
@@ -45,22 +44,22 @@ func TestUserHandler_AddPhotoHandlerSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockPhotoUsecase(ctrl)
 	mock.EXPECT().AddPhoto(photo).Return(nil)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	photoHandler := photoHttp.PhotoHandlerType{
+		PUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.AddPhotoHandler)
+	handler := http.HandlerFunc(photoHandler.AddPhotoHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 200, status)
 }
 
-func TestUserHandler_AddPhotoHandlerFail(t *testing.T) {
+func TestPhotoHandler_AddPhotoHandlerFail(t *testing.T) {
 	photo := models.Photo{
 		Path:      "./static/avatars/4.jpg",
 		Telephone: "909-277-47-21",
@@ -80,22 +79,22 @@ func TestUserHandler_AddPhotoHandlerFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().AddPhoto(photo).Return(domain.ErrInternalServerError)
+	mock := mock.NewMockPhotoUsecase(ctrl)
+	mock.EXPECT().AddPhoto(photo).Return(models.ErrInternalServerError)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	photoHandler := photoHttp.PhotoHandlerType{
+		PUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.AddPhotoHandler)
+	handler := http.HandlerFunc(photoHandler.AddPhotoHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 500, status)
 }
 
-func TestUserHandler_AddPhotoHandlerFailDecode(t *testing.T) {
+func TestPhotoHandler_AddPhotoHandlerFailDecode(t *testing.T) {
 	var byteData = []byte(``)
 	body := bytes.NewReader(byteData)
 	req, err := http.NewRequest("POST", "/add_photo", body)
@@ -106,14 +105,14 @@ func TestUserHandler_AddPhotoHandlerFailDecode(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockPhotoUsecase(ctrl)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	photoHandler := photoHttp.PhotoHandlerType{
+		PUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.AddPhotoHandler)
+	handler := http.HandlerFunc(photoHandler.AddPhotoHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
@@ -129,14 +128,14 @@ func TestUserHandler_UploadAvatarHandlerFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockPhotoUsecase(ctrl)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	photoHandler := photoHttp.PhotoHandlerType{
+		PUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.UploadAvatarHandler)
+	handler := http.HandlerFunc(photoHandler.UploadAvatarHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 

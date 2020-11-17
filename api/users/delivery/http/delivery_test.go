@@ -5,8 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	domain "park_2020/2020_2_tmp_name/api/users"
-	"park_2020/2020_2_tmp_name/domain/mock"
+	"park_2020/2020_2_tmp_name/api/users/mock"
 	"park_2020/2020_2_tmp_name/models"
 	"testing"
 	"time"
@@ -15,7 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 
-	userHttp "park_2020/2020_2_tmp_name/users/delivery/http"
+	userHttp "park_2020/2020_2_tmp_name/api/users/delivery/http"
 )
 
 func TestHealthCheckHandler(t *testing.T) {
@@ -24,7 +23,7 @@ func TestHealthCheckHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	userHandler := &userHttp.UserHandler{}
+	userHandler := &userHttp.UserHandlerType{}
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(userHandler.HealthHandler)
@@ -59,7 +58,7 @@ func TestUserHandler_LoginHandlerSuccess(t *testing.T) {
 	mock := mock.NewMockUserUsecase(ctrl)
 	mock.EXPECT().Login(login).Return("some uuid", nil)
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 
@@ -108,7 +107,7 @@ func TestUserHandler_LoginHandlerFail(t *testing.T) {
 		mock.EXPECT().Login(login).Return("some uuid", errors.New("error uuid")),
 	)
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 
@@ -155,7 +154,7 @@ func TestUserHandler_LogoutHandlerSuccess(t *testing.T) {
 	mock := mock.NewMockUserUsecase(ctrl)
 	mock.EXPECT().Logout(cookie.Value).Return(nil)
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 
@@ -190,7 +189,7 @@ func TestUserHandler_LogoutHandlerFail(t *testing.T) {
 	mock := mock.NewMockUserUsecase(ctrl)
 	mock.EXPECT().Logout(cookie.Value).Return(errors.New("error"))
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 
@@ -240,7 +239,7 @@ func TestUserHandler_SignupHandlerSuccess(t *testing.T) {
 	mock := mock.NewMockUserUsecase(ctrl)
 	mock.EXPECT().Signup(user).Return(nil)
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 
@@ -299,7 +298,7 @@ func TestUserHandler_SignupHandlerFail(t *testing.T) {
 	mock := mock.NewMockUserUsecase(ctrl)
 	mock.EXPECT().Signup(user).Return(errors.New("error"))
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 
@@ -356,7 +355,7 @@ func TestUserHandler_SettingsHandlerSuccess(t *testing.T) {
 	mock := mock.NewMockUserUsecase(ctrl)
 	mock.EXPECT().Settings(sid, user).Return(nil)
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 
@@ -381,7 +380,7 @@ func TestUserHandler_SettingsHandlerFailDecode(t *testing.T) {
 
 	mock := mock.NewMockUserUsecase(ctrl)
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 
@@ -432,9 +431,9 @@ func TestUserHandler_SettingsHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Settings(sid, user).Return(domain.ErrInternalServerError)
+	mock.EXPECT().Settings(sid, user).Return(models.ErrInternalServerError)
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 
@@ -475,7 +474,7 @@ func TestUserHandler_MeHandlerSuccess(t *testing.T) {
 	mock := mock.NewMockUserUsecase(ctrl)
 	mock.EXPECT().Me(sid).Return(user, nil)
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 
@@ -513,9 +512,9 @@ func TestUserHandler_MeHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Me(sid).Return(user, domain.ErrInternalServerError)
+	mock.EXPECT().Me(sid).Return(user, models.ErrInternalServerError)
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 
@@ -565,7 +564,7 @@ func TestUserHandler_FeedHandlerSuccess(t *testing.T) {
 	mock := mock.NewMockUserUsecase(ctrl)
 	mock.EXPECT().Feed(sid).Return(users, nil)
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 
@@ -613,9 +612,9 @@ func TestUserHandler_FeedHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Feed(sid).Return(users, domain.ErrInternalServerError)
+	mock.EXPECT().Feed(sid).Return(users, models.ErrInternalServerError)
 
-	userHandler := userHttp.UserHandler{
+	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
 	}
 

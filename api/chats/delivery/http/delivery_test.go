@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
-	"park_2020/2020_2_tmp_name/domain"
-	"park_2020/2020_2_tmp_name/domain/mock"
+	"park_2020/2020_2_tmp_name/api/chats/mock"
 	"park_2020/2020_2_tmp_name/models"
 	"testing"
 	"time"
@@ -14,19 +13,19 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 
-	userHttp "park_2020/2020_2_tmp_name/users/delivery/http"
+	chatHttp "park_2020/2020_2_tmp_name/api/chats/delivery/http"
 )
 
-func TestNewUserHandler(t *testing.T) {
+func TestNewchatHandler(t *testing.T) {
 	router := mux.NewRouter()
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	userHttp.NewUserHandler(router, mock)
+	mock := mock.NewMockChatUsecase(ctrl)
+	chatHttp.NewChatHandler(router, mock)
 }
 
-func TestUserHandler_ChatHandlerSuccess(t *testing.T) {
+func TestChatHandler_ChatHandlerSuccess(t *testing.T) {
 	chat := models.Chat{
 		Uid2:    10,
 		LastMsg: "How are you",
@@ -45,15 +44,15 @@ func TestUserHandler_ChatHandlerSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockChatUsecase(ctrl)
 	mock.EXPECT().Chat(chat).Return(nil)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.ChatHandler)
+	handler := http.HandlerFunc(chatHandler.ChatHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
@@ -61,7 +60,7 @@ func TestUserHandler_ChatHandlerSuccess(t *testing.T) {
 
 }
 
-func TestUserHandler_ChatHandlerFail(t *testing.T) {
+func TestChatHandler_ChatHandlerFail(t *testing.T) {
 	chat := models.Chat{
 		Uid2:    10,
 		LastMsg: "How are you",
@@ -80,22 +79,22 @@ func TestUserHandler_ChatHandlerFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Chat(chat).Return(domain.ErrInternalServerError)
+	mock := mock.NewMockChatUsecase(ctrl)
+	mock.EXPECT().Chat(chat).Return(models.ErrInternalServerError)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.ChatHandler)
+	handler := http.HandlerFunc(chatHandler.ChatHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 500, status)
 }
 
-func TestUserHandler_ChatHandlerFailDecode(t *testing.T) {
+func TestChatHandler_ChatHandlerFailDecode(t *testing.T) {
 	var byteData = []byte(``)
 	body := bytes.NewReader(byteData)
 	req, err := http.NewRequest("POST", "/chat", body)
@@ -106,21 +105,21 @@ func TestUserHandler_ChatHandlerFailDecode(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockChatUsecase(ctrl)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.ChatHandler)
+	handler := http.HandlerFunc(chatHandler.ChatHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 500, status)
 }
 
-func TestUserHandler_MessageHandlerSuccess(t *testing.T) {
+func TestChatHandler_MessageHandlerSuccess(t *testing.T) {
 	message := models.Message{
 		Text:   "How are you",
 		ChatID: 2,
@@ -146,15 +145,15 @@ func TestUserHandler_MessageHandlerSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockChatUsecase(ctrl)
 	mock.EXPECT().Message(sid, message).Return(nil)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.MessageHandler)
+	handler := http.HandlerFunc(chatHandler.MessageHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
@@ -162,7 +161,7 @@ func TestUserHandler_MessageHandlerSuccess(t *testing.T) {
 
 }
 
-func TestUserHandler_MessageHandlerFail(t *testing.T) {
+func TestChatHandler_MessageHandlerFail(t *testing.T) {
 	message := models.Message{
 		Text:   "How are you",
 		ChatID: 2,
@@ -188,22 +187,22 @@ func TestUserHandler_MessageHandlerFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Message(sid, message).Return(domain.ErrInternalServerError)
+	mock := mock.NewMockChatUsecase(ctrl)
+	mock.EXPECT().Message(sid, message).Return(models.ErrInternalServerError)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.MessageHandler)
+	handler := http.HandlerFunc(chatHandler.MessageHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 500, status)
 }
 
-func TestUserHandler_MessageHandlerFailDecode(t *testing.T) {
+func TestChatHandler_MessageHandlerFailDecode(t *testing.T) {
 	var byteData = []byte(``)
 	body := bytes.NewReader(byteData)
 	req, err := http.NewRequest("POST", "/message", body)
@@ -214,21 +213,21 @@ func TestUserHandler_MessageHandlerFailDecode(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockChatUsecase(ctrl)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.MessageHandler)
+	handler := http.HandlerFunc(chatHandler.MessageHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 500, status)
 }
 
-func TestUserHandler_ChatsHandlerSuccess(t *testing.T) {
+func TestChatHandler_ChatsHandlerSuccess(t *testing.T) {
 	sid := "something-like-this"
 
 	msg1 := models.Msg{
@@ -298,22 +297,22 @@ func TestUserHandler_ChatsHandlerSuccess(t *testing.T) {
 	var chatModel models.ChatModel
 	chatModel.Data = chats
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockChatUsecase(ctrl)
 	mock.EXPECT().Chats(sid).Return(chatModel, nil)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.ChatsHandler)
+	handler := http.HandlerFunc(chatHandler.ChatsHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 200, status)
 }
 
-func TestUserHandler_ChatsHandlerFail(t *testing.T) {
+func TestChatHandler_ChatsHandlerFail(t *testing.T) {
 	sid := "something-like-this"
 
 	msg1 := models.Msg{}
@@ -357,22 +356,22 @@ func TestUserHandler_ChatsHandlerFail(t *testing.T) {
 	var chatModel models.ChatModel
 	chatModel.Data = chats
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Chats(sid).Return(chatModel, domain.ErrInternalServerError)
+	mock := mock.NewMockChatUsecase(ctrl)
+	mock.EXPECT().Chats(sid).Return(chatModel, models.ErrInternalServerError)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.ChatsHandler)
+	handler := http.HandlerFunc(chatHandler.ChatsHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 500, status)
 }
 
-func TestUserHandler_ChatIDSuccess(t *testing.T) {
+func TestChatHandler_ChatIDSuccess(t *testing.T) {
 	sid := "something-like-this"
 	var chid = 1
 
@@ -423,22 +422,22 @@ func TestUserHandler_ChatIDSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockChatUsecase(ctrl)
 	mock.EXPECT().ChatID(sid, chid).Return(chat, nil)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.ChatIDHandler)
+	handler := http.HandlerFunc(chatHandler.ChatIDHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 200, status)
 }
 
-func TestUserHandler_ChatIDFail(t *testing.T) {
+func TestChatHandler_ChatIDFail(t *testing.T) {
 	sid := "something-like-this"
 	var chid = 1
 
@@ -471,22 +470,22 @@ func TestUserHandler_ChatIDFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().ChatID(sid, chid).Return(chat, domain.ErrInternalServerError)
+	mock := mock.NewMockChatUsecase(ctrl)
+	mock.EXPECT().ChatID(sid, chid).Return(chat, models.ErrInternalServerError)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.ChatIDHandler)
+	handler := http.HandlerFunc(chatHandler.ChatIDHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 500, status)
 }
 
-func TestUserHandler_GochatFail(t *testing.T) {
+func TestChatHandler_GochatFail(t *testing.T) {
 	sid := "something-like-this"
 
 	user := models.UserFeed{
@@ -512,15 +511,15 @@ func TestUserHandler_GochatFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Gochat(sid).Return(user, domain.ErrInternalServerError)
+	mock := mock.NewMockChatUsecase(ctrl)
+	mock.EXPECT().Gochat(sid).Return(user, models.ErrInternalServerError)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.GochatHandler)
+	handler := http.HandlerFunc(chatHandler.GochatHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 

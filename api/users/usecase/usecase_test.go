@@ -2,12 +2,13 @@ package usecase
 
 import (
 	"errors"
+	domain "park_2020/2020_2_tmp_name/api/users"
+	"park_2020/2020_2_tmp_name/api/users/mock"
 	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/golang/mock/gomock"
 
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -16,8 +17,8 @@ func TestNewUserUsecase(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	var u models.UserRepository
-	uu := NewUserUsecase(u, time.Duration(10*time.Second))
+	var u domain.UserRepository
+	uu := NewUserUsecase(u)
 	require.NotEmpty(t, uu)
 }
 
@@ -42,7 +43,6 @@ func TestLoginFail(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
 	mock := mock.NewMockUserRepository(ctrl)
 	mock.EXPECT().CheckUser(login.Telephone).Times(1).Return(true)
 	mock.EXPECT().SelectUser(login.Telephone).Times(1).Return(user, nil)

@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
-	"park_2020/2020_2_tmp_name/domain"
-	"park_2020/2020_2_tmp_name/domain/mock"
+	"park_2020/2020_2_tmp_name/api/likes/mock"
 	"park_2020/2020_2_tmp_name/models"
 	"testing"
 	"time"
@@ -14,16 +13,16 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 
-	userHttp "park_2020/2020_2_tmp_name/users/delivery/http"
+	likeHttp "park_2020/2020_2_tmp_name/api/likes/delivery/http"
 )
 
-func TestNewUserHandler(t *testing.T) {
+func TestNewLikeHandler(t *testing.T) {
 	router := mux.NewRouter()
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	userHttp.NewUserHandler(router, mock)
+	mock := mock.NewMockLikeUsecase(ctrl)
+	likeHttp.NewLikeHandler(router, mock)
 }
 
 func TestUserHandler_LikeHandlerSuccess(t *testing.T) {
@@ -50,15 +49,15 @@ func TestUserHandler_LikeHandlerSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockLikeUsecase(ctrl)
 	mock.EXPECT().Like(sid, like).Return(nil)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	likeHandler := likeHttp.LikeHandlerType{
+		LUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.LikeHandler)
+	handler := http.HandlerFunc(likeHandler.LikeHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
@@ -66,7 +65,7 @@ func TestUserHandler_LikeHandlerSuccess(t *testing.T) {
 
 }
 
-func TestUserHandler_LikeHandlerFail(t *testing.T) {
+func TestLikeHandler_LikeHandlerFail(t *testing.T) {
 	like := models.Like{
 		Uid2: 10,
 	}
@@ -90,22 +89,22 @@ func TestUserHandler_LikeHandlerFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Like(sid, like).Return(domain.ErrInternalServerError)
+	mock := mock.NewMockLikeUsecase(ctrl)
+	mock.EXPECT().Like(sid, like).Return(models.ErrInternalServerError)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	likeHandler := likeHttp.LikeHandlerType{
+		LUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.LikeHandler)
+	handler := http.HandlerFunc(likeHandler.LikeHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 500, status)
 }
 
-func TestUserHandler_LikeHandlerFailDecode(t *testing.T) {
+func TestLikeHandler_LikeHandlerFailDecode(t *testing.T) {
 	var byteData = []byte(``)
 	body := bytes.NewReader(byteData)
 	req, err := http.NewRequest("POST", "/like", body)
@@ -116,21 +115,21 @@ func TestUserHandler_LikeHandlerFailDecode(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockLikeUsecase(ctrl)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	likeHandler := likeHttp.LikeHandlerType{
+		LUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.LikeHandler)
+	handler := http.HandlerFunc(likeHandler.LikeHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 500, status)
 }
 
-func TestUserHandler_DislikeHandlerSuccess(t *testing.T) {
+func TestLikeHandler_DislikeHandlerSuccess(t *testing.T) {
 	dislike := models.Dislike{
 		Uid2: 10,
 	}
@@ -154,15 +153,15 @@ func TestUserHandler_DislikeHandlerSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockLikeUsecase(ctrl)
 	mock.EXPECT().Dislike(sid, dislike).Return(nil)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	likeHandler := likeHttp.LikeHandlerType{
+		LUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.DislikeHandler)
+	handler := http.HandlerFunc(likeHandler.DislikeHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
@@ -194,15 +193,15 @@ func TestUserHandler_DislikeHandlerFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Dislike(sid, dislike).Return(domain.ErrInternalServerError)
+	mock := mock.NewMockLikeUsecase(ctrl)
+	mock.EXPECT().Dislike(sid, dislike).Return(models.ErrInternalServerError)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	likeHandler := likeHttp.LikeHandlerType{
+		LUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.DislikeHandler)
+	handler := http.HandlerFunc(likeHandler.DislikeHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
@@ -220,14 +219,14 @@ func TestUserHandler_DisLikeHandlerFailDecode(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mock := mock.NewMockUserUsecase(ctrl)
+	mock := mock.NewMockLikeUsecase(ctrl)
 
-	userHandler := userHttp.UserHandler{
-		UUsecase: mock,
+	likeHandler := likeHttp.LikeHandlerType{
+		LUsecase: mock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.DislikeHandler)
+	handler := http.HandlerFunc(likeHandler.DislikeHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
