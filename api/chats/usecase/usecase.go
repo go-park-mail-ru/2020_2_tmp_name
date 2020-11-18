@@ -45,28 +45,16 @@ func (ch *chatUsecase) Chat(chat models.Chat) error {
 	return nil
 }
 
-func (ch *chatUsecase) Message(cookie string, message models.Message) error {
-	telephone := ch.chatRepo.CheckUserBySession(cookie)
-	user, err := ch.chatRepo.SelectUserFeed(telephone)
-	if err != nil {
-		return models.ErrInternalServerError
-	}
-
-	err = ch.chatRepo.InsertMessage(message.Text, message.ChatID, user.ID)
+func (ch *chatUsecase) Message(user models.User, message models.Message) error {
+	err := ch.chatRepo.InsertMessage(message.Text, message.ChatID, user.ID)
 	if err != nil {
 		return models.ErrInternalServerError
 	}
 	return nil
 }
 
-func (ch *chatUsecase) Chats(cookie string) (models.ChatModel, error) {
+func (ch *chatUsecase) Chats(user models.User) (models.ChatModel, error) {
 	var chatModel models.ChatModel
-	telephone := ch.chatRepo.CheckUserBySession(cookie)
-	user, err := ch.chatRepo.SelectUserFeed(telephone)
-	if err != nil {
-		return chatModel, models.ErrInternalServerError
-	}
-
 	chats, err := ch.chatRepo.SelectChatsByID(user.ID)
 	if err != nil {
 		return chatModel, models.ErrInternalServerError
@@ -76,15 +64,9 @@ func (ch *chatUsecase) Chats(cookie string) (models.ChatModel, error) {
 	return chatModel, nil
 }
 
-func (ch *chatUsecase) ChatID(cookie string, chid int) (models.ChatData, error) {
+func (ch *chatUsecase) ChatID(user models.User, chid int) (models.ChatData, error) {
 	var chat models.ChatData
-	telephone := ch.chatRepo.CheckUserBySession(cookie)
-	user, err := ch.chatRepo.SelectUserFeed(telephone)
-	if err != nil {
-		return chat, models.ErrInternalServerError
-	}
-
-	chat, err = ch.chatRepo.SelectChatByID(user.ID, chid)
+	chat, err := ch.chatRepo.SelectChatByID(user.ID, chid)
 	if err != nil {
 		return chat, models.ErrInternalServerError
 	}
@@ -92,11 +74,11 @@ func (ch *chatUsecase) ChatID(cookie string, chid int) (models.ChatData, error) 
 	return chat, nil
 }
 
-func (ch *chatUsecase) Gochat(cookie string) (models.UserFeed, error) {
+func (ch *chatUsecase) User(cookie string) (models.User, error) {
 	telephone := ch.chatRepo.CheckUserBySession(cookie)
-	user, err := ch.chatRepo.SelectUserFeed(telephone)
+	user, err := ch.chatRepo.SelectUser(telephone)
 	if err != nil {
-		return user, models.ErrInternalServerError
+		return user, models.ErrNotFound
 	}
 	return user, nil
 }

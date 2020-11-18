@@ -48,6 +48,19 @@ func (p *postgresCommentRepository) SelectUserFeedByID(uid int) (models.UserFeed
 	return u, err
 }
 
+func (p *postgresCommentRepository) SelectUser(telephone string) (models.User, error) {
+	var u models.User
+	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
+						WHERE  telephone=$1;`, telephone)
+	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe)
+	if err != nil {
+		return u, err
+	}
+
+	u.LinkImages, err = p.SelectImages(u.ID)
+	return u, err
+}
+
 func (p *postgresCommentRepository) SelectImages(uid int) ([]string, error) {
 	var images []string
 	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE  user_id=$1;`, uid)

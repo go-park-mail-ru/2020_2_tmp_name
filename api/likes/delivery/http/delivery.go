@@ -41,9 +41,15 @@ func (l *LikeHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := r.Cookies()[0]
+	user, err := l.LUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
 
-	err = l.LUsecase.Like(cookie.Value, like)
+	err = l.LUsecase.Like(user, like)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
@@ -73,9 +79,15 @@ func (l *LikeHandlerType) DislikeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	cookie := r.Cookies()[0]
+	user, err := l.LUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
 
-	err = l.LUsecase.Dislike(cookie.Value, dislike)
+	err = l.LUsecase.Dislike(user, dislike)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))

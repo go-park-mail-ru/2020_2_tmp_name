@@ -155,8 +155,15 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	cookie := r.Cookies()[0]
-	err = u.UUsecase.Settings(cookie.Value, userData)
+	user, err := u.UUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	err = u.UUsecase.Settings(user.ID, userData)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
@@ -177,8 +184,7 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (u *UserHandlerType) MeHandler(w http.ResponseWriter, r *http.Request) {
-	cookie := r.Cookies()[0]
-	user, err := u.UUsecase.Me(cookie.Value)
+	user, err := u.UUsecase.Me(r.Cookies()[0].Value)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
@@ -199,10 +205,16 @@ func (u *UserHandlerType) MeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserHandlerType) FeedHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	cookie := r.Cookies()[0]
+	user, err := u.UUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
 	var feed models.Feed
-	feed.Data, err = u.UUsecase.Feed(cookie.Value)
+	feed.Data, err = u.UUsecase.Feed(user)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))

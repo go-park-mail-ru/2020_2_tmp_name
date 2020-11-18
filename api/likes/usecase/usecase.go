@@ -15,14 +15,8 @@ func NewLikeUsecase(u domain.LikeRepository) domain.LikeUsecase {
 	}
 }
 
-func (l *likeUsecase) Like(cookie string, like models.Like) error {
-	telephone := l.likeRepo.CheckUserBySession(cookie)
-	user, err := l.likeRepo.SelectUserFeed(telephone)
-	if err != nil {
-		return models.ErrInternalServerError
-	}
-
-	err = l.likeRepo.InsertLike(user.ID, like.Uid2)
+func (l *likeUsecase) Like(user models.User, like models.Like) error {
+	err := l.likeRepo.InsertLike(user.ID, like.Uid2)
 	if err != nil {
 		return models.ErrInternalServerError
 	}
@@ -41,16 +35,19 @@ func (l *likeUsecase) Like(cookie string, like models.Like) error {
 	return nil
 }
 
-func (l *likeUsecase) Dislike(cookie string, dislike models.Dislike) error {
-	telephone := l.likeRepo.CheckUserBySession(cookie)
-	user, err := l.likeRepo.SelectUserFeed(telephone)
-	if err != nil {
-		return models.ErrInternalServerError
-	}
-
-	err = l.likeRepo.InsertDislike(user.ID, dislike.Uid2)
+func (l *likeUsecase) Dislike(user models.User, dislike models.Dislike) error {
+	err := l.likeRepo.InsertDislike(user.ID, dislike.Uid2)
 	if err != nil {
 		return models.ErrInternalServerError
 	}
 	return nil
+}
+
+func (l *likeUsecase) User(cookie string) (models.User, error) {
+	telephone := l.likeRepo.CheckUserBySession(cookie)
+	user, err := l.likeRepo.SelectUser(telephone)
+	if err != nil {
+		return user, models.ErrNotFound
+	}
+	return user, nil
 }

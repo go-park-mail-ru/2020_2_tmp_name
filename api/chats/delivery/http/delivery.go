@@ -78,8 +78,15 @@ func (ch *ChatHandlerType) MessageHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	cookie := r.Cookies()[0]
-	err = ch.ChUsecase.Message(cookie.Value, message)
+	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	err = ch.ChUsecase.Message(user, message)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
@@ -100,9 +107,15 @@ func (ch *ChatHandlerType) MessageHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (ch *ChatHandlerType) ChatsHandler(w http.ResponseWriter, r *http.Request) {
-	cookie := r.Cookies()[0]
+	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
 
-	chatModel, err := ch.ChUsecase.Chats(cookie.Value)
+	chatModel, err := ch.ChUsecase.Chats(user)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
@@ -131,8 +144,14 @@ func (ch *ChatHandlerType) ChatIDHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	cookie := r.Cookies()[0]
-	chat, err := ch.ChUsecase.ChatID(cookie.Value, chid)
+	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+	chat, err := ch.ChUsecase.ChatID(user, chid)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
@@ -153,9 +172,7 @@ func (ch *ChatHandlerType) ChatIDHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (ch *ChatHandlerType) GochatHandler(w http.ResponseWriter, r *http.Request) {
-	cookie := r.Cookies()[0]
-
-	user, err := ch.ChUsecase.Gochat(cookie.Value)
+	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))

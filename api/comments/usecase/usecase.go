@@ -15,14 +15,8 @@ func NewCommentUsecase(c domain.CommentRepository) domain.CommentUsecase {
 	}
 }
 
-func (c *commentUsecase) Comment(cookie string, comment models.Comment) error {
-	telephone := c.commentRepo.CheckUserBySession(cookie)
-	user, err := c.commentRepo.SelectUserFeed(telephone)
-	if err != nil {
-		return models.ErrInternalServerError
-	}
-
-	err = c.commentRepo.InsertComment(comment, user.ID)
+func (c *commentUsecase) Comment(user models.User, comment models.Comment) error {
+	err := c.commentRepo.InsertComment(comment, user.ID)
 	if err != nil {
 		return models.ErrInternalServerError
 	}
@@ -39,4 +33,13 @@ func (c *commentUsecase) CommentsByID(id int) (models.CommentsData, error) {
 	}
 
 	return data, nil
+}
+
+func (c *commentUsecase) User(cookie string) (models.User, error) {
+	telephone := c.commentRepo.CheckUserBySession(cookie)
+	user, err := c.commentRepo.SelectUser(telephone)
+	if err != nil {
+		return user, models.ErrNotFound
+	}
+	return user, nil
 }

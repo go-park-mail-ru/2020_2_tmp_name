@@ -62,14 +62,8 @@ func (u *userUsecase) Signup(user models.User) error {
 	return nil
 }
 
-func (u *userUsecase) Settings(cookie string, userData models.User) error {
-	telephone := u.userRepo.CheckUserBySession(cookie)
-	user, err := u.userRepo.SelectUserFeed(telephone)
-	if err != nil {
-		return models.ErrInternalServerError
-	}
-
-	err = u.userRepo.UpdateUser(userData, user.ID)
+func (u *userUsecase) Settings(uid int, userData models.User) error {
+	err := u.userRepo.UpdateUser(userData, uid)
 	if err != nil {
 		return models.ErrInternalServerError
 	}
@@ -85,15 +79,8 @@ func (u *userUsecase) Me(cookie string) (models.UserFeed, error) {
 	return user, nil
 }
 
-func (u *userUsecase) Feed(cookie string) ([]models.UserFeed, error) {
-	var data []models.UserFeed
-	telephone := u.userRepo.CheckUserBySession(cookie)
-	user, err := u.userRepo.SelectUser(telephone)
-	if err != nil {
-		return data, models.ErrInternalServerError
-	}
-
-	data, err = u.userRepo.SelectUsers(user)
+func (u *userUsecase) Feed(user models.User) ([]models.UserFeed, error) {
+	data, err := u.userRepo.SelectUsers(user)
 	if err != nil {
 		return data, models.ErrInternalServerError
 	}
@@ -102,6 +89,15 @@ func (u *userUsecase) Feed(cookie string) ([]models.UserFeed, error) {
 
 func (u *userUsecase) UserID(uid int) (models.UserFeed, error) {
 	user, err := u.userRepo.SelectUserFeedByID(uid)
+	if err != nil {
+		return user, models.ErrNotFound
+	}
+	return user, nil
+}
+
+func (u *userUsecase) User(cookie string) (models.User, error) {
+	telephone := u.userRepo.CheckUserBySession(cookie)
+	user, err := u.userRepo.SelectUser(telephone)
 	if err != nil {
 		return user, models.ErrNotFound
 	}

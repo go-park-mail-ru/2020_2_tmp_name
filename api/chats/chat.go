@@ -10,16 +10,17 @@ import (
 
 type ChatUsecase interface {
 	Chat(chat models.Chat) error
-	Message(cookie string, message models.Message) error
-	Chats(cookie string) (models.ChatModel, error)
-	ChatID(cookie string, chid int) (models.ChatData, error)
-	Gochat(cookie string) (models.UserFeed, error)
+	Message(user models.User, message models.Message) error
+	Chats(user models.User) (models.ChatModel, error)
+	ChatID(user models.User, chid int) (models.ChatData, error)
+	User(cookie string) (models.User, error)
 	ServeWs(hub *models.Hub, w http.ResponseWriter, r *http.Request, uid int)
 }
 
 type ChatRepository interface {
 	SelectUserFeed(telephone string) (models.UserFeed, error)
 	SelectUserFeedByID(uid int) (models.UserFeed, error)
+	SelectUser(telephone string) (models.User, error)
 	SelectImages(uid int) ([]string, error)
 	CheckChat(chat models.Chat) bool
 	InsertChat(chat models.Chat) error

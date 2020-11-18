@@ -11,10 +11,11 @@ type UserUsecase interface {
 	Login(data models.LoginData) (string, error)
 	Logout(session string) error
 	Signup(user models.User) error
-	Settings(cookie string, user models.User) error
+	Settings(uid int, user models.User) error
 	Me(cookie string) (models.UserFeed, error)
-	Feed(cookie string) ([]models.UserFeed, error)
+	Feed(user models.User) ([]models.UserFeed, error)
 	UserID(uid int) (models.UserFeed, error)
+	User(cookie string) (models.User, error)
 }
 
 type UserRepository interface {

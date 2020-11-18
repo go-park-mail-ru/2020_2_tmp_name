@@ -45,8 +45,15 @@ func (c *CommentHandlerType) CommentHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	cookie := r.Cookies()[0]
-	err = c.CUsecase.Comment(cookie.Value, comment)
+	user, err := c.CUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	err = c.CUsecase.Comment(user, comment)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
