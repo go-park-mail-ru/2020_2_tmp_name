@@ -57,7 +57,7 @@ func (ch *chatUsecase) Chats(user models.User) (models.ChatModel, error) {
 	var chatModel models.ChatModel
 	chats, err := ch.chatRepo.SelectChatsByID(user.ID)
 	if err != nil {
-		return chatModel, models.ErrInternalServerError
+		return chatModel, models.ErrNotFound
 	}
 
 	chatModel.Data = chats
@@ -68,7 +68,7 @@ func (ch *chatUsecase) ChatID(user models.User, chid int) (models.ChatData, erro
 	var chat models.ChatData
 	chat, err := ch.chatRepo.SelectChatByID(user.ID, chid)
 	if err != nil {
-		return chat, models.ErrInternalServerError
+		return chat, models.ErrNotFound
 	}
 
 	return chat, nil

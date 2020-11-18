@@ -25,7 +25,7 @@ func (u *userUsecase) Login(data models.LoginData) (string, error) {
 
 	user, err := u.userRepo.SelectUser(data.Telephone)
 	if err != nil {
-		return "", models.ErrInternalServerError
+		return "", models.ErrNotFound
 	}
 
 	if !models.CheckPasswordHash(data.Password, user.Password) {
@@ -39,7 +39,7 @@ func (u *userUsecase) Login(data models.LoginData) (string, error) {
 
 	err = u.userRepo.InsertSession(SID.String(), data.Telephone)
 	if err != nil {
-		return "", models.ErrBadParamInput
+		return "", models.ErrInternalServerError
 	}
 
 	return SID.String(), nil
@@ -74,7 +74,7 @@ func (u *userUsecase) Me(cookie string) (models.UserFeed, error) {
 	telephone := u.userRepo.CheckUserBySession(cookie)
 	user, err := u.userRepo.SelectUserFeed(telephone)
 	if err != nil {
-		return user, models.ErrInternalServerError
+		return user, models.ErrNotFound
 	}
 	return user, nil
 }
@@ -82,7 +82,7 @@ func (u *userUsecase) Me(cookie string) (models.UserFeed, error) {
 func (u *userUsecase) Feed(user models.User) ([]models.UserFeed, error) {
 	data, err := u.userRepo.SelectUsers(user)
 	if err != nil {
-		return data, models.ErrInternalServerError
+		return data, models.ErrNotFound
 	}
 	return data, nil
 }

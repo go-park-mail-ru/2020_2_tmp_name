@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	domain "park_2020/2020_2_tmp_name/api/chats"
 	"park_2020/2020_2_tmp_name/models"
@@ -10,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 type ChatHandlerType struct {
@@ -42,7 +42,7 @@ func (ch *ChatHandlerType) ChatHandler(w http.ResponseWriter, r *http.Request) {
 	chat := models.Chat{}
 	err := json.NewDecoder(r.Body).Decode(&chat)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
@@ -50,7 +50,6 @@ func (ch *ChatHandlerType) ChatHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = ch.ChUsecase.Chat(chat)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -58,7 +57,7 @@ func (ch *ChatHandlerType) ChatHandler(w http.ResponseWriter, r *http.Request) {
 
 	body, err := json.Marshal(chat)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
@@ -72,15 +71,20 @@ func (ch *ChatHandlerType) MessageHandler(w http.ResponseWriter, r *http.Request
 	message := models.Message{}
 	err := json.NewDecoder(r.Body).Decode(&message)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
 
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
 	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -88,7 +92,6 @@ func (ch *ChatHandlerType) MessageHandler(w http.ResponseWriter, r *http.Request
 
 	err = ch.ChUsecase.Message(user, message)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -96,7 +99,7 @@ func (ch *ChatHandlerType) MessageHandler(w http.ResponseWriter, r *http.Request
 
 	body, err := json.Marshal(message)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
@@ -107,9 +110,14 @@ func (ch *ChatHandlerType) MessageHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (ch *ChatHandlerType) ChatsHandler(w http.ResponseWriter, r *http.Request) {
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
 	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -117,7 +125,6 @@ func (ch *ChatHandlerType) ChatsHandler(w http.ResponseWriter, r *http.Request) 
 
 	chatModel, err := ch.ChUsecase.Chats(user)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -125,7 +132,7 @@ func (ch *ChatHandlerType) ChatsHandler(w http.ResponseWriter, r *http.Request) 
 
 	body, err := json.Marshal(chatModel)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
@@ -138,22 +145,27 @@ func (ch *ChatHandlerType) ChatsHandler(w http.ResponseWriter, r *http.Request) 
 func (ch *ChatHandlerType) ChatIDHandler(w http.ResponseWriter, r *http.Request) {
 	chid, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/chats/"))
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(models.GetStatusCode(err))
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
 		return
 	}
 
 	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
 	}
+
 	chat, err := ch.ChUsecase.ChatID(user, chid)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -161,7 +173,7 @@ func (ch *ChatHandlerType) ChatIDHandler(w http.ResponseWriter, r *http.Request)
 
 	body, err := json.Marshal(chat)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
@@ -172,9 +184,14 @@ func (ch *ChatHandlerType) ChatIDHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (ch *ChatHandlerType) GochatHandler(w http.ResponseWriter, r *http.Request) {
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
 	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return

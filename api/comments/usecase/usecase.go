@@ -29,7 +29,7 @@ func (c *commentUsecase) CommentsByID(id int) (models.CommentsData, error) {
 	data.Data = comments
 
 	if err != nil {
-		return data, models.ErrInternalServerError
+		return data, models.ErrNotFound
 	}
 
 	return data, nil

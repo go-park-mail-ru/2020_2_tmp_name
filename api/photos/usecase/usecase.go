@@ -20,7 +20,7 @@ func NewPhotoUsecase(p domain.PhotoRepository) domain.PhotoUsecase {
 func (p *photoUsecase) AddPhoto(photo models.Photo) error {
 	user, err := p.photoRepo.SelectUserFeed(photo.Telephone)
 	if err != nil {
-		return models.ErrInternalServerError
+		return models.ErrNotFound
 	}
 
 	user.LinkImages = append(user.LinkImages, photo.Path)

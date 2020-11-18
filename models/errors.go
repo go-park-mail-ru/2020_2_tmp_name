@@ -9,11 +9,10 @@ import (
 
 var (
 	ErrBadRequest          = errors.New("Bad request")
-	ErrInternalServerError = errors.New("Internal Server Error")
 	ErrNotFound            = errors.New("Your requested Item is not found")
 	ErrConflict            = errors.New("Your Item already exist")
-	ErrBadParamInput       = errors.New("Given Param is not valid")
 	ErrUnauthorized        = errors.New("User not authorised or not found")
+	ErrInternalServerError = errors.New("Internal Server Error")
 )
 
 func GetStatusCode(err error) int {
@@ -23,15 +22,15 @@ func GetStatusCode(err error) int {
 
 	logrus.Error(err)
 	switch err {
-	case ErrBadRequest:
+	case ErrBadRequest: // 400
 		return http.StatusBadRequest
 	case ErrNotFound:
-		return http.StatusNotFound
+		return http.StatusNotFound // 404
 	case ErrConflict:
-		return http.StatusConflict
+		return http.StatusConflict // 409
 	case ErrUnauthorized:
-		return http.StatusUnauthorized
+		return http.StatusUnauthorized // 401
 	default:
-		return http.StatusInternalServerError
+		return http.StatusInternalServerError // 500
 	}
 }

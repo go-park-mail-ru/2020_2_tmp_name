@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 
 	_ "github.com/lib/pq"
 
@@ -75,10 +76,27 @@ func (app *application) initServer() {
 	originsOk := handlers.AllowedOrigins([]string{"http://95.163.213.222:3000"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE"})
 
-	var err error
 	dbConn := DBConnection(&conf)
 
 	router := mux.NewRouter()
+
+	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
+	logrus.WithFields(logrus.Fields{
+		"logger": "LOGRUS",
+		"host":   "95.163.213.222",
+		"port":   ":8080",
+	}).Info("Starting server")
+
+	AccessLogOut := new(middleware.AccessLogger)
+
+	contextLogger := logrus.WithFields(logrus.Fields{
+		"mode":   "[access_log]",
+		"logger": "LOGRUS",
+	})
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+	AccessLogOut.LogrusLogger = contextLogger
+
+	router.Use(AccessLogOut.AccessLogMiddleware(router))
 
 	chr := _chatRepo.NewPostgresChatRepository(dbConn)
 	chu := _chatUcase.NewChatUsecase(chr)
@@ -110,7 +128,7 @@ func (app *application) initServer() {
 	}
 
 	fmt.Println("Starting server at: 8080")
-	err = serv.ListenAndServe()
+	err := serv.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}

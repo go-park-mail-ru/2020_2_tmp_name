@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	domain "park_2020/2020_2_tmp_name/api/users"
 	"park_2020/2020_2_tmp_name/models"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 type UserHandlerType struct {
@@ -49,7 +49,7 @@ func (u *UserHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	loginData := models.LoginData{}
 	err := json.NewDecoder(r.Body).Decode(&loginData)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
@@ -57,7 +57,6 @@ func (u *UserHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	sidString, err := u.UUsecase.Login(loginData)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -73,7 +72,7 @@ func (u *UserHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	body, err := json.Marshal(loginData)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
@@ -87,7 +86,7 @@ func (u *UserHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	session, err := r.Cookie("session_id")
 	if err == http.ErrNoCookie {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
@@ -95,7 +94,6 @@ func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 
 	err = u.UUsecase.Logout(session.Value)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -103,7 +101,7 @@ func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 
 	body, err := json.Marshal("logout success")
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
@@ -120,7 +118,7 @@ func (u *UserHandlerType) SignupHandler(w http.ResponseWriter, r *http.Request) 
 	user := models.User{}
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
@@ -135,7 +133,7 @@ func (u *UserHandlerType) SignupHandler(w http.ResponseWriter, r *http.Request) 
 
 	body, err := json.Marshal(user)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
@@ -149,15 +147,20 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 	userData := models.User{}
 	err := json.NewDecoder(r.Body).Decode(&userData)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
 
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
 	user, err := u.UUsecase.User(r.Cookies()[0].Value)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -165,7 +168,6 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 
 	err = u.UUsecase.Settings(user.ID, userData)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -173,7 +175,7 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 
 	body, err := json.Marshal(userData)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
@@ -184,9 +186,14 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (u *UserHandlerType) MeHandler(w http.ResponseWriter, r *http.Request) {
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
 	user, err := u.UUsecase.Me(r.Cookies()[0].Value)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -194,7 +201,7 @@ func (u *UserHandlerType) MeHandler(w http.ResponseWriter, r *http.Request) {
 
 	body, err := json.Marshal(user)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
@@ -205,9 +212,14 @@ func (u *UserHandlerType) MeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserHandlerType) FeedHandler(w http.ResponseWriter, r *http.Request) {
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
 	user, err := u.UUsecase.User(r.Cookies()[0].Value)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -216,7 +228,6 @@ func (u *UserHandlerType) FeedHandler(w http.ResponseWriter, r *http.Request) {
 	var feed models.Feed
 	feed.Data, err = u.UUsecase.Feed(user)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -224,7 +235,7 @@ func (u *UserHandlerType) FeedHandler(w http.ResponseWriter, r *http.Request) {
 
 	body, err := json.Marshal(feed)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
@@ -237,15 +248,14 @@ func (u *UserHandlerType) FeedHandler(w http.ResponseWriter, r *http.Request) {
 func (u *UserHandlerType) UserIDHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/user/"))
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(models.GetStatusCode(err))
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
 		return
 	}
 
 	user, err := u.UUsecase.UserID(userID)
 	if err != nil {
-		log.Println(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -253,7 +263,7 @@ func (u *UserHandlerType) UserIDHandler(w http.ResponseWriter, r *http.Request) 
 
 	body, err := json.Marshal(user)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
