@@ -1,26 +1,56 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	domain "park_2020/2020_2_tmp_name/api/chats"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
 
 type ChatHandlerType struct {
 	ChUsecase domain.ChatUsecase
-	Hub       *models.Hub
+	Hub       Hub
+}
+
+func (h Hub) run() {
+	for {
+		select {
+		case client := <-h.Register:
+			h.Clients[client] = true
+		case client := <-h.Unregister:
+			if _, ok := h.Clients[client]; ok {
+				delete(h.Clients, client)
+				close(client.Send)
+			}
+		case message := <-h.Broadcast:
+			for client := range h.Clients {
+				select {
+				case client.Send <- message:
+				default:
+					close(client.Send)
+					delete(h.Clients, client)
+				}
+			}
+		}
+	}
 }
 
 func NewChatHandler(r *mux.Router, chs domain.ChatUsecase) {
 	handler := &ChatHandlerType{
 		ChUsecase: chs,
+		Hub:       *NewHub(),
 	}
+
+	go handler.Hub.run()
 
 	r.HandleFunc("/api/v1/chat", handler.ChatHandler).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/message", handler.MessageHandler).Methods(http.MethodPost)
@@ -197,6 +227,101 @@ func (ch *ChatHandlerType) GochatHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ch.ChUsecase.ServeWs(ch.Hub, w, r, user.ID)
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	client := &Client{ID: user.ID, Hub: &ch.Hub, Conn: conn, Send: make(chan []byte, 256)}
+	_, message, err := client.Conn.ReadMessage()
+	_, ok := err.(*websocket.CloseError)
+
+	if err != nil && !ok {
+		log.Println(err)
+
+	} else if (err != nil && ok) || err == nil {
+		var msg models.Message
+		err = json.Unmarshal(message, &msg)
+		if err != nil {
+			log.Println(err)
+		}
+
+		err = ch.ChUsecase.Message(user, msg)
+		if err != nil {
+			log.Println(err)
+		}
+
+	}
+	if err == nil {
+		client.Hub.Register <- client
+	}
+
+	go client.writePump()
+	go client.readPump()
 	w.WriteHeader(http.StatusOK)
+}
+
+// readPump pumps messages from the websocket connection to the hub.
+func (c *Client) readPump() {
+	defer func() {
+		c.Hub.Unregister <- c
+		c.Conn.Close()
+	}()
+	c.Conn.SetReadLimit(maxMessageSize)
+	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	for {
+		_, message, err := c.Conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
+			}
+			break
+		}
+		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		c.Hub.Broadcast <- message
+	}
+}
+
+// writePump pumps messages from the hub to the websocket connection.
+func (c *Client) writePump() {
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		c.Conn.Close()
+	}()
+	for {
+		select {
+		case message, ok := <-c.Send:
+			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if !ok {
+				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+
+			w, err := c.Conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				return
+			}
+			w.Write(message)
+
+			n := len(c.Send)
+			for i := 0; i < n; i++ {
+				w.Write(newline)
+				w.Write(<-c.Send)
+			}
+
+			if err := w.Close(); err != nil {
+				return
+			}
+		case <-ticker.C:
+			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
+		}
+	}
 }

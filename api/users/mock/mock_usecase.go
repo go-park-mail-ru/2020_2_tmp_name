@@ -34,7 +34,7 @@ func (m *MockUserUsecase) EXPECT() *MockUserUsecaseMockRecorder {
 }
 
 // Feed mocks base method
-func (m *MockUserUsecase) Feed(arg0 string) ([]models.UserFeed, error) {
+func (m *MockUserUsecase) Feed(arg0 models.User) ([]models.UserFeed, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Feed", arg0)
 	ret0, _ := ret[0].([]models.UserFeed)
@@ -93,7 +93,7 @@ func (mr *MockUserUsecaseMockRecorder) Me(arg0 interface{}) *gomock.Call {
 }
 
 // Settings mocks base method
-func (m *MockUserUsecase) Settings(arg0 string, arg1 models.User) error {
+func (m *MockUserUsecase) Settings(arg0 int, arg1 models.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Settings", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -118,6 +118,21 @@ func (m *MockUserUsecase) Signup(arg0 models.User) error {
 func (mr *MockUserUsecaseMockRecorder) Signup(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Signup", reflect.TypeOf((*MockUserUsecase)(nil).Signup), arg0)
+}
+
+// User mocks base method
+func (m *MockUserUsecase) User(arg0 string) (models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "User", arg0)
+	ret0, _ := ret[0].(models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// User indicates an expected call of User
+func (mr *MockUserUsecaseMockRecorder) User(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockUserUsecase)(nil).User), arg0)
 }
 
 // UserID mocks base method

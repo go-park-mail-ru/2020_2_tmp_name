@@ -6,7 +6,6 @@ package mock
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	http "net/http"
 	models "park_2020/2020_2_tmp_name/models"
 	reflect "reflect"
 )
@@ -49,7 +48,7 @@ func (mr *MockChatUsecaseMockRecorder) Chat(arg0 interface{}) *gomock.Call {
 }
 
 // ChatID mocks base method
-func (m *MockChatUsecase) ChatID(arg0 string, arg1 int) (models.ChatData, error) {
+func (m *MockChatUsecase) ChatID(arg0 models.User, arg1 int) (models.ChatData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ChatID", arg0, arg1)
 	ret0, _ := ret[0].(models.ChatData)
@@ -64,7 +63,7 @@ func (mr *MockChatUsecaseMockRecorder) ChatID(arg0, arg1 interface{}) *gomock.Ca
 }
 
 // Chats mocks base method
-func (m *MockChatUsecase) Chats(arg0 string) (models.ChatModel, error) {
+func (m *MockChatUsecase) Chats(arg0 models.User) (models.ChatModel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Chats", arg0)
 	ret0, _ := ret[0].(models.ChatModel)
@@ -78,23 +77,8 @@ func (mr *MockChatUsecaseMockRecorder) Chats(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Chats", reflect.TypeOf((*MockChatUsecase)(nil).Chats), arg0)
 }
 
-// Gochat mocks base method
-func (m *MockChatUsecase) Gochat(arg0 string) (models.UserFeed, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Gochat", arg0)
-	ret0, _ := ret[0].(models.UserFeed)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Gochat indicates an expected call of Gochat
-func (mr *MockChatUsecaseMockRecorder) Gochat(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Gochat", reflect.TypeOf((*MockChatUsecase)(nil).Gochat), arg0)
-}
-
 // Message mocks base method
-func (m *MockChatUsecase) Message(arg0 string, arg1 models.Message) error {
+func (m *MockChatUsecase) Message(arg0 models.User, arg1 models.Message) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Message", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -107,14 +91,17 @@ func (mr *MockChatUsecaseMockRecorder) Message(arg0, arg1 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Message", reflect.TypeOf((*MockChatUsecase)(nil).Message), arg0, arg1)
 }
 
-// ServeWs mocks base method
-func (m *MockChatUsecase) ServeWs(arg0 *models.Hub, arg1 http.ResponseWriter, arg2 *http.Request, arg3 int) {
+// User mocks base method
+func (m *MockChatUsecase) User(arg0 string) (models.User, error) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ServeWs", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "User", arg0)
+	ret0, _ := ret[0].(models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// ServeWs indicates an expected call of ServeWs
-func (mr *MockChatUsecaseMockRecorder) ServeWs(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+// User indicates an expected call of User
+func (mr *MockChatUsecaseMockRecorder) User(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServeWs", reflect.TypeOf((*MockChatUsecase)(nil).ServeWs), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockChatUsecase)(nil).User), arg0)
 }

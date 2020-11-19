@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"net/http"
 	"park_2020/2020_2_tmp_name/models"
 )
 
@@ -14,7 +13,6 @@ type ChatUsecase interface {
 	Chats(user models.User) (models.ChatModel, error)
 	ChatID(user models.User, chid int) (models.ChatData, error)
 	User(cookie string) (models.User, error)
-	ServeWs(hub *models.Hub, w http.ResponseWriter, r *http.Request, uid int)
 }
 
 type ChatRepository interface {

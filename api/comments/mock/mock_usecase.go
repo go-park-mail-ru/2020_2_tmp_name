@@ -34,7 +34,7 @@ func (m *MockCommentUsecase) EXPECT() *MockCommentUsecaseMockRecorder {
 }
 
 // Comment mocks base method
-func (m *MockCommentUsecase) Comment(arg0 string, arg1 models.Comment) error {
+func (m *MockCommentUsecase) Comment(arg0 models.User, arg1 models.Comment) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Comment", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -60,4 +60,19 @@ func (m *MockCommentUsecase) CommentsByID(arg0 int) (models.CommentsData, error)
 func (mr *MockCommentUsecaseMockRecorder) CommentsByID(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommentsByID", reflect.TypeOf((*MockCommentUsecase)(nil).CommentsByID), arg0)
+}
+
+// User mocks base method
+func (m *MockCommentUsecase) User(arg0 string) (models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "User", arg0)
+	ret0, _ := ret[0].(models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// User indicates an expected call of User
+func (mr *MockCommentUsecaseMockRecorder) User(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockCommentUsecase)(nil).User), arg0)
 }

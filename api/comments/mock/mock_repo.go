@@ -91,6 +91,21 @@ func (mr *MockCommentRepositoryMockRecorder) SelectImages(arg0 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectImages", reflect.TypeOf((*MockCommentRepository)(nil).SelectImages), arg0)
 }
 
+// SelectUser mocks base method
+func (m *MockCommentRepository) SelectUser(arg0 string) (models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SelectUser", arg0)
+	ret0, _ := ret[0].(models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SelectUser indicates an expected call of SelectUser
+func (mr *MockCommentRepositoryMockRecorder) SelectUser(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectUser", reflect.TypeOf((*MockCommentRepository)(nil).SelectUser), arg0)
+}
+
 // SelectUserFeed mocks base method
 func (m *MockCommentRepository) SelectUserFeed(arg0 string) (models.UserFeed, error) {
 	m.ctrl.T.Helper()

@@ -34,7 +34,7 @@ func (m *MockLikeUsecase) EXPECT() *MockLikeUsecaseMockRecorder {
 }
 
 // Dislike mocks base method
-func (m *MockLikeUsecase) Dislike(arg0 string, arg1 models.Dislike) error {
+func (m *MockLikeUsecase) Dislike(arg0 models.User, arg1 models.Dislike) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Dislike", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -48,7 +48,7 @@ func (mr *MockLikeUsecaseMockRecorder) Dislike(arg0, arg1 interface{}) *gomock.C
 }
 
 // Like mocks base method
-func (m *MockLikeUsecase) Like(arg0 string, arg1 models.Like) error {
+func (m *MockLikeUsecase) Like(arg0 models.User, arg1 models.Like) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Like", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -59,4 +59,19 @@ func (m *MockLikeUsecase) Like(arg0 string, arg1 models.Like) error {
 func (mr *MockLikeUsecaseMockRecorder) Like(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Like", reflect.TypeOf((*MockLikeUsecase)(nil).Like), arg0, arg1)
+}
+
+// User mocks base method
+func (m *MockLikeUsecase) User(arg0 string) (models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "User", arg0)
+	ret0, _ := ret[0].(models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// User indicates an expected call of User
+func (mr *MockLikeUsecaseMockRecorder) User(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockLikeUsecase)(nil).User), arg0)
 }
