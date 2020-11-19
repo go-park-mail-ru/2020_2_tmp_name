@@ -91,6 +91,20 @@ func (mr *MockChatUsecaseMockRecorder) Message(arg0, arg1 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Message", reflect.TypeOf((*MockChatUsecase)(nil).Message), arg0, arg1)
 }
 
+// Msg mocks base method
+func (m *MockChatUsecase) Msg(arg0 models.User, arg1 models.Msg) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Msg", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Msg indicates an expected call of Msg
+func (mr *MockChatUsecaseMockRecorder) Msg(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Msg", reflect.TypeOf((*MockChatUsecase)(nil).Msg), arg0, arg1)
+}
+
 // User mocks base method
 func (m *MockChatUsecase) User(arg0 string) (models.User, error) {
 	m.ctrl.T.Helper()

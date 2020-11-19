@@ -236,32 +236,40 @@ func (ch *ChatHandlerType) GochatHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	client := &Client{ID: user.ID, Hub: &ch.Hub, Conn: conn, Send: make(chan []byte, 256)}
-	_, message, err := client.Conn.ReadMessage()
-	_, ok := err.(*websocket.CloseError)
+	for {
+		_, message, err := client.Conn.ReadMessage()
+		_, ok := err.(*websocket.CloseError)
 
-	if err != nil && !ok {
-		log.Println(err)
+		if err != nil && !ok {
+			logrus.Error(err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write(JSONError(err.Error()))
+			return
 
-	} else if (err != nil && ok) || err == nil {
-		var msg models.Message
-		err = json.Unmarshal(message, &msg)
-		if err != nil {
-			log.Println(err)
+		} else if (err != nil && ok) || err == nil {
+			var msg models.Msg
+			err = json.Unmarshal(message, &msg)
+			if err != nil {
+				logrus.Error(err)
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write(JSONError(err.Error()))
+				return
+			}
+
+			err = ch.ChUsecase.Msg(user, msg)
+			if err != nil {
+				w.WriteHeader(models.GetStatusCode(err))
+				w.Write(JSONError(err.Error()))
+				return
+			}
+
 		}
-
-		err = ch.ChUsecase.Message(user, msg)
-		if err != nil {
-			log.Println(err)
-		}
-
-	}
-	if err == nil {
 		client.Hub.Register <- client
 	}
 
 	go client.writePump()
 	go client.readPump()
-	w.WriteHeader(http.StatusOK)
+
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -270,6 +278,7 @@ func (c *Client) readPump() {
 		c.Hub.Unregister <- c
 		c.Conn.Close()
 	}()
+
 	c.Conn.SetReadLimit(maxMessageSize)
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })

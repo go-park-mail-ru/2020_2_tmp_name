@@ -10,6 +10,7 @@ import (
 type ChatUsecase interface {
 	Chat(chat models.Chat) error
 	Message(user models.User, message models.Message) error
+	Msg(user models.User, message models.Msg) error
 	Chats(user models.User) (models.ChatModel, error)
 	ChatID(user models.User, chid int) (models.ChatData, error)
 	User(cookie string) (models.User, error)

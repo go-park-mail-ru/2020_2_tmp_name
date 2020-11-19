@@ -33,6 +33,14 @@ func (ch *chatUsecase) Message(user models.User, message models.Message) error {
 	return nil
 }
 
+func (ch *chatUsecase) Msg(user models.User, message models.Msg) error {
+	err := ch.chatRepo.InsertMessage(message.Message, message.ChatID, user.ID)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	return nil
+}
+
 func (ch *chatUsecase) Chats(user models.User) (models.ChatModel, error) {
 	var chatModel models.ChatModel
 	chats, err := ch.chatRepo.SelectChatsByID(user.ID)
