@@ -8,8 +8,6 @@ import (
 
 type chatUsecase struct {
 	chatRepo       domain.ChatRepository
-	Hub            *models.Hub
-	client         *models.Client
 	contextTimeout time.Duration
 }
 

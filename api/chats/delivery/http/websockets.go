@@ -18,6 +18,11 @@ var (
 	space   = []byte{' '}
 )
 
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
 type Client struct {
 	ID   int
 	Hub  *Hub
