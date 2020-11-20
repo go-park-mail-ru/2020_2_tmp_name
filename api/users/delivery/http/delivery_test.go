@@ -357,9 +357,17 @@ func TestUserHandler_SettingsHandlerSuccess(t *testing.T) {
 		AboutMe:    "",
 	}
 
-	uid := 1
+	uid := 0
 	var byteData = []byte(`{
-		"job":        "Backend"
+		"id":         "0",
+		"name":       "Misha",
+		"telephone":  "909-277-47-21",
+		"password":   "1234",
+		"sex":        "male",
+		"linkImages": null,
+		"job":        "Fullstack",
+		"education":  "BMSTU",
+		"aboutMe":    ""
 	}`)
 	sid := "something-like-this"
 	cookie := &http.Cookie{
@@ -432,10 +440,18 @@ func TestUserHandler_SettingsHandlerFail(t *testing.T) {
 	}
 
 	var byteData = []byte(`{
-		"job":        "Backend"
+		"id":         "0",
+		"name":       "Misha",
+		"telephone":  "909-277-47-21",
+		"password":   "1234",
+		"sex":        "male",
+		"linkImages": null,
+		"job":        "Fullstack",
+		"education":  "BMSTU",
+		"aboutMe":    ""
 	}`)
 
-	uid := 1
+	uid := 0
 	sid := "something-like-this"
 	cookie := &http.Cookie{
 		Name:    "session_id",
