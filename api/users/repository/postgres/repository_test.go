@@ -50,8 +50,14 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`
 
 	var inputUser models.User
+
 	err = faker.FakeData(&inputUser)
 	require.NoError(t, err)
+
+	inputUser.Day = "21"
+	inputUser.Month = "Май"
+	inputUser.Year = "2001"
+	inputUser.DateBirth = 19
 
 	testCases := []insertUserTestCase{
 		{
@@ -363,6 +369,11 @@ func TestPostgresUserRepository_SelectUser(t *testing.T) {
 	var outputUser models.User
 	err = faker.FakeData(&outputUser)
 	require.NoError(t, err)
+
+	outputUser.Day = ""
+	outputUser.Month = ""
+	outputUser.Year = ""
+	outputUser.DateBirth = 19
 	outputUser.Telephone = telephone
 
 	testCases := []insertUserTestCase{
