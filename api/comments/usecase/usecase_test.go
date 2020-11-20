@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"errors"
 	domain "park_2020/2020_2_tmp_name/api/comments"
 	"park_2020/2020_2_tmp_name/api/comments/mock"
 	"park_2020/2020_2_tmp_name/models"
@@ -19,14 +18,11 @@ func TestNewCommentUsecase(t *testing.T) {
 
 	var c domain.CommentRepository
 	cu := NewCommentUsecase(c)
-	require.NotEmpty(t, cu)
+	require.Empty(t, cu)
 }
 
 func TestUserUsecase_CommentSuccess(t *testing.T) {
-	cookie := "Something-like-uuid"
-	telephone := "909-277-47-21"
-
-	userFeed := models.UserFeed{
+	user := models.User{
 		ID:         0,
 		Name:       "Misha",
 		DateBirth:  0,
@@ -48,25 +44,20 @@ func TestUserUsecase_CommentSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockCommentRepository(ctrl)
-	mock.EXPECT().CheckUserBySession(cookie).Times(1).Return(telephone)
-	mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, nil)
-	mock.EXPECT().InsertComment(comment, userFeed.ID).Return(nil)
+	mock.EXPECT().InsertComment(comment, user.ID).Return(nil)
 
 	cs := commentUsecase{
 		commentRepo: mock,
 	}
 
-	err := cs.Comment(cookie, comment)
+	err := cs.Comment(user, comment)
 
 	require.NoError(t, err)
 	require.Equal(t, nil, err)
 }
 
 func TestUserUsecase_CommentFail(t *testing.T) {
-	cookie := "Something-like-uuid"
-	telephone := "909-277-47-21"
-
-	userFeed := models.UserFeed{
+	user := models.User{
 		ID:         0,
 		Name:       "Misha",
 		DateBirth:  0,
@@ -88,21 +79,14 @@ func TestUserUsecase_CommentFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockCommentRepository(ctrl)
-	mock.EXPECT().CheckUserBySession(cookie).Times(2).Return(telephone)
-	gomock.InOrder(
-		mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, errors.New("error")),
-		mock.EXPECT().SelectUserFeed(telephone).Return(userFeed, nil),
-		mock.EXPECT().InsertComment(comment, userFeed.ID).Return(errors.New("error")),
-	)
+	mock.EXPECT().InsertComment(comment, user.ID).Return(models.ErrInternalServerError)
 
 	cs := commentUsecase{
 		commentRepo: mock,
 	}
 
-	for i := 0; i < 2; i++ {
-		err := cs.Comment(cookie, comment)
-		require.Equal(t, models.ErrInternalServerError, err)
-	}
+	err := cs.Comment(user, comment)
+	require.Equal(t, models.ErrInternalServerError, err)
 
 }
 
@@ -138,7 +122,7 @@ func TestUserUsecase_CommentsByIDFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockCommentRepository(ctrl)
-	mock.EXPECT().SelectComments(id).Return(comments, errors.New("error"))
+	mock.EXPECT().SelectComments(id).Return(comments, models.ErrNotFound)
 
 	cs := commentUsecase{
 		commentRepo: mock,
@@ -146,5 +130,5 @@ func TestUserUsecase_CommentsByIDFail(t *testing.T) {
 
 	_, err := cs.CommentsByID(id)
 
-	require.Equal(t, models.ErrInternalServerError, err)
+	require.Equal(t, models.ErrNotFound, err)
 }

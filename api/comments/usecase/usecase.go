@@ -24,13 +24,12 @@ func (c *commentUsecase) Comment(user models.User, comment models.Comment) error
 }
 
 func (c *commentUsecase) CommentsByID(id int) (models.CommentsData, error) {
-	comments, err := c.commentRepo.SelectComments(id)
 	var data models.CommentsData
-	data.Data = comments
-
+	comments, err := c.commentRepo.SelectComments(id)
 	if err != nil {
 		return data, models.ErrNotFound
 	}
+	data.Data = comments
 
 	return data, nil
 }

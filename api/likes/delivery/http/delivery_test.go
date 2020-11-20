@@ -26,6 +26,17 @@ func TestNewLikeHandler(t *testing.T) {
 }
 
 func TestUserHandler_LikeHandlerSuccess(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
 	like := models.Like{
 		Uid2: 10,
 	}
@@ -50,7 +61,8 @@ func TestUserHandler_LikeHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockLikeUsecase(ctrl)
-	mock.EXPECT().Like(sid, like).Return(nil)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Like(user, like).Return(nil)
 
 	likeHandler := likeHttp.LikeHandlerType{
 		LUsecase: mock,
@@ -66,6 +78,7 @@ func TestUserHandler_LikeHandlerSuccess(t *testing.T) {
 }
 
 func TestLikeHandler_LikeHandlerFail(t *testing.T) {
+	user := models.User{}
 	like := models.Like{
 		Uid2: 10,
 	}
@@ -90,7 +103,8 @@ func TestLikeHandler_LikeHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockLikeUsecase(ctrl)
-	mock.EXPECT().Like(sid, like).Return(models.ErrInternalServerError)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Like(user, like).Return(models.ErrInternalServerError)
 
 	likeHandler := likeHttp.LikeHandlerType{
 		LUsecase: mock,
@@ -126,10 +140,21 @@ func TestLikeHandler_LikeHandlerFailDecode(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
-	require.Equal(t, 500, status)
+	require.Equal(t, 400, status)
 }
 
 func TestLikeHandler_DislikeHandlerSuccess(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
 	dislike := models.Dislike{
 		Uid2: 10,
 	}
@@ -154,7 +179,8 @@ func TestLikeHandler_DislikeHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockLikeUsecase(ctrl)
-	mock.EXPECT().Dislike(sid, dislike).Return(nil)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Dislike(user, dislike).Return(nil)
 
 	likeHandler := likeHttp.LikeHandlerType{
 		LUsecase: mock,
@@ -170,6 +196,16 @@ func TestLikeHandler_DislikeHandlerSuccess(t *testing.T) {
 }
 
 func TestUserHandler_DislikeHandlerFail(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
 	dislike := models.Dislike{
 		Uid2: 10,
 	}
@@ -194,7 +230,8 @@ func TestUserHandler_DislikeHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockLikeUsecase(ctrl)
-	mock.EXPECT().Dislike(sid, dislike).Return(models.ErrInternalServerError)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Dislike(user, dislike).Return(models.ErrInternalServerError)
 
 	likeHandler := likeHttp.LikeHandlerType{
 		LUsecase: mock,
@@ -230,5 +267,5 @@ func TestUserHandler_DisLikeHandlerFailDecode(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
-	require.Equal(t, 500, status)
+	require.Equal(t, 400, status)
 }

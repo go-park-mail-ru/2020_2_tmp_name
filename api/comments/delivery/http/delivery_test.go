@@ -93,11 +93,22 @@ func TestCommentHandler_CommentsByIdHandlerFail(t *testing.T) {
 		status := rr.Code
 
 		require.NoError(t, err)
-		require.Equal(t, 500, status)
+		require.Equal(t, 400, status)
 	}
 }
 
 func TestCommentHandler_CommentHandlerSuccess(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
 	comment := models.Comment{
 		Uid2:         10,
 		TimeDelivery: "18:54",
@@ -126,7 +137,8 @@ func TestCommentHandler_CommentHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockCommentUsecase(ctrl)
-	mock.EXPECT().Comment(sid, comment).Return(nil)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Comment(user, comment).Return(nil)
 
 	commentHandler := commentHttp.CommentHandlerType{
 		CUsecase: mock,
@@ -142,6 +154,16 @@ func TestCommentHandler_CommentHandlerSuccess(t *testing.T) {
 }
 
 func TestCommentHandler_CommentHandlerFail(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
 	comment := models.Comment{
 		Uid2:         10,
 		TimeDelivery: "18:54",
@@ -170,7 +192,8 @@ func TestCommentHandler_CommentHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockCommentUsecase(ctrl)
-	mock.EXPECT().Comment(sid, comment).Return(models.ErrInternalServerError)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Comment(user, comment).Return(models.ErrInternalServerError)
 
 	commentHandler := commentHttp.CommentHandlerType{
 		CUsecase: mock,
@@ -206,5 +229,5 @@ func TestCommentHandler_CommentHandlerFailDecode(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
-	require.Equal(t, 500, status)
+	require.Equal(t, 400, status)
 }

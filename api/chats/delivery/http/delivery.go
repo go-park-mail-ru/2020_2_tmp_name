@@ -267,8 +267,8 @@ func (ch *ChatHandlerType) GochatHandler(w http.ResponseWriter, r *http.Request)
 		client.Hub.Register <- client
 	}
 
-	go client.writePump()
-	go client.readPump()
+	// go client.writePump()
+	// go client.readPump()
 
 }
 

@@ -116,10 +116,21 @@ func TestChatHandler_ChatHandlerFailDecode(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
-	require.Equal(t, 500, status)
+	require.Equal(t, 400, status)
 }
 
 func TestChatHandler_MessageHandlerSuccess(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
 	message := models.Message{
 		Text:   "How are you",
 		ChatID: 2,
@@ -146,7 +157,8 @@ func TestChatHandler_MessageHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatUsecase(ctrl)
-	mock.EXPECT().Message(sid, message).Return(nil)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Message(user, message).Return(nil)
 
 	chatHandler := chatHttp.ChatHandlerType{
 		ChUsecase: mock,
@@ -162,6 +174,17 @@ func TestChatHandler_MessageHandlerSuccess(t *testing.T) {
 }
 
 func TestChatHandler_MessageHandlerFail(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
 	message := models.Message{
 		Text:   "How are you",
 		ChatID: 2,
@@ -188,7 +211,8 @@ func TestChatHandler_MessageHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatUsecase(ctrl)
-	mock.EXPECT().Message(sid, message).Return(models.ErrInternalServerError)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Message(user, message).Return(models.ErrInternalServerError)
 
 	chatHandler := chatHttp.ChatHandlerType{
 		ChUsecase: mock,
@@ -224,10 +248,21 @@ func TestChatHandler_MessageHandlerFailDecode(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
-	require.Equal(t, 500, status)
+	require.Equal(t, 400, status)
 }
 
 func TestChatHandler_ChatsHandlerSuccess(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
 	sid := "something-like-this"
 
 	msg1 := models.Msg{
@@ -298,7 +333,8 @@ func TestChatHandler_ChatsHandlerSuccess(t *testing.T) {
 	chatModel.Data = chats
 
 	mock := mock.NewMockChatUsecase(ctrl)
-	mock.EXPECT().Chats(sid).Return(chatModel, nil)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Chats(user).Return(chatModel, nil)
 
 	chatHandler := chatHttp.ChatHandlerType{
 		ChUsecase: mock,
@@ -313,6 +349,17 @@ func TestChatHandler_ChatsHandlerSuccess(t *testing.T) {
 }
 
 func TestChatHandler_ChatsHandlerFail(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
 	sid := "something-like-this"
 
 	msg1 := models.Msg{}
@@ -357,7 +404,8 @@ func TestChatHandler_ChatsHandlerFail(t *testing.T) {
 	chatModel.Data = chats
 
 	mock := mock.NewMockChatUsecase(ctrl)
-	mock.EXPECT().Chats(sid).Return(chatModel, models.ErrInternalServerError)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Chats(user).Return(chatModel, models.ErrInternalServerError)
 
 	chatHandler := chatHttp.ChatHandlerType{
 		ChUsecase: mock,
@@ -372,6 +420,17 @@ func TestChatHandler_ChatsHandlerFail(t *testing.T) {
 }
 
 func TestChatHandler_ChatIDSuccess(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
 	sid := "something-like-this"
 	var chid = 1
 
@@ -423,7 +482,8 @@ func TestChatHandler_ChatIDSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatUsecase(ctrl)
-	mock.EXPECT().ChatID(sid, chid).Return(chat, nil)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().ChatID(user, chid).Return(chat, nil)
 
 	chatHandler := chatHttp.ChatHandlerType{
 		ChUsecase: mock,
@@ -438,6 +498,17 @@ func TestChatHandler_ChatIDSuccess(t *testing.T) {
 }
 
 func TestChatHandler_ChatIDFail(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
 	sid := "something-like-this"
 	var chid = 1
 
@@ -471,7 +542,8 @@ func TestChatHandler_ChatIDFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatUsecase(ctrl)
-	mock.EXPECT().ChatID(sid, chid).Return(chat, models.ErrInternalServerError)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().ChatID(user, chid).Return(chat, models.ErrInternalServerError)
 
 	chatHandler := chatHttp.ChatHandlerType{
 		ChUsecase: mock,
@@ -488,13 +560,7 @@ func TestChatHandler_ChatIDFail(t *testing.T) {
 func TestChatHandler_GochatFail(t *testing.T) {
 	sid := "something-like-this"
 
-	user := models.UserFeed{
-		Name:       "Misha",
-		LinkImages: nil,
-		Job:        "Fullstack",
-		Education:  "BMSTU",
-		AboutMe:    "",
-	}
+	user := models.User{}
 
 	cookie := &http.Cookie{
 		Name:    "session_id",
@@ -512,7 +578,7 @@ func TestChatHandler_GochatFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatUsecase(ctrl)
-	mock.EXPECT().Gochat(sid).Return(user, models.ErrInternalServerError)
+	mock.EXPECT().User(sid).Return(user, models.ErrInternalServerError)
 
 	chatHandler := chatHttp.ChatHandlerType{
 		ChUsecase: mock,

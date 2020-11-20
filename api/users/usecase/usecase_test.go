@@ -19,7 +19,7 @@ func TestNewUserUsecase(t *testing.T) {
 
 	var u domain.UserRepository
 	uu := NewUserUsecase(u)
-	require.NotEmpty(t, uu)
+	require.Empty(t, uu)
 }
 
 func TestLoginFail(t *testing.T) {
@@ -154,79 +154,41 @@ func TestUserUsecase_SettingsSuccess(t *testing.T) {
 		AboutMe:    "",
 	}
 
-	userFeed := models.UserFeed{
-		ID:         0,
-		Name:       "Misha",
-		DateBirth:  0,
-		LinkImages: nil,
-		Job:        "Fullstack",
-		Education:  "BMSTU",
-		AboutMe:    "",
-	}
-
-	cookie := "Something-like-uuid"
+	uid := 1
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserRepository(ctrl)
-	firstCall := mock.EXPECT().CheckUserBySession(cookie).Return(user.Telephone)
-	mock.EXPECT().SelectUserFeed(user.Telephone).After(firstCall).Return(userFeed, nil)
-	mock.EXPECT().UpdateUser(user, userFeed.ID).Return(nil)
+	mock.EXPECT().UpdateUser(user, uid).Return(nil)
 
 	us := userUsecase{
 		userRepo: mock,
 	}
 
-	err := us.Settings(cookie, user)
+	err := us.Settings(uid, user)
 
 	require.NoError(t, err)
 	require.Equal(t, nil, err)
 }
 
 func TestUserUsecase_SettingsFail(t *testing.T) {
-	user := models.User{
-		ID:         0,
-		Name:       "Misha",
-		Telephone:  "909-277-47-21",
-		Password:   "password",
-		DateBirth:  20,
-		Sex:        "male",
-		LinkImages: nil,
-		Job:        "",
-		Education:  "BMSTU",
-		AboutMe:    "",
-	}
-
-	userFeed := models.UserFeed{
-		ID:         0,
-		Name:       "Misha",
-		DateBirth:  0,
-		LinkImages: nil,
-		Job:        "Fullstack",
-		Education:  "BMSTU",
-		AboutMe:    "",
-	}
-
-	cookie := "Something-like-uuid"
+	user := models.User{}
+	uid := 1
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserRepository(ctrl)
-	mock.EXPECT().CheckUserBySession(cookie).Times(2).Return(user.Telephone)
-	firstCall := mock.EXPECT().SelectUserFeed(user.Telephone).Return(userFeed, errors.New("Have not this user"))
-	secondCall := mock.EXPECT().SelectUserFeed(user.Telephone).After(firstCall).Return(userFeed, nil)
-	mock.EXPECT().UpdateUser(user, userFeed.ID).After(secondCall).Return(errors.New("Could not update"))
+	mock.EXPECT().UpdateUser(user, uid).Return(models.ErrInternalServerError)
 
 	us := userUsecase{
 		userRepo: mock,
 	}
 
-	for i := 0; i < 2; i++ {
-		err := us.Settings(cookie, user)
-		require.Equal(t, models.ErrInternalServerError, err)
-	}
+	err := us.Settings(uid, user)
+	require.Equal(t, models.ErrInternalServerError, err)
+
 }
 
 func TestMeSuccess(t *testing.T) {
@@ -285,8 +247,6 @@ func TestMeFail(t *testing.T) {
 }
 
 func TestFeed(t *testing.T) {
-	sid := "something-like-this"
-
 	user := models.User{
 		ID:         1,
 		Name:       "Andrey",
@@ -323,29 +283,23 @@ func TestFeed(t *testing.T) {
 
 	users = append(users, user1, user2)
 
-	telephone := "944-739-32-28"
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserRepository(ctrl)
-	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
-	mock.EXPECT().SelectUser(telephone).Times(1).Return(user, nil)
 	mock.EXPECT().SelectUsers(user).Times(1).Return(users, nil)
 
 	us := userUsecase{
 		userRepo: mock,
 	}
 
-	feed, err := us.Feed(sid)
+	feed, err := us.Feed(user)
 
 	require.NoError(t, err)
 	require.Equal(t, feed, users)
 }
 
 func TestFeedFail(t *testing.T) {
-	sid := "something-like-this"
-
 	user := models.User{}
 
 	var users []models.UserFeed
@@ -355,51 +309,39 @@ func TestFeedFail(t *testing.T) {
 
 	users = append(users, user1, user2)
 
-	telephone := "944-739-32-28"
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserRepository(ctrl)
-	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
-	mock.EXPECT().SelectUser(telephone).Times(1).Return(user, models.ErrInternalServerError)
+	mock.EXPECT().SelectUsers(user).Return(users, models.ErrNotFound)
 
 	us := userUsecase{
 		userRepo: mock,
 	}
 
-	_, err := us.Feed(sid)
+	_, err := us.Feed(user)
 
 	require.NotEqual(t, err, nil)
 }
 
 func TestFeedSelectFail(t *testing.T) {
-	sid := "something-like-this"
-
 	user := models.User{}
-
 	var users []models.UserFeed
 	user1 := models.UserFeed{}
-
 	user2 := models.UserFeed{}
-
 	users = append(users, user1, user2)
-
-	telephone := "944-739-32-28"
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserRepository(ctrl)
-	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
-	mock.EXPECT().SelectUser(telephone).Times(1).Return(user, nil)
 	mock.EXPECT().SelectUsers(user).Times(1).Return(users, models.ErrInternalServerError)
 
 	us := userUsecase{
 		userRepo: mock,
 	}
 
-	_, err := us.Feed(sid)
+	_, err := us.Feed(user)
 
 	require.NotEqual(t, err, nil)
 }

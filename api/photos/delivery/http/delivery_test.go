@@ -116,7 +116,7 @@ func TestPhotoHandler_AddPhotoHandlerFailDecode(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
-	require.Equal(t, 500, status)
+	require.Equal(t, 400, status)
 }
 
 func TestUserHandler_UploadAvatarHandlerFail(t *testing.T) {
@@ -139,5 +139,5 @@ func TestUserHandler_UploadAvatarHandlerFail(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
-	require.Equal(t, 500, status)
+	require.Equal(t, 400, status)
 }

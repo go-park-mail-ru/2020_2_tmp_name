@@ -73,14 +73,12 @@ func TestUserHandler_LoginHandlerSuccess(t *testing.T) {
 }
 
 func TestUserHandler_LoginHandlerFail(t *testing.T) {
-	var byteData = []byte(``)
-	var byteData2 = []byte(`{
+	var byteData = []byte(`{
 			"telephone" : "909-277-47-21",
 			"password" : "qwerty"
 		}`)
 
 	body := bytes.NewReader(byteData)
-	body_sec := bytes.NewReader(byteData2)
 
 	login := models.LoginData{
 		Telephone: "909-277-47-21",
@@ -91,20 +89,13 @@ func TestUserHandler_LoginHandlerFail(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req2, err := http.NewRequest("POST", "/login", body_sec)
-	if err != nil {
-		t.Fatal(err)
-	}
-	requests := make([]*http.Request, 0, 1)
-	requests = append(requests, req)
-	requests = append(requests, req2)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
 	gomock.InOrder(
-		mock.EXPECT().Login(login).Return("some uuid", errors.New("error uuid")),
+		mock.EXPECT().Login(login).Return("some uuid", models.ErrInternalServerError),
 	)
 
 	userHandler := userHttp.UserHandlerType{
@@ -113,15 +104,38 @@ func TestUserHandler_LoginHandlerFail(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(userHandler.LoginHandler)
-	for i := 0; i < 2; i++ {
-		handler.ServeHTTP(rr, requests[i])
-		status := rr.Code
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+	require.Equal(t, 500, status)
+}
 
-		require.NoError(t, err)
-		require.Equal(t, 500, status)
+func TestUserHandler_LoginHandlerFailDecode(t *testing.T) {
+	var byteData = []byte(``)
+
+	body := bytes.NewReader(byteData)
+
+	req, err := http.NewRequest("POST", "/login", body)
+	if err != nil {
+		t.Fatal(err)
 	}
 
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserUsecase(ctrl)
+	userHandler := userHttp.UserHandlerType{
+		UUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(userHandler.LoginHandler)
+
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 400, status)
 }
+
 func TestNewUserHandler(t *testing.T) {
 	router := mux.NewRouter()
 	ctrl := gomock.NewController(t)
@@ -201,7 +215,7 @@ func TestUserHandler_LogoutHandlerFail(t *testing.T) {
 		req.AddCookie(cookie)
 
 		require.NoError(t, err)
-		require.Equal(t, 500, status)
+		require.Equal(t, 400, status)
 	}
 }
 
@@ -274,23 +288,12 @@ func TestUserHandler_SignupHandlerFail(t *testing.T) {
 		"education":  "BMSTU",
 		"aboutMe":    ""
 	}`)
-	var ByteData = []byte(``)
 
-	body2 := bytes.NewReader(ByteData)
 	body := bytes.NewReader(byteData)
-	req, err := http.NewRequest("POST", "/signup", body2)
+	req, err := http.NewRequest("POST", "/signup", body)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	req2, err := http.NewRequest("POST", "/signup", body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	requests := make([]*http.Request, 0, 1)
-	requests = append(requests, req)
-	requests = append(requests, req2)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -304,13 +307,41 @@ func TestUserHandler_SignupHandlerFail(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(userHandler.SignupHandler)
-	for i := 0; i < 2; i++ {
-		handler.ServeHTTP(rr, requests[i])
-		status := rr.Code
 
-		require.NoError(t, err)
-		require.Equal(t, 500, status)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.NoError(t, err)
+	require.Equal(t, 500, status)
+
+}
+
+func TestUserHandler_SignupHandlerFailDecode(t *testing.T) {
+	var byteData = []byte(``)
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/signup", body)
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserUsecase(ctrl)
+
+	userHandler := userHttp.UserHandlerType{
+		UUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(userHandler.SignupHandler)
+
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.NoError(t, err)
+	require.Equal(t, 400, status)
 
 }
 
@@ -325,15 +356,10 @@ func TestUserHandler_SettingsHandlerSuccess(t *testing.T) {
 		Education:  "BMSTU",
 		AboutMe:    "",
 	}
+
+	uid := 1
 	var byteData = []byte(`{
-		"name":       "Misha",
-		"telephone":  "909-277-47-21",
-		"password":   "1234",
-		"sex":        "male",
-		"linkImages": null,
-		"job":        "Fullstack",
-		"education":  "BMSTU",
-		"aboutMe":    ""
+		"job":        "Backend"
 	}`)
 	sid := "something-like-this"
 	cookie := &http.Cookie{
@@ -353,7 +379,8 @@ func TestUserHandler_SettingsHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Settings(sid, user).Return(nil)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Settings(uid, user).Return(nil)
 
 	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
@@ -389,7 +416,7 @@ func TestUserHandler_SettingsHandlerFailDecode(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
-	require.Equal(t, 500, status)
+	require.Equal(t, 400, status)
 }
 
 func TestUserHandler_SettingsHandlerFail(t *testing.T) {
@@ -403,16 +430,12 @@ func TestUserHandler_SettingsHandlerFail(t *testing.T) {
 		Education:  "BMSTU",
 		AboutMe:    "",
 	}
+
 	var byteData = []byte(`{
-		"name":       "Misha",
-		"telephone":  "909-277-47-21",
-		"password":   "1234",
-		"sex":        "male",
-		"linkImages": null,
-		"job":        "Fullstack",
-		"education":  "BMSTU",
-		"aboutMe":    ""
+		"job":        "Backend"
 	}`)
+
+	uid := 1
 	sid := "something-like-this"
 	cookie := &http.Cookie{
 		Name:    "session_id",
@@ -431,7 +454,8 @@ func TestUserHandler_SettingsHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Settings(sid, user).Return(models.ErrInternalServerError)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Settings(uid, user).Return(models.ErrInternalServerError)
 
 	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
@@ -443,7 +467,6 @@ func TestUserHandler_SettingsHandlerFail(t *testing.T) {
 	status := rr.Code
 
 	require.Equal(t, 500, status)
-
 }
 
 func TestUserHandler_MeHandlerSuccess(t *testing.T) {
@@ -528,8 +551,16 @@ func TestUserHandler_MeHandlerFail(t *testing.T) {
 
 func TestUserHandler_FeedHandlerSuccess(t *testing.T) {
 	var users []models.UserFeed
-	user1 := models.UserFeed{
+	user := models.User{
 		Name:       "Misha",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	user1 := models.UserFeed{
+		Name:       "Dasha",
 		LinkImages: nil,
 		Job:        "Fullstack",
 		Education:  "BMSTU",
@@ -562,7 +593,8 @@ func TestUserHandler_FeedHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Feed(sid).Return(users, nil)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Feed(user).Return(users, nil)
 
 	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
@@ -577,6 +609,7 @@ func TestUserHandler_FeedHandlerSuccess(t *testing.T) {
 }
 
 func TestUserHandler_FeedHandlerFail(t *testing.T) {
+	var user models.User
 	var users []models.UserFeed
 	user1 := models.UserFeed{
 		Name:       "Misha",
@@ -612,7 +645,8 @@ func TestUserHandler_FeedHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Feed(sid).Return(users, models.ErrInternalServerError)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Feed(user).Return(users, models.ErrInternalServerError)
 
 	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,

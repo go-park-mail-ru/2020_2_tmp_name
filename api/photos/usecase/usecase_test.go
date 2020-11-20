@@ -18,7 +18,7 @@ func TestNewPhotoUsecase(t *testing.T) {
 
 	var p domain.PhotoRepository
 	pu := NewPhotoUsecase(p)
-	require.NotEmpty(t, pu)
+	require.Empty(t, pu)
 }
 
 func TestAddPhotoSuccess(t *testing.T) {
