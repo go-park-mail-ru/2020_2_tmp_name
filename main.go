@@ -96,7 +96,7 @@ func (app *application) initServer() {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 	AccessLogOut.LogrusLogger = contextLogger
 
-	router.Use(AccessLogOut.AccessLogMiddleware(router))
+	// router.Use(AccessLogOut.AccessLogMiddleware(router))
 
 	chr := _chatRepo.NewPostgresChatRepository(dbConn)
 	chu := _chatUcase.NewChatUsecase(chr)
