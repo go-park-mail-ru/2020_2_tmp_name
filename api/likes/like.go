@@ -20,7 +20,7 @@ type LikeRepository interface {
 	CheckChat(chat models.Chat) bool
 	InsertChat(chat models.Chat) error
 	Match(uid1, uid2 int) bool
-	InsertLike(uid1, uid2 int) error
-	InsertDislike(uid1, uid2 int) error
+	InsertLike(uid1, uid2 int) error    // Tested
+	InsertDislike(uid1, uid2 int) error // Tested
 	SelectImages(uid int) ([]string, error)
 }

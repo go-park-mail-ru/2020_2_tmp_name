@@ -105,6 +105,37 @@ func TestLikeUsecase_LikeFail(t *testing.T) {
 	require.Equal(t, models.ErrInternalServerError, err)
 }
 
+func TestLikeUsecase_LikeFaiInsert(t *testing.T) {
+	like := models.Like{
+		ID:   0,
+		Uid1: 1,
+		Uid2: 2,
+	}
+
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockLikeRepository(ctrl)
+	mock.EXPECT().InsertLike(user.ID, like.Uid2).Return(models.ErrInternalServerError)
+
+	ls := likeUsecase{
+		likeRepo: mock,
+	}
+
+	err := ls.Like(user, like)
+	require.Equal(t, models.ErrInternalServerError, err)
+}
+
 func TestLikeUsecase_DislikeSuccess(t *testing.T) {
 	user := models.User{
 		ID:         0,
@@ -168,4 +199,65 @@ func TestLikeUsecase_DislikeFail(t *testing.T) {
 	err := ls.Dislike(user, dislike)
 	require.Equal(t, models.ErrInternalServerError, err)
 
+}
+
+func TestLikeUsecase_UserSuccess(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	telephone := "(944) 546 98 24"
+	sid := "something-like-this"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockLikeRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Return(telephone)
+	mock.EXPECT().SelectUser(telephone).Return(user, nil)
+
+	chs := likeUsecase{
+		likeRepo: mock,
+	}
+
+	result, err := chs.User(sid)
+
+	require.NoError(t, err)
+	require.Equal(t, result, user)
+}
+
+func TestLikeUsecase_UserFail(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	telephone := "(944) 546 98 24"
+	sid := "something-like-this"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockLikeRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Return(telephone)
+	mock.EXPECT().SelectUser(telephone).Return(user, models.ErrNotFound)
+
+	chs := likeUsecase{
+		likeRepo: mock,
+	}
+
+	_, err := chs.User(sid)
+
+	require.Equal(t, err, models.ErrNotFound)
 }

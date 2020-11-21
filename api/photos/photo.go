@@ -16,6 +16,6 @@ type PhotoUsecase interface {
 
 type PhotoRepository interface {
 	SelectUserFeed(telephone string) (models.UserFeed, error)
-	SelectImages(uid int) ([]string, error)
-	InsertPhoto(path string, uid int) error
+	SelectImages(uid int) ([]string, error) // Tested
+	InsertPhoto(path string, uid int) error // Tested
 }

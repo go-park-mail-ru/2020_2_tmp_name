@@ -231,3 +231,81 @@ func TestCommentHandler_CommentHandlerFailDecode(t *testing.T) {
 
 	require.Equal(t, 400, status)
 }
+
+func TestCommentHandler_CommentHandlerFailUser(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	var byteData = []byte(`{
+		"user_id2":       10,
+		"timeDelivery" : "18:54",
+		"CommentText" : "How are you"
+	}`)
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/comment", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockCommentUsecase(ctrl)
+	mock.EXPECT().User(sid).Return(user, models.ErrNotFound)
+
+	commentHandler := commentHttp.CommentHandlerType{
+		CUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(commentHandler.CommentHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 404, status)
+}
+
+func TestCommentHandler_CommentHandlerFailCookie(t *testing.T) {
+	var byteData = []byte(`{
+		"user_id2":       10,
+		"timeDelivery" : "18:54",
+		"CommentText" : "How are you"
+	}`)
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/comment", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockCommentUsecase(ctrl)
+	commentHandler := commentHttp.CommentHandlerType{
+		CUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(commentHandler.CommentHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 401, status)
+}

@@ -143,6 +143,71 @@ func TestLikeHandler_LikeHandlerFailDecode(t *testing.T) {
 	require.Equal(t, 400, status)
 }
 
+func TestLikeHandler_LikeHandlerFailUser(t *testing.T) {
+	user := models.User{}
+	var byteData = []byte(`{
+		"user_id2":       10
+	}`)
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/like", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockLikeUsecase(ctrl)
+	mock.EXPECT().User(sid).Return(user, models.ErrNotFound)
+
+	likeHandler := likeHttp.LikeHandlerType{
+		LUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(likeHandler.LikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 404, status)
+}
+
+func TestLikeHandler_LikeHandlerFailCookie(t *testing.T) {
+	var byteData = []byte(`{
+		"user_id2":       10
+	}`)
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/like", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockLikeUsecase(ctrl)
+
+	likeHandler := likeHttp.LikeHandlerType{
+		LUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(likeHandler.LikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 401, status)
+}
+
 func TestLikeHandler_DislikeHandlerSuccess(t *testing.T) {
 	user := models.User{
 		Name:       "Misha",
@@ -268,4 +333,78 @@ func TestUserHandler_DisLikeHandlerFailDecode(t *testing.T) {
 	status := rr.Code
 
 	require.Equal(t, 400, status)
+}
+
+func TestUserHandler_DislikeHandlerFailUser(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	var byteData = []byte(`{
+		"user_id2":       10
+	}`)
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/dislike", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockLikeUsecase(ctrl)
+	mock.EXPECT().User(sid).Return(user, models.ErrNotFound)
+
+	likeHandler := likeHttp.LikeHandlerType{
+		LUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(likeHandler.DislikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 404, status)
+}
+
+func TestUserHandler_DislikeHandlerFailCookie(t *testing.T) {
+	var byteData = []byte(`{
+		"user_id2":       10
+	}`)
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/dislike", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockLikeUsecase(ctrl)
+
+	likeHandler := likeHttp.LikeHandlerType{
+		LUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(likeHandler.DislikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 401, status)
 }
