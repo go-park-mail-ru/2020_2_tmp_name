@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"database/sql/driver"
-	"math/rand"
 	"park_2020/2020_2_tmp_name/models"
 	"testing"
 
@@ -177,12 +176,12 @@ func TestPostgresChatRepository_SelectMessages(t *testing.T) {
 	testCases := []insertMessageTestCase{
 		{
 			messages: messages,
-			chatId:   messages[1+rand.Int()%len(messages)].ChatID,
+			chatId:   1,
 			err:      sql.ErrNoRows,
 		},
 		{
 			messages: messages,
-			chatId:   messages[1+rand.Int()%len(messages)].ChatID,
+			chatId:   1,
 			err:      nil,
 		},
 	}
