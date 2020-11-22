@@ -432,3 +432,373 @@ func TestPostgresUserRepository_SelectUser(t *testing.T) {
 		require.NoError(t, err, "unfulfilled expectations: %s\n%s", err, msg)
 	}
 }
+
+func TestPostgresUserRepository_SelectMe(t *testing.T) {
+	type insertUserTestCase struct {
+		telephone  string
+		outputUser models.UserMe
+		err        error
+	}
+
+	db, dbMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"id",
+		"name",
+		"telephone",
+		"date_birth",
+		"education",
+		"job",
+		"about_me",
+	}
+
+	query := `SELECT id, name, telephone, date_birth, job, education, about_me FROM users
+			  WHERE  telephone=$1;`
+
+	var telephone string
+	err = faker.FakeData(&telephone)
+	require.NoError(t, err)
+
+	var outputUser models.UserMe
+	err = faker.FakeData(&outputUser)
+	require.NoError(t, err)
+
+	// outputUser.Day = ""
+	// outputUser.Month = ""
+	// outputUser.Year = ""
+	// outputUser.DateBirth = 19
+	// outputUser.Telephone = telephone
+
+	testCases := []insertUserTestCase{
+		{
+			telephone:  "telephone",
+			outputUser: outputUser,
+			err:        sql.ErrNoRows,
+		},
+		{
+			telephone:  telephone,
+			outputUser: outputUser,
+			err:        nil,
+		},
+	}
+
+	for i, testCase := range testCases {
+		msg := fmt.Sprintf("case %d aaaaaaaaaaaa", i)
+		data := []driver.Value{
+			testCase.outputUser.ID,
+			testCase.outputUser.Name,
+			testCase.outputUser.Telephone,
+			testCase.outputUser.DateBirth,
+			testCase.outputUser.Education,
+			testCase.outputUser.Job,
+			testCase.outputUser.AboutMe,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			dbMock.ExpectQuery(query).WithArgs(outputUser.Telephone).WillReturnRows(rows)
+
+			subQuery := `SELECT path FROM photo WHERE user_id=$1;`
+			subColumns := []string{
+				"path",
+			}
+			subRows := sqlmock.NewRows(subColumns)
+			for _, img := range testCase.outputUser.LinkImages {
+				subRows.AddRow(img)
+			}
+			dbMock.ExpectQuery(subQuery).WithArgs(testCase.outputUser.ID).WillReturnRows(subRows)
+		} else {
+			dbMock.ExpectQuery(query).WithArgs(outputUser.Telephone).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresUserRepository(sqlxDB.DB)
+
+		user, err := repo.SelectUserMe(testCase.outputUser.Telephone)
+		require.Equal(t, testCase.err, err)
+		if err == nil {
+			require.Equal(t, testCase.outputUser, user)
+		}
+
+		err = dbMock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s\n%s", err, msg)
+	}
+}
+
+func TestPostgresUserRepository_SelectUserFeed(t *testing.T) {
+	type insertUserTestCase struct {
+		telephone  string
+		outputUser models.UserFeed
+		err        error
+	}
+
+	db, dbMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"id",
+		"name",
+		"date_birth",
+		"education",
+		"job",
+		"about_me",
+	}
+
+	query := `SELECT id, name, date_birth, education, job, about_me FROM users
+			  WHERE  telephone=$1;`
+
+	var telephone string
+	err = faker.FakeData(&telephone)
+	require.NoError(t, err)
+
+	var outputUser models.UserFeed
+	err = faker.FakeData(&outputUser)
+	require.NoError(t, err)
+
+	testCases := []insertUserTestCase{
+		{
+			telephone:  "telephone",
+			outputUser: outputUser,
+			err:        sql.ErrNoRows,
+		},
+		{
+			telephone:  telephone,
+			outputUser: outputUser,
+			err:        nil,
+		},
+	}
+
+	for i, testCase := range testCases {
+		msg := fmt.Sprintf("case %d aaaaaaaaaaaa", i)
+		data := []driver.Value{
+			testCase.outputUser.ID,
+			testCase.outputUser.Name,
+			testCase.outputUser.DateBirth,
+			testCase.outputUser.Education,
+			testCase.outputUser.Job,
+			testCase.outputUser.AboutMe,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			dbMock.ExpectQuery(query).WithArgs(telephone).WillReturnRows(rows)
+
+			subQuery := `SELECT path FROM photo WHERE user_id=$1;`
+			subColumns := []string{
+				"path",
+			}
+			subRows := sqlmock.NewRows(subColumns)
+			for _, img := range testCase.outputUser.LinkImages {
+				subRows.AddRow(img)
+			}
+			dbMock.ExpectQuery(subQuery).WithArgs(testCase.outputUser.ID).WillReturnRows(subRows)
+		} else {
+			dbMock.ExpectQuery(query).WithArgs(telephone).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresUserRepository(sqlxDB.DB)
+
+		user, err := repo.SelectUserFeed(telephone)
+		require.Equal(t, testCase.err, err)
+		if err == nil {
+			require.Equal(t, testCase.outputUser, user)
+		}
+
+		err = dbMock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s\n%s", err, msg)
+	}
+}
+
+func TestPostgresUserRepository_SelectUserByID(t *testing.T) {
+	type insertUserTestCase struct {
+		id         int
+		outputUser models.User
+		err        error
+	}
+
+	db, dbMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"id",
+		"name",
+		"telephone",
+		"password",
+		"date_birth",
+		"sex",
+		"education",
+		"job",
+		"about_me",
+	}
+
+	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
+			  WHERE  id=$1;`
+
+	var telephone string
+	err = faker.FakeData(&telephone)
+	require.NoError(t, err)
+
+	var outputUser models.User
+	err = faker.FakeData(&outputUser)
+	require.NoError(t, err)
+
+	outputUser.Day = ""
+	outputUser.Month = ""
+	outputUser.Year = ""
+	outputUser.DateBirth = 19
+	outputUser.Telephone = telephone
+
+	testCases := []insertUserTestCase{
+		{
+			id:         1,
+			outputUser: outputUser,
+			err:        sql.ErrNoRows,
+		},
+		{
+			id:         1,
+			outputUser: outputUser,
+			err:        nil,
+		},
+	}
+
+	for i, testCase := range testCases {
+		msg := fmt.Sprintf("case %d aaaaaaaaaaaa", i)
+		data := []driver.Value{
+			testCase.outputUser.ID,
+			testCase.outputUser.Name,
+			testCase.outputUser.Telephone,
+			testCase.outputUser.Password,
+			testCase.outputUser.DateBirth,
+			testCase.outputUser.Sex,
+			testCase.outputUser.Education,
+			testCase.outputUser.Job,
+			testCase.outputUser.AboutMe,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			dbMock.ExpectQuery(query).WithArgs(outputUser.ID).WillReturnRows(rows)
+
+			subQuery := `SELECT path FROM photo WHERE user_id=$1;`
+			subColumns := []string{
+				"path",
+			}
+			subRows := sqlmock.NewRows(subColumns)
+			for _, img := range testCase.outputUser.LinkImages {
+				subRows.AddRow(img)
+			}
+			dbMock.ExpectQuery(subQuery).WithArgs(testCase.outputUser.ID).WillReturnRows(subRows)
+		} else {
+			dbMock.ExpectQuery(query).WithArgs(outputUser.ID).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresUserRepository(sqlxDB.DB)
+
+		user, err := repo.SelectUserByID(testCase.outputUser.ID)
+		require.Equal(t, testCase.err, err)
+		if err == nil {
+			require.Equal(t, testCase.outputUser, user)
+		}
+
+		err = dbMock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s\n%s", err, msg)
+	}
+}
+
+func TestPostgresUserRepository_SelectUserFeedByID(t *testing.T) {
+	type insertUserTestCase struct {
+		id         int
+		outputUser models.UserFeed
+		err        error
+	}
+
+	db, dbMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"name",
+		"date_birth",
+		"job",
+		"education",
+		"about_me",
+	}
+
+	query := `SELECT name, date_birth, job, education, about_me FROM users
+			  WHERE id=$1;`
+
+	var telephone string
+	err = faker.FakeData(&telephone)
+	require.NoError(t, err)
+
+	var outputUser models.UserFeed
+	err = faker.FakeData(&outputUser)
+	require.NoError(t, err)
+
+	testCases := []insertUserTestCase{
+		{
+			id:         1,
+			outputUser: outputUser,
+			err:        sql.ErrNoRows,
+		},
+		{
+			id:         1,
+			outputUser: outputUser,
+			err:        nil,
+		},
+	}
+
+	for i, testCase := range testCases {
+		msg := fmt.Sprintf("case %d aaaaaaaaaaaa", i)
+		data := []driver.Value{
+			testCase.outputUser.Name,
+			testCase.outputUser.DateBirth,
+			testCase.outputUser.Job,
+			testCase.outputUser.Education,
+			testCase.outputUser.AboutMe,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			dbMock.ExpectQuery(query).WithArgs(outputUser.ID).WillReturnRows(rows)
+
+			subQuery := `SELECT path FROM photo WHERE user_id=$1;`
+			subColumns := []string{
+				"path",
+			}
+			subRows := sqlmock.NewRows(subColumns)
+			for _, img := range testCase.outputUser.LinkImages {
+				subRows.AddRow(img)
+			}
+			dbMock.ExpectQuery(subQuery).WithArgs(testCase.outputUser.ID).WillReturnRows(subRows)
+		} else {
+			dbMock.ExpectQuery(query).WithArgs(outputUser.ID).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresUserRepository(sqlxDB.DB)
+
+		user, err := repo.SelectUserFeedByID(testCase.outputUser.ID)
+		require.Equal(t, testCase.err, err)
+		if err == nil {
+			require.Equal(t, testCase.outputUser, user)
+		}
+
+		err = dbMock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s\n%s", err, msg)
+	}
+}

@@ -17,10 +17,10 @@ type ChatUsecase interface {
 }
 
 type ChatRepository interface {
-	SelectUserFeed(telephone string) (models.UserFeed, error)
-	SelectUserFeedByID(uid int) (models.UserFeed, error)
-	SelectUser(telephone string) (models.User, error) // Tested
-	SelectImages(uid int) ([]string, error)           // Tested
+	SelectUserFeed(telephone string) (models.UserFeed, error) // Tested
+	SelectUserFeedByID(uid int) (models.UserFeed, error)      // Tested
+	SelectUser(telephone string) (models.User, error)         // Tested
+	SelectImages(uid int) ([]string, error)                   // Tested
 	CheckChat(chat models.Chat) bool
 	InsertChat(chat models.Chat) error                // Tested
 	InsertMessage(text string, chatID, uid int) error // Tested
