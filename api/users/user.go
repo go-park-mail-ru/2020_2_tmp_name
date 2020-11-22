@@ -20,12 +20,12 @@ type UserUsecase interface {
 
 type UserRepository interface {
 	CheckUser(telephone string) bool
-	InsertUser(user models.User) error                // Tested
-	SelectUser(telephone string) (models.User, error) // Tested
-	SelectUserMe(telephone string) (models.UserMe, error)
+	InsertUser(user models.User) error                        // Tested
+	SelectUser(telephone string) (models.User, error)         // Tested
+	SelectUserMe(telephone string) (models.UserMe, error)     // Tested
 	SelectUserFeed(telephone string) (models.UserFeed, error) // Tested
-	SelectUserByID(uid int) (models.User, error)
-	SelectUserFeedByID(uid int) (models.UserFeed, error)
+	SelectUserByID(uid int) (models.User, error)              // Tested
+	SelectUserFeedByID(uid int) (models.UserFeed, error)      // Tested
 	Match(uid1, uid2 int) bool
 	SelectUsers(user models.User) ([]models.UserFeed, error)
 	UpdateUser(user models.User, uid int) error // Tested
