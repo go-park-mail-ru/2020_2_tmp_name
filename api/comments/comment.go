@@ -15,8 +15,8 @@ type CommentUsecase interface {
 
 type CommentRepository interface {
 	CheckUserBySession(sid string) string
-	SelectUser(telephone string) (models.User, error) // Tested
-	SelectUserFeed(telephone string) (models.UserFeed, error)
+	SelectUser(telephone string) (models.User, error)         // Tested
+	SelectUserFeed(telephone string) (models.UserFeed, error) // Tested
 	SelectUserFeedByID(uid int) (models.UserFeed, error)
 	InsertComment(comment models.Comment, uid int) error // Tested
 	SelectComments(userId int) (models.CommentsById, error)

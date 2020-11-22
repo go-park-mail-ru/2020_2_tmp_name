@@ -14,13 +14,13 @@ type LikeUsecase interface {
 }
 
 type LikeRepository interface {
-	SelectUserFeed(telephone string) (models.UserFeed, error)
-	SelectUser(telephone string) (models.User, error)
+	SelectUserFeed(telephone string) (models.UserFeed, error) // Tested
+	SelectUser(telephone string) (models.User, error)         // Tested
 	CheckUserBySession(sid string) string
 	CheckChat(chat models.Chat) bool
 	InsertChat(chat models.Chat) error
 	Match(uid1, uid2 int) bool
-	InsertLike(uid1, uid2 int) error    // Tested
-	InsertDislike(uid1, uid2 int) error // Tested
-	SelectImages(uid int) ([]string, error)
+	InsertLike(uid1, uid2 int) error        // Tested
+	InsertDislike(uid1, uid2 int) error     // Tested
+	SelectImages(uid int) ([]string, error) // Tested
 }

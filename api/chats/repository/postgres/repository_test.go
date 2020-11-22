@@ -272,7 +272,7 @@ func TestPostgresChatRepository_SelectMessage(t *testing.T) {
 	}
 }
 
-func TestPostgresPhotoRepository_SelectImages(t *testing.T) {
+func TestPostgresChatRepository_SelectImages(t *testing.T) {
 	type insertPhotoTestCase struct {
 		uid  int
 		path []string
@@ -338,7 +338,7 @@ func TestPostgresPhotoRepository_SelectImages(t *testing.T) {
 	}
 }
 
-func TestPostgresUserRepository_SelectUser(t *testing.T) {
+func TestPostgresChatRepository_SelectUser(t *testing.T) {
 	type insertUserTestCase struct {
 		telephone  string
 		outputUser models.User
@@ -428,6 +428,94 @@ func TestPostgresUserRepository_SelectUser(t *testing.T) {
 		repo := NewPostgresChatRepository(sqlxDB.DB)
 
 		user, err := repo.SelectUser(testCase.outputUser.Telephone)
+		require.Equal(t, testCase.err, err)
+		if err == nil {
+			require.Equal(t, testCase.outputUser, user)
+		}
+
+		err = dbMock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s\n%s", err, msg)
+	}
+}
+
+func TestPostgresChatRepository_SelectUserFeed(t *testing.T) {
+	type insertUserTestCase struct {
+		telephone  string
+		outputUser models.UserFeed
+		err        error
+	}
+
+	db, dbMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"id",
+		"name",
+		"date_birth",
+		"education",
+		"job",
+		"about_me",
+	}
+
+	query := `SELECT id, name, date_birth, education, job, about_me FROM users
+			  WHERE  telephone=$1;`
+
+	var telephone string
+	err = faker.FakeData(&telephone)
+	require.NoError(t, err)
+
+	var outputUser models.UserFeed
+	err = faker.FakeData(&outputUser)
+	require.NoError(t, err)
+
+	testCases := []insertUserTestCase{
+		{
+			telephone:  "telephone",
+			outputUser: outputUser,
+			err:        sql.ErrNoRows,
+		},
+		{
+			telephone:  telephone,
+			outputUser: outputUser,
+			err:        nil,
+		},
+	}
+
+	for i, testCase := range testCases {
+		msg := fmt.Sprintf("case %d aaaaaaaaaaaa", i)
+		data := []driver.Value{
+			testCase.outputUser.ID,
+			testCase.outputUser.Name,
+			testCase.outputUser.DateBirth,
+			testCase.outputUser.Education,
+			testCase.outputUser.Job,
+			testCase.outputUser.AboutMe,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			dbMock.ExpectQuery(query).WithArgs(telephone).WillReturnRows(rows)
+
+			subQuery := `SELECT path FROM photo WHERE user_id=$1;`
+			subColumns := []string{
+				"path",
+			}
+			subRows := sqlmock.NewRows(subColumns)
+			for _, img := range testCase.outputUser.LinkImages {
+				subRows.AddRow(img)
+			}
+			dbMock.ExpectQuery(subQuery).WithArgs(testCase.outputUser.ID).WillReturnRows(subRows)
+		} else {
+			dbMock.ExpectQuery(query).WithArgs(telephone).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresChatRepository(sqlxDB.DB)
+
+		user, err := repo.SelectUserFeed(telephone)
 		require.Equal(t, testCase.err, err)
 		if err == nil {
 			require.Equal(t, testCase.outputUser, user)

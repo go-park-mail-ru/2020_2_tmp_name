@@ -17,7 +17,7 @@ type ChatUsecase interface {
 }
 
 type ChatRepository interface {
-	SelectUserFeed(telephone string) (models.UserFeed, error)
+	SelectUserFeed(telephone string) (models.UserFeed, error) // Tested
 	SelectUserFeedByID(uid int) (models.UserFeed, error)
 	SelectUser(telephone string) (models.User, error) // Tested
 	SelectImages(uid int) ([]string, error)           // Tested
