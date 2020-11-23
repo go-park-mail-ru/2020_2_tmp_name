@@ -41,6 +41,14 @@ func (ch *chatUsecase) Msg(user models.User, message models.Msg) error {
 	return nil
 }
 
+func (ch *chatUsecase) Sessions(uid int) ([]string, error) {
+	sessions, err := ch.chatRepo.SelectSessions(uid)
+	if err != nil {
+		return sessions, models.ErrNotFound
+	}
+	return sessions, nil
+}
+
 func (ch *chatUsecase) Chats(user models.User) (models.ChatModel, error) {
 	var chatModel models.ChatModel
 	chats, err := ch.chatRepo.SelectChatsByID(user.ID)
@@ -60,6 +68,14 @@ func (ch *chatUsecase) ChatID(user models.User, chid int) (models.ChatData, erro
 	}
 
 	return chat, nil
+}
+
+func (ch *chatUsecase) Partner(user models.User, chid int) (models.UserFeed, error) {
+	partner, err := ch.chatRepo.SelectPartner(user.ID, chid)
+	if err != nil {
+		return partner, models.ErrNotFound
+	}
+	return partner, nil
 }
 
 func (ch *chatUsecase) User(cookie string) (models.User, error) {
