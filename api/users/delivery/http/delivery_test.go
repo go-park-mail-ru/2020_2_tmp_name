@@ -944,3 +944,29 @@ func TestUserHandler_UserIDHandlerFailAtoi(t *testing.T) {
 
 	require.Equal(t, 400, status)
 }
+
+func TestUserHandler_TelephoneHandlerSuccess(t *testing.T) {
+	telephone := "telephone"
+
+	req, err := http.NewRequest("GET", "/api/v1/telephone/telephone", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserUsecase(ctrl)
+	mock.EXPECT().Telephone(telephone).Return(true)
+
+	userHandler := userHttp.UserHandlerType{
+		UUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(userHandler.TelephoneHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 200, status)
+}
