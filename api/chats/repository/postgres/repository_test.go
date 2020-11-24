@@ -247,7 +247,7 @@ func TestPostgresChatRepository_SelectMessage(t *testing.T) {
 
 	for _, testCase := range testCases {
 		if testCase.err != nil {
-			mock.ExpectQuery(query).WithArgs(testCase.messages.UserID, testCase.messages.ChatID).WillReturnError(testCase.err)
+			mock.ExpectQuery(query).WithArgs(testCase.messages.ChatID).WillReturnError(testCase.err)
 		} else {
 			data := []driver.Value{
 				testCase.messages.Message,
@@ -255,7 +255,7 @@ func TestPostgresChatRepository_SelectMessage(t *testing.T) {
 				testCase.messages.UserID,
 			}
 			rows := sqlmock.NewRows(columns).AddRow(data...)
-			mock.ExpectQuery(query).WithArgs(testCase.messages.UserID, testCase.messages.ChatID).WillReturnRows(rows)
+			mock.ExpectQuery(query).WithArgs(testCase.messages.ChatID).WillReturnRows(rows)
 		}
 
 		repo := NewPostgresChatRepository(sqlxDB.DB)
