@@ -33,6 +33,5 @@ type ChatRepository interface {
 	SelectUserByChat(uid, chid int) (models.UserFeed, error)
 	SelectUserByID(uid int) (models.User, error)
 	SelectSessions(uid int) ([]string, error)
-	SelectPartner(uid, chid int) (models.UserFeed, error)
 	CheckUserBySession(sid string) string
 }

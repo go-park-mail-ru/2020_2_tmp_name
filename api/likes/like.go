@@ -10,16 +10,21 @@ import (
 type LikeUsecase interface {
 	Like(user models.User, like models.Like) error
 	Dislike(user models.User, dislike models.Dislike) error
+	MatchUser(user models.User, like models.Like) (models.Chat, bool, error)
+	Partner(user models.User, chid int) (models.UserFeed, error)
 	User(cookie string) (models.User, error)
 }
 
 type LikeRepository interface {
 	SelectUserFeed(telephone string) (models.UserFeed, error) // Tested
 	SelectUser(telephone string) (models.User, error)         // Tested
+	SelectUserFeedByID(uid int) (models.UserFeed, error)
+	SelectChatID(uid1, uid2 int) (int, error)
 	CheckUserBySession(sid string) string
 	CheckChat(chat models.Chat) bool
 	InsertChat(chat models.Chat) error
 	Match(uid1, uid2 int) bool
+	SelectUserByChat(uid, chid int) (models.UserFeed, error)
 	InsertLike(uid1, uid2 int) error        // Tested
 	InsertDislike(uid1, uid2 int) error     // Tested
 	SelectImages(uid int) ([]string, error) // Tested

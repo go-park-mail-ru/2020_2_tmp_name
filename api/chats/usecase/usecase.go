@@ -71,7 +71,7 @@ func (ch *chatUsecase) ChatID(user models.User, chid int) (models.ChatData, erro
 }
 
 func (ch *chatUsecase) Partner(user models.User, chid int) (models.UserFeed, error) {
-	partner, err := ch.chatRepo.SelectPartner(user.ID, chid)
+	partner, err := ch.chatRepo.SelectUserByChat(user.ID, chid)
 	if err != nil {
 		return partner, models.ErrNotFound
 	}

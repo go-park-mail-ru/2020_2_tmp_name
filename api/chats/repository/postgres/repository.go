@@ -179,14 +179,6 @@ func (p *postgresChatRepository) SelectChatByID(uid, chid int) (models.ChatData,
 	return chat, err
 }
 
-func (p *postgresChatRepository) SelectPartner(uid, chid int) (models.UserFeed, error) {
-	user, err := p.SelectUserByChat(uid, chid)
-	if err != nil {
-		return user, err
-	}
-	return user, nil
-}
-
 func (p *postgresChatRepository) SelectUserByChat(uid, chid int) (models.UserFeed, error) {
 	var user models.UserFeed
 	var id1, id2, id int
