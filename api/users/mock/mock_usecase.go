@@ -120,6 +120,20 @@ func (mr *MockUserUsecaseMockRecorder) Signup(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Signup", reflect.TypeOf((*MockUserUsecase)(nil).Signup), arg0)
 }
 
+// Telephone mocks base method
+func (m *MockUserUsecase) Telephone(arg0 string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Telephone", arg0)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Telephone indicates an expected call of Telephone
+func (mr *MockUserUsecaseMockRecorder) Telephone(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Telephone", reflect.TypeOf((*MockUserUsecase)(nil).Telephone), arg0)
+}
+
 // User mocks base method
 func (m *MockUserUsecase) User(arg0 string) (models.User, error) {
 	m.ctrl.T.Helper()
