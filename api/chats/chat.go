@@ -13,6 +13,8 @@ type ChatUsecase interface {
 	Msg(user models.User, message models.Msg) error
 	Chats(user models.User) (models.ChatModel, error)
 	ChatID(user models.User, chid int) (models.ChatData, error)
+	Partner(user models.User, chid int) (models.UserFeed, error)
+	Sessions(uid int) ([]string, error)
 	User(cookie string) (models.User, error)
 }
 
@@ -29,5 +31,7 @@ type ChatRepository interface {
 	SelectChatsByID(uid int) ([]models.ChatData, error)
 	SelectChatByID(uid, chid int) (models.ChatData, error)
 	SelectUserByChat(uid, chid int) (models.UserFeed, error)
+	SelectUserByID(uid int) (models.User, error)
+	SelectSessions(uid int) ([]string, error)
 	CheckUserBySession(sid string) string
 }

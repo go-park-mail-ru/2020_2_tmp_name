@@ -25,20 +25,11 @@ func (h Hub) run() {
 	for {
 		select {
 		case client := <-h.Register:
-			h.Clients[client] = true
+			h.Clients[client.Session] = client
 		case client := <-h.Unregister:
-			if _, ok := h.Clients[client]; ok {
-				delete(h.Clients, client)
+			if _, ok := h.Clients[client.Session]; ok {
+				delete(h.Clients, client.Session)
 				close(client.Send)
-			}
-		case message := <-h.Broadcast:
-			for client := range h.Clients {
-				select {
-				case client.Send <- message:
-				default:
-					close(client.Send)
-					delete(h.Clients, client)
-				}
 			}
 		}
 	}
@@ -57,7 +48,7 @@ func NewChatHandler(r *mux.Router, chs domain.ChatUsecase) {
 	r.HandleFunc("/api/v1/chats", handler.ChatsHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/chats/{chat_id}", handler.ChatIDHandler).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v1/gochat", handler.GochatHandler).Methods(http.MethodGet, http.MethodPost)
+	r.HandleFunc("/api/v1/gochat", handler.GochatHandler).Methods(http.MethodGet)
 }
 
 func JSONError(message string) []byte {
@@ -235,45 +226,16 @@ func (ch *ChatHandlerType) GochatHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	client := &Client{ID: user.ID, Hub: &ch.Hub, Conn: conn, Send: make(chan []byte, 256)}
-	for {
-		_, message, err := client.Conn.ReadMessage()
-		_, ok := err.(*websocket.CloseError)
+	client := &Client{ID: user.ID, Session: r.Cookies()[0].Value, Hub: &ch.Hub, Conn: conn, Send: make(chan []byte, 256)}
+	client.Hub.Register <- client
 
-		if err != nil && !ok {
-			logrus.Error(err)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write(JSONError(err.Error()))
-			return
-
-		} else if (err != nil && ok) || err == nil {
-			var msg models.Msg
-			err = json.Unmarshal(message, &msg)
-			if err != nil {
-				logrus.Error(err)
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write(JSONError(err.Error()))
-				return
-			}
-
-			err = ch.ChUsecase.Msg(user, msg)
-			if err != nil {
-				w.WriteHeader(models.GetStatusCode(err))
-				w.Write(JSONError(err.Error()))
-				return
-			}
-
-		}
-		client.Hub.Register <- client
-	}
-
-	// go client.writePump()
-	// go client.readPump()
+	go client.writePump(ch, user)
+	go client.readPump(ch, user)
 
 }
 
 // readPump pumps messages from the websocket connection to the hub.
-func (c *Client) readPump() {
+func (c *Client) readPump(ch *ChatHandlerType, user models.User) {
 	defer func() {
 		c.Hub.Unregister <- c
 		c.Conn.Close()
@@ -284,6 +246,7 @@ func (c *Client) readPump() {
 	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, message, err := c.Conn.ReadMessage()
+
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
@@ -291,12 +254,49 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.Hub.Broadcast <- message
+
+		var msg models.Msg
+		err = json.Unmarshal(message, &msg)
+		if err != nil {
+			logrus.Error(err)
+			return
+		}
+
+		err = ch.ChUsecase.Msg(user, msg)
+		if err != nil {
+			logrus.Error(err)
+			return
+		}
+
+		var chatData models.ChatData
+		chatData.ID = msg.ChatID
+		chatData.Partner, err = ch.ChUsecase.Partner(user, msg.ChatID)
+		if err != nil {
+			logrus.Error(err)
+			return
+		}
+		chatData.Messages = append(chatData.Messages, msg)
+
+		data, err := json.Marshal(chatData)
+		if err != nil {
+			logrus.Error(err)
+			return
+		}
+
+		sessions, err := ch.ChUsecase.Sessions(chatData.Partner.ID)
+		clients := ch.Hub.Clients
+		for _, session := range sessions {
+			client, ok := clients[session]
+			if ok {
+				client.Send <- data
+			}
+		}
+
 	}
 }
 
 // writePump pumps messages from the hub to the websocket connection.
-func (c *Client) writePump() {
+func (c *Client) writePump(ch *ChatHandlerType, user models.User) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()

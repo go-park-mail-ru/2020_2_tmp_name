@@ -16,6 +16,7 @@ type UserUsecase interface {
 	Feed(user models.User) ([]models.UserFeed, error)
 	UserID(uid int) (models.UserFeed, error)
 	User(cookie string) (models.User, error)
+	Telephone(telephone string) bool
 }
 
 type UserRepository interface {

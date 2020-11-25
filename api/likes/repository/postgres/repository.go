@@ -46,6 +46,13 @@ func (p *postgresLikeRepository) SelectUser(telephone string) (models.User, erro
 	return u, err
 }
 
+func (p *postgresLikeRepository) SelectChatID(uid1, uid2 int) (int, error) {
+	var chid int
+	row := p.Conn.QueryRow(`SELECT id FROM chat WHERE user_id1=$1 AND user_id2=$2;`, uid1, uid2)
+	err := row.Scan(&chid)
+	return chid, err
+}
+
 func (p *postgresLikeRepository) CheckChat(chat models.Chat) bool {
 	var id1, id2 int
 	row := p.Conn.QueryRow(`SELECT user_id1, user_id2 FROM chat 
@@ -66,6 +73,41 @@ func (p *postgresLikeRepository) Match(uid1, uid2 int) bool {
 							WHERE user_id1 = $1 AND user_id2 = $2;`, uid2, uid1)
 	err := row.Scan(&id1, &id2)
 	return err == nil
+}
+
+func (p *postgresLikeRepository) SelectUserByChat(uid, chid int) (models.UserFeed, error) {
+	var user models.UserFeed
+	var id1, id2, id int
+
+	row := p.Conn.QueryRow(`SELECT user_id1, user_id2 FROM chat WHERE id=$1;`, chid)
+
+	err := row.Scan(&id1, &id2)
+	if err != nil {
+		return user, err
+	}
+
+	if id1 != uid {
+		id = id1
+	} else {
+		id = id2
+	}
+
+	user, err = p.SelectUserFeedByID(id)
+	return user, err
+}
+
+func (p *postgresLikeRepository) SelectUserFeedByID(uid int) (models.UserFeed, error) {
+	var u models.UserFeed
+	row := p.Conn.QueryRow(`SELECT name, date_birth, job, education, about_me FROM users
+						WHERE  id=$1;`, uid)
+	err := row.Scan(&u.Name, &u.DateBirth, &u.Job, &u.Education, &u.AboutMe)
+	if err != nil {
+		return u, err
+	}
+	u.ID = uid
+
+	u.LinkImages, err = p.SelectImages(u.ID)
+	return u, err
 }
 
 func (p *postgresLikeRepository) InsertLike(uid1, uid2 int) error {

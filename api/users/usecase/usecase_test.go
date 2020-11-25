@@ -463,3 +463,21 @@ func TestUserUsecase_UserIDFail(t *testing.T) {
 
 	require.Equal(t, err, models.ErrNotFound)
 }
+
+func TestUserUsecase_TelephoneSuccess(t *testing.T) {
+	telephone := "telephone"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().CheckUser(telephone).Return(true)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	result := us.Telephone(telephone)
+
+	require.Equal(t, result, true)
+}

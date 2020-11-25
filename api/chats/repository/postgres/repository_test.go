@@ -167,7 +167,7 @@ func TestPostgresChatRepository_SelectMessages(t *testing.T) {
 		"user_id",
 	}
 
-	query := `SELECT text, time_delivery, user_id FROM message WHERE chat_id=$1 order by id asc limit 10;`
+	query := `SELECT m.text, m.time_delivery, m.user_id FROM (SELECT * FROM message WHERE chat_id=$1 ORDER BY id DESC limit 10) AS m ORDER BY m.id ASC;`
 
 	var messages []models.Msg
 	err = faker.FakeData(&messages)
@@ -232,7 +232,7 @@ func TestPostgresChatRepository_SelectMessage(t *testing.T) {
 		"user_id",
 	}
 
-	query := `SELECT text, time_delivery, user_id FROM message WHERE user_id=$1 AND chat_id=$2 order by id desc limit 1;`
+	query := `SELECT text, time_delivery, user_id FROM message WHERE chat_id=$1 order by id desc limit 1;`
 
 	var messages models.Msg
 	err = faker.FakeData(&messages)
@@ -247,7 +247,7 @@ func TestPostgresChatRepository_SelectMessage(t *testing.T) {
 
 	for _, testCase := range testCases {
 		if testCase.err != nil {
-			mock.ExpectQuery(query).WithArgs(testCase.messages.UserID, testCase.messages.ChatID).WillReturnError(testCase.err)
+			mock.ExpectQuery(query).WithArgs(testCase.messages.ChatID).WillReturnError(testCase.err)
 		} else {
 			data := []driver.Value{
 				testCase.messages.Message,
@@ -255,7 +255,7 @@ func TestPostgresChatRepository_SelectMessage(t *testing.T) {
 				testCase.messages.UserID,
 			}
 			rows := sqlmock.NewRows(columns).AddRow(data...)
-			mock.ExpectQuery(query).WithArgs(testCase.messages.UserID, testCase.messages.ChatID).WillReturnRows(rows)
+			mock.ExpectQuery(query).WithArgs(testCase.messages.ChatID).WillReturnRows(rows)
 		}
 
 		repo := NewPostgresChatRepository(sqlxDB.DB)

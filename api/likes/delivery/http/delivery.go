@@ -61,6 +61,29 @@ func (l *LikeHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	chat, match, err := l.LUsecase.MatchUser(user, like)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	if match {
+		var chatData models.ChatData
+		chatData.ID = chat.ID
+		chatData.Partner, err = l.LUsecase.Partner(user, chat.ID)
+		body, err := json.Marshal(chatData)
+		if err != nil {
+			logrus.Error(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(JSONError(err.Error()))
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(body)
+	}
+
 	body, err := json.Marshal(like)
 	if err != nil {
 		logrus.Error(err)

@@ -103,3 +103,7 @@ func (u *userUsecase) User(cookie string) (models.User, error) {
 	}
 	return user, nil
 }
+
+func (u *userUsecase) Telephone(telephone string) bool {
+	return u.userRepo.CheckUser(telephone)
+}

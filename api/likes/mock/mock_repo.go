@@ -117,6 +117,21 @@ func (mr *MockLikeRepositoryMockRecorder) Match(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Match", reflect.TypeOf((*MockLikeRepository)(nil).Match), arg0, arg1)
 }
 
+// SelectChatID mocks base method
+func (m *MockLikeRepository) SelectChatID(arg0, arg1 int) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SelectChatID", arg0, arg1)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SelectChatID indicates an expected call of SelectChatID
+func (mr *MockLikeRepositoryMockRecorder) SelectChatID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectChatID", reflect.TypeOf((*MockLikeRepository)(nil).SelectChatID), arg0, arg1)
+}
+
 // SelectImages mocks base method
 func (m *MockLikeRepository) SelectImages(arg0 int) ([]string, error) {
 	m.ctrl.T.Helper()
@@ -147,6 +162,21 @@ func (mr *MockLikeRepositoryMockRecorder) SelectUser(arg0 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectUser", reflect.TypeOf((*MockLikeRepository)(nil).SelectUser), arg0)
 }
 
+// SelectUserByChat mocks base method
+func (m *MockLikeRepository) SelectUserByChat(arg0, arg1 int) (models.UserFeed, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SelectUserByChat", arg0, arg1)
+	ret0, _ := ret[0].(models.UserFeed)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SelectUserByChat indicates an expected call of SelectUserByChat
+func (mr *MockLikeRepositoryMockRecorder) SelectUserByChat(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectUserByChat", reflect.TypeOf((*MockLikeRepository)(nil).SelectUserByChat), arg0, arg1)
+}
+
 // SelectUserFeed mocks base method
 func (m *MockLikeRepository) SelectUserFeed(arg0 string) (models.UserFeed, error) {
 	m.ctrl.T.Helper()
@@ -160,4 +190,19 @@ func (m *MockLikeRepository) SelectUserFeed(arg0 string) (models.UserFeed, error
 func (mr *MockLikeRepositoryMockRecorder) SelectUserFeed(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectUserFeed", reflect.TypeOf((*MockLikeRepository)(nil).SelectUserFeed), arg0)
+}
+
+// SelectUserFeedByID mocks base method
+func (m *MockLikeRepository) SelectUserFeedByID(arg0 int) (models.UserFeed, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SelectUserFeedByID", arg0)
+	ret0, _ := ret[0].(models.UserFeed)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SelectUserFeedByID indicates an expected call of SelectUserFeedByID
+func (mr *MockLikeRepositoryMockRecorder) SelectUserFeedByID(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectUserFeedByID", reflect.TypeOf((*MockLikeRepository)(nil).SelectUserFeedByID), arg0)
 }

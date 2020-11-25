@@ -28,24 +28,23 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	ID   int
-	Hub  *Hub
-	Conn *websocket.Conn
-	Send chan []byte
+	ID      int
+	Session string
+	Hub     *Hub
+	Conn    *websocket.Conn
+	Send    chan []byte
 }
 
 type Hub struct {
-	Clients    map[*Client]bool
-	Broadcast  chan []byte
+	Clients    map[string]*Client
 	Register   chan *Client
 	Unregister chan *Client
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		Broadcast:  make(chan []byte),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
-		Clients:    make(map[*Client]bool),
+		Clients:    make(map[string]*Client),
 	}
 }
