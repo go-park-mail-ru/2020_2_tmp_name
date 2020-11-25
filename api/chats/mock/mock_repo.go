@@ -164,21 +164,6 @@ func (mr *MockChatRepositoryMockRecorder) SelectMessages(arg0 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectMessages", reflect.TypeOf((*MockChatRepository)(nil).SelectMessages), arg0)
 }
 
-// SelectPartner mocks base method
-func (m *MockChatRepository) SelectPartner(arg0, arg1 int) (models.UserFeed, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SelectPartner", arg0, arg1)
-	ret0, _ := ret[0].(models.UserFeed)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SelectPartner indicates an expected call of SelectPartner
-func (mr *MockChatRepositoryMockRecorder) SelectPartner(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectPartner", reflect.TypeOf((*MockChatRepository)(nil).SelectPartner), arg0, arg1)
-}
-
 // SelectSessions mocks base method
 func (m *MockChatRepository) SelectSessions(arg0 int) ([]string, error) {
 	m.ctrl.T.Helper()

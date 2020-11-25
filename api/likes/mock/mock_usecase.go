@@ -61,6 +61,37 @@ func (mr *MockLikeUsecaseMockRecorder) Like(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Like", reflect.TypeOf((*MockLikeUsecase)(nil).Like), arg0, arg1)
 }
 
+// MatchUser mocks base method
+func (m *MockLikeUsecase) MatchUser(arg0 models.User, arg1 models.Like) (models.Chat, bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MatchUser", arg0, arg1)
+	ret0, _ := ret[0].(models.Chat)
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// MatchUser indicates an expected call of MatchUser
+func (mr *MockLikeUsecaseMockRecorder) MatchUser(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MatchUser", reflect.TypeOf((*MockLikeUsecase)(nil).MatchUser), arg0, arg1)
+}
+
+// Partner mocks base method
+func (m *MockLikeUsecase) Partner(arg0 models.User, arg1 int) (models.UserFeed, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Partner", arg0, arg1)
+	ret0, _ := ret[0].(models.UserFeed)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Partner indicates an expected call of Partner
+func (mr *MockLikeUsecaseMockRecorder) Partner(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Partner", reflect.TypeOf((*MockLikeUsecase)(nil).Partner), arg0, arg1)
+}
+
 // User mocks base method
 func (m *MockLikeUsecase) User(arg0 string) (models.User, error) {
 	m.ctrl.T.Helper()
