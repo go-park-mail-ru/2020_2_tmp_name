@@ -31,7 +31,7 @@ func NewUserHandler(r *mux.Router, us domain.UserUsecase) {
 	r.HandleFunc("/api/v1/me", handler.MeHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/feed", handler.FeedHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/user/{user_id}", handler.UserIDHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/telephone/{telephone}", handler.TelephoneHandler).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/telephone", handler.TelephoneHandler).Methods(http.MethodPost)
 }
 
 func (u *UserHandlerType) HealthHandler(w http.ResponseWriter, r *http.Request) {
@@ -275,8 +275,16 @@ func (u *UserHandlerType) UserIDHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (u *UserHandlerType) TelephoneHandler(w http.ResponseWriter, r *http.Request) {
-	telephone := strings.TrimPrefix(r.URL.Path, "/api/v1/telephone/")
-	hasUser := u.UUsecase.Telephone(telephone)
+	phoneData := models.Phone{}
+	err := json.NewDecoder(r.Body).Decode(&phoneData)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	hasUser := u.UUsecase.Telephone(phoneData.Telephone)
 
 	body, err := json.Marshal(hasUser)
 	if err != nil {

@@ -85,6 +85,10 @@ type Message struct {
 	UserID       int       `json:"-"`
 }
 
+type Phone struct {
+	Telephone string `json:"telephone"`
+}
+
 type Error struct {
 	Message string `json:"message"`
 }
