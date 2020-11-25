@@ -67,7 +67,7 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (p *PhotoHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(1024 * 1024)
+	r.ParseMultipartForm(10 * 1024 * 1024)
 	file, _, err := r.FormFile("photo")
 	if err != nil {
 		logrus.Error(err)
@@ -114,7 +114,14 @@ func (p *PhotoHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	io.Copy(f, file)
+	_, err = io.Copy(f, file)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
