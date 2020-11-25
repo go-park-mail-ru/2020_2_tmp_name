@@ -16,6 +16,9 @@ type ChatUsecase interface {
 	Partner(user models.User, chid int) (models.UserFeed, error)
 	Sessions(uid int) ([]string, error)
 	User(cookie string) (models.User, error)
+	Like(user models.User, like models.Like) error
+	Dislike(user models.User, dislike models.Dislike) error
+	MatchUser(user models.User, like models.Like) (models.Chat, bool, error)
 }
 
 type ChatRepository interface {
@@ -34,4 +37,8 @@ type ChatRepository interface {
 	SelectUserByID(uid int) (models.User, error)
 	SelectSessions(uid int) ([]string, error)
 	CheckUserBySession(sid string) string
+	SelectChatID(uid1, uid2 int) (int, error)
+	Match(uid1, uid2 int) bool
+	InsertLike(uid1, uid2 int) error    // Tested
+	InsertDislike(uid1, uid2 int) error // Tested
 }

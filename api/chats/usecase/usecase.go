@@ -86,3 +86,40 @@ func (ch *chatUsecase) User(cookie string) (models.User, error) {
 	}
 	return user, nil
 }
+
+func (ch *chatUsecase) Like(user models.User, like models.Like) error {
+	err := ch.chatRepo.InsertLike(user.ID, like.Uid2)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	return nil
+}
+
+func (ch *chatUsecase) MatchUser(user models.User, like models.Like) (models.Chat, bool, error) {
+	var chat models.Chat
+	if ch.chatRepo.Match(user.ID, like.Uid2) {
+		chat.Uid1 = user.ID
+		chat.Uid2 = like.Uid2
+		if !ch.chatRepo.CheckChat(chat) {
+			err := ch.chatRepo.InsertChat(chat)
+			if err != nil {
+				return chat, false, models.ErrInternalServerError
+			}
+			chat.ID, err = ch.chatRepo.SelectChatID(user.ID, like.Uid2)
+			if err != nil {
+				return chat, false, models.ErrNotFound
+			}
+			return chat, true, nil
+		}
+		return chat, false, nil
+	}
+	return chat, false, nil
+}
+
+func (ch *chatUsecase) Dislike(user models.User, dislike models.Dislike) error {
+	err := ch.chatRepo.InsertDislike(user.ID, dislike.Uid2)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	return nil
+}

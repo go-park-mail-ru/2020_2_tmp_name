@@ -941,3 +941,387 @@ func TestChatHandler_GochatFailCookie(t *testing.T) {
 
 	require.Equal(t, 401, status)
 }
+
+func TestChatHandler_LikeHandlerSuccess(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	like := models.Like{
+		Uid2: 10,
+	}
+	var byteData = []byte(`{
+		"user_id2":       10
+	}`)
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/like", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatUsecase(ctrl)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Like(user, like).Return(nil)
+
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(chatHandler.LikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 200, status)
+
+}
+
+func TestChatHandler_LikeHandlerFail(t *testing.T) {
+	user := models.User{}
+	like := models.Like{
+		Uid2: 10,
+	}
+	var byteData = []byte(`{
+		"user_id2":       10
+	}`)
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/like", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatUsecase(ctrl)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Like(user, like).Return(models.ErrInternalServerError)
+
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(chatHandler.LikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 500, status)
+}
+
+func TestChatHandler_LikeHandlerFailDecode(t *testing.T) {
+	var byteData = []byte(``)
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/like", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatUsecase(ctrl)
+
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(chatHandler.LikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 400, status)
+}
+
+func TestChatHandler_LikeHandlerFailUser(t *testing.T) {
+	user := models.User{}
+	var byteData = []byte(`{
+		"user_id2":       10
+	}`)
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/like", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatUsecase(ctrl)
+	mock.EXPECT().User(sid).Return(user, models.ErrNotFound)
+
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(chatHandler.LikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 404, status)
+}
+
+func TestChatHandler_LikeHandlerFailCookie(t *testing.T) {
+	var byteData = []byte(`{
+		"user_id2":       10
+	}`)
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/like", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatUsecase(ctrl)
+
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(chatHandler.LikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 401, status)
+}
+
+func TestChatHandler_DislikeHandlerSuccess(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	dislike := models.Dislike{
+		Uid2: 10,
+	}
+	var byteData = []byte(`{
+		"user_id2":       10
+	}`)
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/dislike", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatUsecase(ctrl)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Dislike(user, dislike).Return(nil)
+
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(chatHandler.DislikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 200, status)
+
+}
+
+func TestChatHandler_DislikeHandlerFail(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+	dislike := models.Dislike{
+		Uid2: 10,
+	}
+	var byteData = []byte(`{
+		"user_id2":       10
+	}`)
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/dislike", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatUsecase(ctrl)
+	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().Dislike(user, dislike).Return(models.ErrInternalServerError)
+
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(chatHandler.DislikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 500, status)
+}
+
+func TestChatHandler_DisLikeHandlerFailDecode(t *testing.T) {
+	var byteData = []byte(``)
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/dislike", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatUsecase(ctrl)
+
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(chatHandler.DislikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 400, status)
+}
+
+func TestChatHandler_DislikeHandlerFailUser(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	var byteData = []byte(`{
+		"user_id2":       10
+	}`)
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/dislike", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatUsecase(ctrl)
+	mock.EXPECT().User(sid).Return(user, models.ErrNotFound)
+
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(chatHandler.DislikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 404, status)
+}
+
+func TestChatHandler_DislikeHandlerFailCookie(t *testing.T) {
+	var byteData = []byte(`{
+		"user_id2":       10
+	}`)
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/dislike", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatUsecase(ctrl)
+
+	chatHandler := chatHttp.ChatHandlerType{
+		ChUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(chatHandler.DislikeHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 401, status)
+}

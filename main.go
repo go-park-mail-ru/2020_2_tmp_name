@@ -24,10 +24,6 @@ import (
 	_commentRepo "park_2020/2020_2_tmp_name/api/comments/repository/postgres"
 	_commentUcase "park_2020/2020_2_tmp_name/api/comments/usecase"
 
-	_likeDelivery "park_2020/2020_2_tmp_name/api/likes/delivery/http"
-	_likeRepo "park_2020/2020_2_tmp_name/api/likes/repository/postgres"
-	_likeUcase "park_2020/2020_2_tmp_name/api/likes/usecase"
-
 	_photoDelivery "park_2020/2020_2_tmp_name/api/photos/delivery/http"
 	_photoRepo "park_2020/2020_2_tmp_name/api/photos/repository/postgres"
 	_photoUcase "park_2020/2020_2_tmp_name/api/photos/usecase"
@@ -105,10 +101,6 @@ func (app *application) initServer() {
 	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
 	cu := _commentUcase.NewCommentUsecase(cr)
 	_commentDelivery.NewCommentHandler(router, cu)
-
-	lr := _likeRepo.NewPostgresLikeRepository(dbConn)
-	lu := _likeUcase.NewLikeUsecase(lr)
-	_likeDelivery.NewLikeHandler(router, lu)
 
 	pr := _photoRepo.NewPostgresPhotoRepository(dbConn)
 	pu := _photoUcase.NewPhotoUsecase(pr)
