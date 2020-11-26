@@ -283,12 +283,10 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, client := range clients {
-
 			client.Send <- bodyMe
 		}
 
 		clientMe := &Client{ID: user.ID, Session: r.Cookies()[0].Value, Hub: &ch.Hub, Send: make(chan []byte, 256)}
-
 		clientMe.Send <- body
 	}
 
