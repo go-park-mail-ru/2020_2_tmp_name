@@ -247,6 +247,7 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 		var chatData models.ChatData
 		chatData.ID = chat.ID
 		chatData.Partner, err = ch.ChUsecase.Partner(user, chat.ID)
+
 		body, err := json.Marshal(chatData)
 		if err != nil {
 			logrus.Error(err)
@@ -255,8 +256,10 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		w.Write(body)
+		for _, client := range ch.Hub.Clients {
+			client.Send <- body
+		}
+
 	}
 
 	body, err := json.Marshal(like)
