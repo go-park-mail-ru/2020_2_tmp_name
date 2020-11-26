@@ -247,6 +247,14 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 		var chatData models.ChatData
 		chatData.ID = chat.ID
 		chatData.Partner, err = ch.ChUsecase.Partner(user, chat.ID)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write(JSONError(err.Error()))
+			return
+		}
+
+		msg := models.Msg{Message: ""}
+		chatData.Messages = []models.Msg{msg}
 
 		body, err := json.Marshal(chatData)
 		if err != nil {
@@ -256,23 +264,32 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		clients := make(map[string]*Client)
-		sessions, err := ch.ChUsecase.Sessions(chatData.Partner.ID)
-		if err != nil {
-			logrus.Error(err)
-			w.WriteHeader(http.StatusNoContent)
-			w.Write(JSONError(err.Error()))
-			return
+		clients := ch.Hub.Clients
+
+		clientsMe := make(map[string]*Client)
+		clientsPartner := make(map[string]*Client)
+
+		for _, client := range clients {
+			if client.ID == user.ID {
+				clientsMe[client.Session] = client
+			} else {
+				clientsPartner[client.Session] = client
+			}
 		}
 
-		for _, session := range sessions {
-			client := &Client{ID: user.ID, Session: session, Hub: &ch.Hub, Send: make(chan []byte, 256)}
-			clients[session] = client
+		for _, client := range clientsMe {
+			client.Send <- body
 		}
 
 		var myChatData models.ChatData
 		myChatData.ID = chatData.ID
 		myChatData.Partner, err = ch.ChUsecase.UserFeed(r.Cookies()[0].Value)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write(JSONError(err.Error()))
+			return
+		}
+		myChatData.Messages = []models.Msg{msg}
 
 		bodyMe, err := json.Marshal(myChatData)
 		if err != nil {
@@ -282,12 +299,9 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		for _, client := range clients {
+		for _, client := range clientsPartner {
 			client.Send <- bodyMe
 		}
-
-		clientMe := &Client{ID: user.ID, Session: r.Cookies()[0].Value, Hub: &ch.Hub, Send: make(chan []byte, 256)}
-		clientMe.Send <- body
 	}
 
 	body, err := json.Marshal(like)
