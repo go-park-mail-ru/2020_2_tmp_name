@@ -42,7 +42,25 @@ func (p *postgresUserRepository) InsertUser(user models.User) error {
 		user.Education,
 		user.AboutMe,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	var uid int
+	row := p.Conn.QueryRow(`SELECT id FROM users WHERE  telephone=$1;`, user.Telephone)
+	err = row.Scan(&uid)
+	if err != nil {
+		return err
+	}
+
+	for _, path := range user.LinkImages {
+		_, err = p.Conn.Exec(`INSERT INTO photo(path, user_id) VALUES ($1, $2);`, path, uid)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (p *postgresUserRepository) SelectUser(telephone string) (models.User, error) {

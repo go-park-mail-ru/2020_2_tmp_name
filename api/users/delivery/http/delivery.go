@@ -2,7 +2,9 @@ package http
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
+	"os"
 	domain "park_2020/2020_2_tmp_name/api/users"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
@@ -32,6 +34,7 @@ func NewUserHandler(r *mux.Router, us domain.UserUsecase) {
 	r.HandleFunc("/api/v1/feed", handler.FeedHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/user/{user_id}", handler.UserIDHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/telephone", handler.TelephoneHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/upload", handler.UploadAvatarHandler).Methods(http.MethodPost)
 }
 
 func (u *UserHandlerType) HealthHandler(w http.ResponseWriter, r *http.Request) {
@@ -110,6 +113,67 @@ func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 
 	session.Expires = time.Now().AddDate(0, 0, -1)
 	http.SetCookie(w, session)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseMultipartForm(10 * 1024 * 1024)
+	file, _, err := r.FormFile("photo")
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+	defer file.Close()
+	r.FormValue("photo")
+
+	str, err := os.Getwd()
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars"
+	os.Chdir(photoPath)
+
+	photoID, err := u.UUsecase.UploadAvatar()
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	f, err := os.OpenFile(photoID.String(), os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+	defer f.Close()
+
+	os.Chdir(str)
+
+	body, err := json.Marshal(photoPath + photoID.String())
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	_, err = io.Copy(f, file)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
