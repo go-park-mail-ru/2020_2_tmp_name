@@ -256,10 +256,40 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		for _, client := range ch.Hub.Clients {
-			client.Send <- body
+		clients := make(map[string]*Client)
+		sessions, err := ch.ChUsecase.Sessions(chatData.Partner.ID)
+		if err != nil {
+			logrus.Error(err)
+			w.WriteHeader(http.StatusNoContent)
+			w.Write(JSONError(err.Error()))
+			return
 		}
 
+		for _, session := range sessions {
+			client := &Client{ID: user.ID, Session: session, Hub: &ch.Hub, Send: make(chan []byte, 256)}
+			clients[session] = client
+		}
+
+		var myChatData models.ChatData
+		myChatData.ID = chatData.ID
+		myChatData.Partner, err = ch.ChUsecase.UserFeed(r.Cookies()[0].Value)
+
+		bodyMe, err := json.Marshal(myChatData)
+		if err != nil {
+			logrus.Error(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(JSONError(err.Error()))
+			return
+		}
+
+		for _, client := range clients {
+
+			client.Send <- bodyMe
+		}
+
+		clientMe := &Client{ID: user.ID, Session: r.Cookies()[0].Value, Hub: &ch.Hub, Send: make(chan []byte, 256)}
+
+		clientMe.Send <- body
 	}
 
 	body, err := json.Marshal(like)

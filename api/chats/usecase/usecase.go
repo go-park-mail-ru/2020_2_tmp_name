@@ -87,6 +87,15 @@ func (ch *chatUsecase) User(cookie string) (models.User, error) {
 	return user, nil
 }
 
+func (ch *chatUsecase) UserFeed(cookie string) (models.UserFeed, error) {
+	telephone := ch.chatRepo.CheckUserBySession(cookie)
+	user, err := ch.chatRepo.SelectUserFeed(telephone)
+	if err != nil {
+		return user, models.ErrNotFound
+	}
+	return user, nil
+}
+
 func (ch *chatUsecase) Like(user models.User, like models.Like) error {
 	err := ch.chatRepo.InsertLike(user.ID, like.Uid2)
 	if err != nil {

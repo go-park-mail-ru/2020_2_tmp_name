@@ -193,3 +193,18 @@ func (mr *MockChatUsecaseMockRecorder) User(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockChatUsecase)(nil).User), arg0)
 }
+
+// UserFeed mocks base method
+func (m *MockChatUsecase) UserFeed(arg0 string) (models.UserFeed, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserFeed", arg0)
+	ret0, _ := ret[0].(models.UserFeed)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserFeed indicates an expected call of UserFeed
+func (mr *MockChatUsecaseMockRecorder) UserFeed(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserFeed", reflect.TypeOf((*MockChatUsecase)(nil).UserFeed), arg0)
+}

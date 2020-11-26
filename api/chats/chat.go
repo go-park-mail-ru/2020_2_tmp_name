@@ -16,6 +16,7 @@ type ChatUsecase interface {
 	Partner(user models.User, chid int) (models.UserFeed, error)
 	Sessions(uid int) ([]string, error)
 	User(cookie string) (models.User, error)
+	UserFeed(cookie string) (models.UserFeed, error)
 	Like(user models.User, like models.Like) error
 	Dislike(user models.User, dislike models.Dislike) error
 	MatchUser(user models.User, like models.Like) (models.Chat, bool, error)
