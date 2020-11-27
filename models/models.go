@@ -89,6 +89,10 @@ type Phone struct {
 	Telephone string `json:"telephone"`
 }
 
+type Image struct {
+	LinkImage string `json:"link_image"`
+}
+
 type Error struct {
 	Message string `json:"message"`
 }

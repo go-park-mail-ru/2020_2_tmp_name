@@ -2,6 +2,8 @@ package domain
 
 import (
 	"park_2020/2020_2_tmp_name/models"
+
+	"github.com/google/uuid"
 )
 
 //go:generate mockgen -destination=./mock/mock_usecase.go -package=mock park_2020/2020_2_tmp_name/api/photos PhotoUsecase
@@ -9,10 +11,16 @@ import (
 
 type PhotoUsecase interface {
 	AddPhoto(photo models.Photo) error
+	RemovePhoto(path string, uid int) error
+	UploadAvatar() (uuid.UUID, error)
+	User(cookie string) (models.User, error)
 }
 
 type PhotoRepository interface {
 	SelectUserFeed(telephone string) (models.UserFeed, error) // Tested
 	SelectImages(uid int) ([]string, error)                   // Tested
 	InsertPhoto(path string, uid int) error                   // Tested
+	DeletePhoto(path string, uid int) error
+	CheckUserBySession(sid string) string
+	SelectUser(telephone string) (models.User, error)
 }

@@ -6,6 +6,7 @@ package mock
 
 import (
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 	models "park_2020/2020_2_tmp_name/models"
 	reflect "reflect"
 )
@@ -45,4 +46,48 @@ func (m *MockPhotoUsecase) AddPhoto(arg0 models.Photo) error {
 func (mr *MockPhotoUsecaseMockRecorder) AddPhoto(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPhoto", reflect.TypeOf((*MockPhotoUsecase)(nil).AddPhoto), arg0)
+}
+
+// RemovePhoto mocks base method
+func (m *MockPhotoUsecase) RemovePhoto(arg0 string, arg1 int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemovePhoto", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemovePhoto indicates an expected call of RemovePhoto
+func (mr *MockPhotoUsecaseMockRecorder) RemovePhoto(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePhoto", reflect.TypeOf((*MockPhotoUsecase)(nil).RemovePhoto), arg0, arg1)
+}
+
+// UploadAvatar mocks base method
+func (m *MockPhotoUsecase) UploadAvatar() (uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UploadAvatar")
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UploadAvatar indicates an expected call of UploadAvatar
+func (mr *MockPhotoUsecaseMockRecorder) UploadAvatar() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadAvatar", reflect.TypeOf((*MockPhotoUsecase)(nil).UploadAvatar))
+}
+
+// User mocks base method
+func (m *MockPhotoUsecase) User(arg0 string) (models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "User", arg0)
+	ret0, _ := ret[0].(models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// User indicates an expected call of User
+func (mr *MockPhotoUsecaseMockRecorder) User(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockPhotoUsecase)(nil).User), arg0)
 }

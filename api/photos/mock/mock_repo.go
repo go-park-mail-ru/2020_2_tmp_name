@@ -33,6 +33,34 @@ func (m *MockPhotoRepository) EXPECT() *MockPhotoRepositoryMockRecorder {
 	return m.recorder
 }
 
+// CheckUserBySession mocks base method
+func (m *MockPhotoRepository) CheckUserBySession(arg0 string) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckUserBySession", arg0)
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// CheckUserBySession indicates an expected call of CheckUserBySession
+func (mr *MockPhotoRepositoryMockRecorder) CheckUserBySession(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckUserBySession", reflect.TypeOf((*MockPhotoRepository)(nil).CheckUserBySession), arg0)
+}
+
+// DeletePhoto mocks base method
+func (m *MockPhotoRepository) DeletePhoto(arg0 string, arg1 int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePhoto", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeletePhoto indicates an expected call of DeletePhoto
+func (mr *MockPhotoRepositoryMockRecorder) DeletePhoto(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePhoto", reflect.TypeOf((*MockPhotoRepository)(nil).DeletePhoto), arg0, arg1)
+}
+
 // InsertPhoto mocks base method
 func (m *MockPhotoRepository) InsertPhoto(arg0 string, arg1 int) error {
 	m.ctrl.T.Helper()
@@ -60,6 +88,21 @@ func (m *MockPhotoRepository) SelectImages(arg0 int) ([]string, error) {
 func (mr *MockPhotoRepositoryMockRecorder) SelectImages(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectImages", reflect.TypeOf((*MockPhotoRepository)(nil).SelectImages), arg0)
+}
+
+// SelectUser mocks base method
+func (m *MockPhotoRepository) SelectUser(arg0 string) (models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SelectUser", arg0)
+	ret0, _ := ret[0].(models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SelectUser indicates an expected call of SelectUser
+func (mr *MockPhotoRepositoryMockRecorder) SelectUser(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectUser", reflect.TypeOf((*MockPhotoRepository)(nil).SelectUser), arg0)
 }
 
 // SelectUserFeed mocks base method
