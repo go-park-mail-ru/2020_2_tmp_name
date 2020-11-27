@@ -119,6 +119,7 @@ func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 10*1024*1024)
 	err := r.ParseMultipartForm(10 * 1024 * 1024)
 	if err != nil {
 		logrus.Error(err)

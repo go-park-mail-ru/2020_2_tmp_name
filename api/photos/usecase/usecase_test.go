@@ -115,19 +115,3 @@ func TestAddPhotoFailSelect(t *testing.T) {
 
 	require.NotEqual(t, err, nil)
 }
-
-func TestUploadAvatarSuccess(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := mock.NewMockPhotoRepository(ctrl)
-
-	ps := photoUsecase{
-		photoRepo: mock,
-	}
-
-	uid, err := ps.UploadAvatar()
-
-	require.NoError(t, err)
-	require.NotEqual(t, uid.String(), "")
-}

@@ -118,26 +118,3 @@ func TestPhotoHandler_AddPhotoHandlerFailDecode(t *testing.T) {
 
 	require.Equal(t, 400, status)
 }
-
-func TestUserHandler_UploadAvatarHandlerFail(t *testing.T) {
-	req, err := http.NewRequest("POST", "/upload", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := mock.NewMockPhotoUsecase(ctrl)
-
-	photoHandler := photoHttp.PhotoHandlerType{
-		PUsecase: mock,
-	}
-
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(photoHandler.UploadAvatarHandler)
-	handler.ServeHTTP(rr, req)
-	status := rr.Code
-
-	require.Equal(t, 400, status)
-}
