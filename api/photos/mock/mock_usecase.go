@@ -6,7 +6,6 @@ package mock
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	uuid "github.com/google/uuid"
 	models "park_2020/2020_2_tmp_name/models"
 	reflect "reflect"
 )
@@ -46,19 +45,4 @@ func (m *MockPhotoUsecase) AddPhoto(arg0 models.Photo) error {
 func (mr *MockPhotoUsecaseMockRecorder) AddPhoto(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPhoto", reflect.TypeOf((*MockPhotoUsecase)(nil).AddPhoto), arg0)
-}
-
-// UploadAvatar mocks base method
-func (m *MockPhotoUsecase) UploadAvatar() (uuid.UUID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UploadAvatar")
-	ret0, _ := ret[0].(uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UploadAvatar indicates an expected call of UploadAvatar
-func (mr *MockPhotoUsecaseMockRecorder) UploadAvatar() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadAvatar", reflect.TypeOf((*MockPhotoUsecase)(nil).UploadAvatar))
 }

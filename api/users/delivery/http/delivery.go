@@ -119,7 +119,14 @@ func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(10 * 1024 * 1024)
+	err := r.ParseMultipartForm(10 * 1024 * 1024)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
 	file, _, err := r.FormFile("photo")
 	if err != nil {
 		logrus.Error(err)
@@ -159,7 +166,7 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 
 	os.Chdir(str)
 
-	body, err := json.Marshal(photoPath + photoID.String())
+	body, err := json.Marshal("http://95.163.213.222:8080/static/avatars/" + photoID.String())
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
