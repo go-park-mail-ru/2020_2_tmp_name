@@ -7,6 +7,8 @@ import (
 	domain "park_2020/2020_2_tmp_name/api/photos"
 	"park_2020/2020_2_tmp_name/models"
 
+	"io"
+
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -91,6 +93,14 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 
 	os.Chdir(str)
 
+	_, err = io.Copy(f, file)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
 	user, err := p.PUsecase.User(r.Cookies()[0].Value)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
@@ -116,6 +126,7 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 		w.Write(JSONError(err.Error()))
 		return
 	}
+
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
