@@ -120,7 +120,7 @@ func (app *application) initServer() {
 	}
 
 	fmt.Println("Starting server at: 8080")
-	err := serv.ListenAndServeTLS("cert.pem", "key.pem")
+	err := serv.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}
