@@ -402,5 +402,27 @@ func (u *UserHandlerType) TelephoneHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (u *UserHandlerType) GetPremiumHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+	}
+
+	label := r.PostFormValue("label")
+	userId, err := strconv.Atoi(label)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+	}
+
+	err = u.UUsecase.GetPremium(userId)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+	}
+
 	w.WriteHeader(http.StatusOK)
 }

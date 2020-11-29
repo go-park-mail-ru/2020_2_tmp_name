@@ -2,6 +2,7 @@ package domain
 
 import (
 	"park_2020/2020_2_tmp_name/models"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -21,6 +22,7 @@ type UserUsecase interface {
 	UserID(uid int) (models.UserFeed, error)
 	User(cookie string) (models.User, error)
 	Telephone(telephone string) bool
+	GetPremium(uid int) error
 }
 
 type UserRepository interface {
@@ -39,4 +41,5 @@ type UserRepository interface {
 	DeleteSession(sid string) error
 	CheckUserBySession(sid string) string
 	SelectImages(uid int) ([]string, error) // Tested
+	InsertPremium(uid int, dateFrom time.Time, dateTo time.Time) error
 }
