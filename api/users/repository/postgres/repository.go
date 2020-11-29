@@ -137,6 +137,12 @@ func (p *postgresUserRepository) Match(uid1, uid2 int) bool {
 	return err == nil
 }
 
+func (p *postgresUserRepository) CheckPremium(uid int) bool {
+	var count int
+	p.Conn.QueryRow(`SELECT COUNT(user_id) FROM premium_accounts WHERE user_id=$1;`, uid).Scan(&count)
+	return count > 0
+}
+
 func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFeed, error) {
 	var users []models.UserFeed
 	rows, err := p.Conn.Query(`SELECT id, name, date_birth, education, job,  about_me FROM users WHERE sex != $1`, user.Sex)

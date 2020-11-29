@@ -15,6 +15,7 @@ type UserUsecase interface {
 	UploadAvatar() (uuid.UUID, error)
 	Signup(user models.User) error
 	Settings(uid int, user models.User) error
+	IsPremium(uid int) bool
 	Me(cookie string) (models.UserFeed, error)
 	Feed(user models.User) ([]models.UserFeed, error)
 	UserID(uid int) (models.UserFeed, error)
@@ -31,6 +32,7 @@ type UserRepository interface {
 	SelectUserByID(uid int) (models.User, error)              // Tested
 	SelectUserFeedByID(uid int) (models.UserFeed, error)      // Tested
 	Match(uid1, uid2 int) bool
+	CheckPremium(uid int) bool
 	SelectUsers(user models.User) ([]models.UserFeed, error)
 	UpdateUser(user models.User, uid int) error // Tested
 	InsertSession(sid, telephone string) error  // Tested

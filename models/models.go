@@ -93,6 +93,10 @@ type Image struct {
 	LinkImage string `json:"link_image"`
 }
 
+type Premium struct {
+	IsPremium bool `json:"is_premium"`
+}
+
 type Error struct {
 	Message string `json:"message"`
 }

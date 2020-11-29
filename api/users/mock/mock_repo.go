@@ -33,6 +33,20 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 	return m.recorder
 }
 
+// CheckPremium mocks base method
+func (m *MockUserRepository) CheckPremium(arg0 int) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckPremium", arg0)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CheckPremium indicates an expected call of CheckPremium
+func (mr *MockUserRepositoryMockRecorder) CheckPremium(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckPremium", reflect.TypeOf((*MockUserRepository)(nil).CheckPremium), arg0)
+}
+
 // CheckUser mocks base method
 func (m *MockUserRepository) CheckUser(arg0 string) bool {
 	m.ctrl.T.Helper()

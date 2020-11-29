@@ -33,6 +33,7 @@ func NewUserHandler(r *mux.Router, us domain.UserUsecase) {
 	r.HandleFunc("/api/v1/me", handler.MeHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/feed", handler.FeedHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/user/{user_id}", handler.UserIDHandler).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/is_premium", handler.IsPremiumHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/telephone", handler.TelephoneHandler).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/upload", handler.UploadAvatarHandler).Methods(http.MethodPost)
 }
@@ -247,6 +248,35 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	body, err := json.Marshal(userData)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (u *UserHandlerType) IsPremiumHandler(w http.ResponseWriter, r *http.Request) {
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
+	user, err := u.UUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	var premium models.Premium
+	premium.IsPremium = u.UUsecase.IsPremium(user.ID)
+
+	body, err := json.Marshal(premium)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)

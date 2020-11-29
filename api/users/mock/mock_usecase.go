@@ -49,6 +49,20 @@ func (mr *MockUserUsecaseMockRecorder) Feed(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Feed", reflect.TypeOf((*MockUserUsecase)(nil).Feed), arg0)
 }
 
+// IsPremium mocks base method
+func (m *MockUserUsecase) IsPremium(arg0 int) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsPremium", arg0)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsPremium indicates an expected call of IsPremium
+func (mr *MockUserUsecaseMockRecorder) IsPremium(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsPremium", reflect.TypeOf((*MockUserUsecase)(nil).IsPremium), arg0)
+}
+
 // Login mocks base method
 func (m *MockUserUsecase) Login(arg0 models.LoginData) (string, error) {
 	m.ctrl.T.Helper()

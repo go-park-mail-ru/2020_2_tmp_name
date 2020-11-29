@@ -272,7 +272,7 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 		for _, client := range clients {
 			if client.ID == user.ID {
 				clientsMe[client.Session] = client
-			} else {
+			} else if client.ID == chatData.Partner.ID {
 				clientsPartner[client.Session] = client
 			}
 		}
@@ -300,6 +300,7 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, client := range clientsPartner {
+
 			client.Send <- bodyMe
 		}
 	}

@@ -80,6 +80,10 @@ func (u *userUsecase) Settings(uid int, userData models.User) error {
 	return nil
 }
 
+func (u *userUsecase) IsPremium(uid int) bool {
+	return u.userRepo.CheckPremium(uid)
+}
+
 func (u *userUsecase) Me(cookie string) (models.UserFeed, error) {
 	telephone := u.userRepo.CheckUserBySession(cookie)
 	user, err := u.userRepo.SelectUserFeed(telephone)
