@@ -132,3 +132,12 @@ func (ch *chatUsecase) Dislike(user models.User, dislike models.Dislike) error {
 	}
 	return nil
 }
+
+func (ch *chatUsecase) SuperLike(user models.User, superLike models.SuperLike) error {
+	err := ch.chatRepo.InsertSuperLike(user.ID, superLike.Uid2)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+
+	return nil
+}

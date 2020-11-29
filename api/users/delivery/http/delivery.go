@@ -407,6 +407,8 @@ func (u *UserHandlerType) GetPremiumHandler(w http.ResponseWriter, r *http.Reque
 		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
+
+		return
 	}
 
 	label := r.PostFormValue("label")
@@ -415,6 +417,8 @@ func (u *UserHandlerType) GetPremiumHandler(w http.ResponseWriter, r *http.Reque
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
+
+		return
 	}
 
 	err = u.UUsecase.GetPremium(userId)
@@ -422,6 +426,8 @@ func (u *UserHandlerType) GetPremiumHandler(w http.ResponseWriter, r *http.Reque
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
+
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)

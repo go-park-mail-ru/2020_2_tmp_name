@@ -100,3 +100,9 @@ type Premium struct {
 type Error struct {
 	Message string `json:"message"`
 }
+
+type SuperLike struct {
+	ID   int `json:"-"`
+	Uid1 int `json:"-"`
+	Uid2 int `json:"user_id2"`
+}

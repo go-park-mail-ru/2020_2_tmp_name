@@ -281,3 +281,8 @@ func (p *postgresChatRepository) SelectChatID(uid1, uid2 int) (int, error) {
 	err := row.Scan(&chid)
 	return chid, err
 }
+
+func (p *postgresChatRepository) InsertSuperLike(uid1, uid2 int) error {
+	_, err := p.Conn.Exec(`INSERT INTO superlikes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
+	return err
+}

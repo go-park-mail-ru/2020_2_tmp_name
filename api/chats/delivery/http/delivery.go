@@ -49,6 +49,7 @@ func NewChatHandler(r *mux.Router, chs domain.ChatUsecase) {
 	r.HandleFunc("/api/v1/chats/{chat_id}", handler.ChatIDHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/like", handler.LikeHandler).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/dislike", handler.DislikeHandler).Methods(http.MethodPost)
+	r.HandleFunc("api/v1/superlike", handler.SuperLikeHandler).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v1/gochat", handler.GochatHandler).Methods(http.MethodGet)
 }
@@ -487,4 +488,47 @@ func (c *Client) writePump(ch *ChatHandlerType, user models.User) {
 			}
 		}
 	}
+}
+
+
+func (ch *ChatHandlerType) SuperLikeHandler(w http.ResponseWriter, r *http.Request) {
+	superLike := models.SuperLike{}
+	err := json.NewDecoder(r.Body).Decode(&superLike)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
+	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	err = ch.ChUsecase.SuperLike(user, superLike)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	body, err := json.Marshal(superLike)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }

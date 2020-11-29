@@ -20,6 +20,7 @@ type ChatUsecase interface {
 	Like(user models.User, like models.Like) error
 	Dislike(user models.User, dislike models.Dislike) error
 	MatchUser(user models.User, like models.Like) (models.Chat, bool, error)
+	SuperLike(user models.User, superLike models.SuperLike) error
 }
 
 type ChatRepository interface {
@@ -42,4 +43,5 @@ type ChatRepository interface {
 	Match(uid1, uid2 int) bool
 	InsertLike(uid1, uid2 int) error    // Tested
 	InsertDislike(uid1, uid2 int) error // Tested
+	InsertSuperLike(uid1, uid2 int) error
 }
