@@ -173,6 +173,20 @@ func (mr *MockChatRepositoryMockRecorder) InsertMessage(arg0, arg1, arg2 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertMessage", reflect.TypeOf((*MockChatRepository)(nil).InsertMessage), arg0, arg1, arg2)
 }
 
+// InsertSuperlike mocks base method
+func (m *MockChatRepository) InsertSuperlike(arg0, arg1 int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertSuperlike", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertSuperlike indicates an expected call of InsertSuperlike
+func (mr *MockChatRepositoryMockRecorder) InsertSuperlike(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertSuperlike", reflect.TypeOf((*MockChatRepository)(nil).InsertSuperlike), arg0, arg1)
+}
+
 // Match mocks base method
 func (m *MockChatRepository) Match(arg0, arg1 int) bool {
 	m.ctrl.T.Helper()

@@ -101,7 +101,7 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-type SuperLike struct {
+type Superlike struct {
 	ID   int `json:"-"`
 	Uid1 int `json:"-"`
 	Uid2 int `json:"user_id2"`

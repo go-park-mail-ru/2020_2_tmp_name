@@ -107,6 +107,7 @@ func (ch *chatUsecase) Like(user models.User, like models.Like) error {
 			return models.ErrInternalServerError
 		}
 	}
+
 	err := ch.chatRepo.InsertLike(user.ID, like.Uid2)
 	if err != nil {
 		return models.ErrInternalServerError
@@ -146,6 +147,7 @@ func (ch *chatUsecase) Dislike(user models.User, dislike models.Dislike) error {
 			return models.ErrInternalServerError
 		}
 	}
+
 	err := ch.chatRepo.InsertDislike(user.ID, dislike.Uid2)
 	if err != nil {
 		return models.ErrInternalServerError
@@ -153,10 +155,25 @@ func (ch *chatUsecase) Dislike(user models.User, dislike models.Dislike) error {
 	return nil
 }
 
-func (ch *chatUsecase) SuperLike(user models.User, superLike models.SuperLike) error {
-	err := ch.chatRepo.InsertSuperLike(user.ID, superLike.Uid2)
+func (ch *chatUsecase) Superlike(user models.User, superlike models.Superlike) error {
+	if ch.chatRepo.CheckDislike(user.ID, superlike.Uid2) {
+		err := ch.chatRepo.DeleteDislike(user.ID, superlike.Uid2)
+		if err != nil {
+			return models.ErrInternalServerError
+		}
+	}
+
+	err := ch.chatRepo.InsertSuperlike(user.ID, superlike.Uid2)
 	if err != nil {
 		return models.ErrInternalServerError
+	}
+
+	if !ch.chatRepo.CheckLike(user.ID, superlike.Uid2) {
+		err := ch.chatRepo.InsertLike(user.ID, superlike.Uid2)
+		if err != nil {
+			return models.ErrInternalServerError
+		}
+		return nil
 	}
 
 	return nil

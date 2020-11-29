@@ -49,7 +49,7 @@ func NewChatHandler(r *mux.Router, chs domain.ChatUsecase) {
 	r.HandleFunc("/api/v1/chats/{chat_id}", handler.ChatIDHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/like", handler.LikeHandler).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/dislike", handler.DislikeHandler).Methods(http.MethodPost)
-	r.HandleFunc("api/v1/superlike", handler.SuperLikeHandler).Methods(http.MethodPost)
+	r.HandleFunc("api/v1/superlike", handler.SuperlikeHandler).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v1/gochat", handler.GochatHandler).Methods(http.MethodGet)
 }
@@ -490,10 +490,9 @@ func (c *Client) writePump(ch *ChatHandlerType, user models.User) {
 	}
 }
 
-
-func (ch *ChatHandlerType) SuperLikeHandler(w http.ResponseWriter, r *http.Request) {
-	superLike := models.SuperLike{}
-	err := json.NewDecoder(r.Body).Decode(&superLike)
+func (ch *ChatHandlerType) SuperlikeHandler(w http.ResponseWriter, r *http.Request) {
+	superlike := models.Superlike{}
+	err := json.NewDecoder(r.Body).Decode(&superlike)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -514,14 +513,14 @@ func (ch *ChatHandlerType) SuperLikeHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = ch.ChUsecase.SuperLike(user, superLike)
+	err = ch.ChUsecase.Superlike(user, superlike)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
 	}
 
-	body, err := json.Marshal(superLike)
+	body, err := json.Marshal(superlike)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
