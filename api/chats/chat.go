@@ -44,4 +44,8 @@ type ChatRepository interface {
 	InsertLike(uid1, uid2 int) error    // Tested
 	InsertDislike(uid1, uid2 int) error // Tested
 	InsertSuperLike(uid1, uid2 int) error
+	DeleteLike(uid1, uid2 int) error
+	DeleteDislike(uid1, uid2 int) error
+	CheckLike(uid1, uid2 int) bool
+	CheckDislike(uid1, uid2 int) bool
 }
