@@ -47,6 +47,34 @@ func (mr *MockChatRepositoryMockRecorder) CheckChat(arg0 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckChat", reflect.TypeOf((*MockChatRepository)(nil).CheckChat), arg0)
 }
 
+// CheckDislike mocks base method
+func (m *MockChatRepository) CheckDislike(arg0, arg1 int) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckDislike", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CheckDislike indicates an expected call of CheckDislike
+func (mr *MockChatRepositoryMockRecorder) CheckDislike(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckDislike", reflect.TypeOf((*MockChatRepository)(nil).CheckDislike), arg0, arg1)
+}
+
+// CheckLike mocks base method
+func (m *MockChatRepository) CheckLike(arg0, arg1 int) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckLike", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CheckLike indicates an expected call of CheckLike
+func (mr *MockChatRepositoryMockRecorder) CheckLike(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckLike", reflect.TypeOf((*MockChatRepository)(nil).CheckLike), arg0, arg1)
+}
+
 // CheckUserBySession mocks base method
 func (m *MockChatRepository) CheckUserBySession(arg0 string) string {
 	m.ctrl.T.Helper()
@@ -59,6 +87,34 @@ func (m *MockChatRepository) CheckUserBySession(arg0 string) string {
 func (mr *MockChatRepositoryMockRecorder) CheckUserBySession(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckUserBySession", reflect.TypeOf((*MockChatRepository)(nil).CheckUserBySession), arg0)
+}
+
+// DeleteDislike mocks base method
+func (m *MockChatRepository) DeleteDislike(arg0, arg1 int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDislike", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteDislike indicates an expected call of DeleteDislike
+func (mr *MockChatRepositoryMockRecorder) DeleteDislike(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDislike", reflect.TypeOf((*MockChatRepository)(nil).DeleteDislike), arg0, arg1)
+}
+
+// DeleteLike mocks base method
+func (m *MockChatRepository) DeleteLike(arg0, arg1 int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteLike", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteLike indicates an expected call of DeleteLike
+func (mr *MockChatRepositoryMockRecorder) DeleteLike(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteLike", reflect.TypeOf((*MockChatRepository)(nil).DeleteLike), arg0, arg1)
 }
 
 // InsertChat mocks base method

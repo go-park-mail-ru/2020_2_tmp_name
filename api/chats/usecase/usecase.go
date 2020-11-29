@@ -97,6 +97,16 @@ func (ch *chatUsecase) UserFeed(cookie string) (models.UserFeed, error) {
 }
 
 func (ch *chatUsecase) Like(user models.User, like models.Like) error {
+	if ch.chatRepo.CheckLike(user.ID, like.Uid2) {
+		return nil
+	}
+
+	if ch.chatRepo.CheckDislike(user.ID, like.Uid2) {
+		err := ch.chatRepo.DeleteDislike(user.ID, like.Uid2)
+		if err != nil {
+			return models.ErrInternalServerError
+		}
+	}
 	err := ch.chatRepo.InsertLike(user.ID, like.Uid2)
 	if err != nil {
 		return models.ErrInternalServerError
@@ -126,6 +136,16 @@ func (ch *chatUsecase) MatchUser(user models.User, like models.Like) (models.Cha
 }
 
 func (ch *chatUsecase) Dislike(user models.User, dislike models.Dislike) error {
+	if ch.chatRepo.CheckDislike(user.ID, dislike.Uid2) {
+		return nil
+	}
+
+	if ch.chatRepo.CheckLike(user.ID, dislike.Uid2) {
+		err := ch.chatRepo.DeleteLike(user.ID, dislike.Uid2)
+		if err != nil {
+			return models.ErrInternalServerError
+		}
+	}
 	err := ch.chatRepo.InsertDislike(user.ID, dislike.Uid2)
 	if err != nil {
 		return models.ErrInternalServerError

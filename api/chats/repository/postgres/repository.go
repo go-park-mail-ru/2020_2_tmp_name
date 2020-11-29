@@ -275,6 +275,28 @@ func (p *postgresChatRepository) InsertDislike(uid1, uid2 int) error {
 	return err
 }
 
+func (p *postgresChatRepository) CheckLike(uid1, uid2 int) bool {
+	var count int
+	p.Conn.QueryRow(`SELECT value FROM likes WHERE user_id=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	return count > 0
+}
+
+func (p *postgresChatRepository) CheckDislike(uid1, uid2 int) bool {
+	var count int
+	p.Conn.QueryRow(`SELECT value FROM dislikes WHERE user_id=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	return count > 0
+}
+
+func (p *postgresChatRepository) DeleteLike(uid1, uid2 int) error {
+	_, err := p.Conn.Exec(`DELETE FROM likes WHERE user_id1=$1 AND user_id2=$2;`, uid1, uid2)
+	return err
+}
+
+func (p *postgresChatRepository) DeleteDislike(uid1, uid2 int) error {
+	_, err := p.Conn.Exec(`DELETE FROM dislikes WHERE user_id1=$1 AND user_id2=$2;`, uid1, uid2)
+	return err
+}
+
 func (p *postgresChatRepository) SelectChatID(uid1, uid2 int) (int, error) {
 	var chid int
 	row := p.Conn.QueryRow(`SELECT id FROM chat WHERE user_id1=$1 AND user_id2=$2;`, uid1, uid2)

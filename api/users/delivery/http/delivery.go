@@ -9,9 +9,7 @@ import (
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
-
 	"time"
-
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -402,5 +400,12 @@ func (u *UserHandlerType) TelephoneHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (u *UserHandlerType) GetPremiumHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+	}
+
 	w.WriteHeader(http.StatusOK)
 }

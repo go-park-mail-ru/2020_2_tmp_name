@@ -42,4 +42,8 @@ type ChatRepository interface {
 	Match(uid1, uid2 int) bool
 	InsertLike(uid1, uid2 int) error    // Tested
 	InsertDislike(uid1, uid2 int) error // Tested
+	DeleteLike(uid1, uid2 int) error
+	DeleteDislike(uid1, uid2 int) error
+	CheckLike(uid1, uid2 int) bool
+	CheckDislike(uid1, uid2 int) bool
 }
