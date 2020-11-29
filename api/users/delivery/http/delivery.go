@@ -167,7 +167,7 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 
 	os.Chdir(str)
 
-	body, err := json.Marshal("http://95.163.213.222:8080/static/avatars/" + photoID.String())
+	body, err := json.Marshal("https://mi-ami.ru/static/avatars/" + photoID.String())
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)

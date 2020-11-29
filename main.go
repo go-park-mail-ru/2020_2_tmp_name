@@ -69,7 +69,7 @@ func DBConnection(conf *models.Config) *sql.DB {
 
 func (app *application) initServer() {
 	headersOk := handlers.AllowedHeaders([]string{"Content-Type", "Content-Disposition"})
-	originsOk := handlers.AllowedOrigins([]string{"http://95.163.213.222:3000"})
+	originsOk := handlers.AllowedOrigins([]string{"https://mi-ami.ru"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE"})
 
 	dbConn := DBConnection(&conf)

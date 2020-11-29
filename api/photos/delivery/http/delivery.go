@@ -110,7 +110,7 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 
 	var photo models.Photo
 	photo.Telephone = user.Telephone
-	photo.Path = "http://95.163.213.222:8080/static/avatars/" + photoID.String()
+	photo.Path = "https://mi-ami.ru/static/avatars/" + photoID.String()
 
 	err = p.PUsecase.AddPhoto(photo)
 	if err != nil {
