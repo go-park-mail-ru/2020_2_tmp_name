@@ -17,9 +17,11 @@ require (
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/sirupsen/logrus v1.7.0
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/crypto v0.0.0-20201124201722-c8d3bf9c5392
-	golang.org/x/sys v0.0.0-20201126144705-a4b67b81d3d2 // indirect
+	golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9
+	golang.org/x/sys v0.0.0-20201119102817-f84b799fce68 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/grpc v1.33.2
+	google.golang.org/protobuf v1.25.0
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )
