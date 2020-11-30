@@ -3,6 +3,7 @@ package usecase
 import (
 	domain "park_2020/2020_2_tmp_name/api/users"
 	"park_2020/2020_2_tmp_name/models"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -49,6 +50,15 @@ func (u *userUsecase) Logout(session string) error {
 	return u.userRepo.DeleteSession(session)
 }
 
+func (u *userUsecase) UploadAvatar() (uuid.UUID, error) {
+	photoID, err := uuid.NewRandom()
+	if err != nil {
+		return photoID, models.ErrInternalServerError
+	}
+
+	return photoID, nil
+}
+
 func (u *userUsecase) Signup(user models.User) error {
 	var check bool
 	if check = u.userRepo.CheckUser(user.Telephone); check {
@@ -59,6 +69,7 @@ func (u *userUsecase) Signup(user models.User) error {
 	if err != nil {
 		return models.ErrInternalServerError
 	}
+
 	return nil
 }
 
@@ -68,6 +79,10 @@ func (u *userUsecase) Settings(uid int, userData models.User) error {
 		return models.ErrInternalServerError
 	}
 	return nil
+}
+
+func (u *userUsecase) IsPremium(uid int) bool {
+	return u.userRepo.CheckPremium(uid)
 }
 
 func (u *userUsecase) Me(cookie string) (models.UserFeed, error) {
@@ -106,4 +121,8 @@ func (u *userUsecase) User(cookie string) (models.User, error) {
 
 func (u *userUsecase) Telephone(telephone string) bool {
 	return u.userRepo.CheckUser(telephone)
+}
+
+func (u *userUsecase) GetPremium(uid int) error {
+	return u.userRepo.InsertPremium(uid, time.Now(), time.Now())
 }

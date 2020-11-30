@@ -47,6 +47,9 @@ func NewChatHandler(r *mux.Router, chs domain.ChatUsecase) {
 	r.HandleFunc("/api/v1/message", handler.MessageHandler).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/chats", handler.ChatsHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/chats/{chat_id}", handler.ChatIDHandler).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/like", handler.LikeHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/dislike", handler.DislikeHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/superlike", handler.SuperlikeHandler).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v1/gochat", handler.GochatHandler).Methods(http.MethodGet)
 }
@@ -204,6 +207,159 @@ func (ch *ChatHandlerType) ChatIDHandler(w http.ResponseWriter, r *http.Request)
 	w.Write(body)
 }
 
+func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
+	like := models.Like{}
+	err := json.NewDecoder(r.Body).Decode(&like)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
+	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	err = ch.ChUsecase.Like(user, like)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	chat, match, err := ch.ChUsecase.MatchUser(user, like)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	if match {
+		var chatData models.ChatData
+		chatData.ID = chat.ID
+		chatData.Partner, err = ch.ChUsecase.Partner(user, chat.ID)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write(JSONError(err.Error()))
+			return
+		}
+
+		msg := models.Msg{Message: ""}
+		chatData.Messages = []models.Msg{msg}
+
+		body, err := json.Marshal(chatData)
+		if err != nil {
+			logrus.Error(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(JSONError(err.Error()))
+			return
+		}
+
+		clients := ch.Hub.Clients
+
+		clientsMe := make(map[string]*Client)
+		clientsPartner := make(map[string]*Client)
+
+		for _, client := range clients {
+			if client.ID == user.ID {
+				clientsMe[client.Session] = client
+			} else if client.ID == chatData.Partner.ID {
+				clientsPartner[client.Session] = client
+			}
+		}
+
+		for _, client := range clientsMe {
+			client.Send <- body
+		}
+
+		var myChatData models.ChatData
+		myChatData.ID = chatData.ID
+		myChatData.Partner, err = ch.ChUsecase.UserFeed(r.Cookies()[0].Value)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write(JSONError(err.Error()))
+			return
+		}
+		myChatData.Messages = []models.Msg{msg}
+
+		bodyMe, err := json.Marshal(myChatData)
+		if err != nil {
+			logrus.Error(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(JSONError(err.Error()))
+			return
+		}
+
+		for _, client := range clientsPartner {
+
+			client.Send <- bodyMe
+		}
+	}
+
+	body, err := json.Marshal(like)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (ch *ChatHandlerType) DislikeHandler(w http.ResponseWriter, r *http.Request) {
+	dislike := models.Dislike{}
+	err := json.NewDecoder(r.Body).Decode(&dislike)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
+	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	err = ch.ChUsecase.Dislike(user, dislike)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	body, err := json.Marshal(dislike)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
 func (ch *ChatHandlerType) GochatHandler(w http.ResponseWriter, r *http.Request) {
 	if len(r.Cookies()) == 0 {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -231,7 +387,6 @@ func (ch *ChatHandlerType) GochatHandler(w http.ResponseWriter, r *http.Request)
 
 	go client.writePump(ch, user)
 	go client.readPump(ch, user)
-
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -333,4 +488,46 @@ func (c *Client) writePump(ch *ChatHandlerType, user models.User) {
 			}
 		}
 	}
+}
+
+func (ch *ChatHandlerType) SuperlikeHandler(w http.ResponseWriter, r *http.Request) {
+	superlike := models.Superlike{}
+	err := json.NewDecoder(r.Body).Decode(&superlike)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
+	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	err = ch.ChUsecase.Superlike(user, superlike)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	body, err := json.Marshal(superlike)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
 }

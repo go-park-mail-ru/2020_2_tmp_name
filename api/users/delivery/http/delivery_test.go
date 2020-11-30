@@ -219,6 +219,29 @@ func TestUserHandler_LogoutHandlerFail(t *testing.T) {
 	}
 }
 
+func TestUserHandler_UploadAvatarHandlerFail(t *testing.T) {
+	req, err := http.NewRequest("POST", "/upload", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserUsecase(ctrl)
+
+	userHandler := userHttp.UserHandlerType{
+		UUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(userHandler.UploadAvatarHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 400, status)
+}
+
 func TestUserHandler_SignupHandlerSuccess(t *testing.T) {
 	user := models.User{
 		Name:       "Misha",

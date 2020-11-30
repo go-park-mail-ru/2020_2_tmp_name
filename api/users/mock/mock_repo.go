@@ -8,6 +8,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	models "park_2020/2020_2_tmp_name/models"
 	reflect "reflect"
+	time "time"
 )
 
 // MockUserRepository is a mock of UserRepository interface
@@ -31,6 +32,20 @@ func NewMockUserRepository(ctrl *gomock.Controller) *MockUserRepository {
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 	return m.recorder
+}
+
+// CheckPremium mocks base method
+func (m *MockUserRepository) CheckPremium(arg0 int) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckPremium", arg0)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CheckPremium indicates an expected call of CheckPremium
+func (mr *MockUserRepositoryMockRecorder) CheckPremium(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckPremium", reflect.TypeOf((*MockUserRepository)(nil).CheckPremium), arg0)
 }
 
 // CheckUser mocks base method
@@ -73,6 +88,20 @@ func (m *MockUserRepository) DeleteSession(arg0 string) error {
 func (mr *MockUserRepositoryMockRecorder) DeleteSession(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSession", reflect.TypeOf((*MockUserRepository)(nil).DeleteSession), arg0)
+}
+
+// InsertPremium mocks base method
+func (m *MockUserRepository) InsertPremium(arg0 int, arg1, arg2 time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertPremium", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertPremium indicates an expected call of InsertPremium
+func (mr *MockUserRepositoryMockRecorder) InsertPremium(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertPremium", reflect.TypeOf((*MockUserRepository)(nil).InsertPremium), arg0, arg1, arg2)
 }
 
 // InsertSession mocks base method

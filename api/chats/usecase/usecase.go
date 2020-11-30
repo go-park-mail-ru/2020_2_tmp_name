@@ -86,3 +86,95 @@ func (ch *chatUsecase) User(cookie string) (models.User, error) {
 	}
 	return user, nil
 }
+
+func (ch *chatUsecase) UserFeed(cookie string) (models.UserFeed, error) {
+	telephone := ch.chatRepo.CheckUserBySession(cookie)
+	user, err := ch.chatRepo.SelectUserFeed(telephone)
+	if err != nil {
+		return user, models.ErrNotFound
+	}
+	return user, nil
+}
+
+func (ch *chatUsecase) Like(user models.User, like models.Like) error {
+	if ch.chatRepo.CheckLike(user.ID, like.Uid2) {
+		return nil
+	}
+
+	if ch.chatRepo.CheckDislike(user.ID, like.Uid2) {
+		err := ch.chatRepo.DeleteDislike(user.ID, like.Uid2)
+		if err != nil {
+			return models.ErrInternalServerError
+		}
+	}
+
+	err := ch.chatRepo.InsertLike(user.ID, like.Uid2)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	return nil
+}
+
+func (ch *chatUsecase) MatchUser(user models.User, like models.Like) (models.Chat, bool, error) {
+	var chat models.Chat
+	if ch.chatRepo.Match(user.ID, like.Uid2) {
+		chat.Uid1 = user.ID
+		chat.Uid2 = like.Uid2
+		if !ch.chatRepo.CheckChat(chat) {
+			err := ch.chatRepo.InsertChat(chat)
+			if err != nil {
+				return chat, false, models.ErrInternalServerError
+			}
+			chat.ID, err = ch.chatRepo.SelectChatID(user.ID, like.Uid2)
+			if err != nil {
+				return chat, false, models.ErrNotFound
+			}
+			return chat, true, nil
+		}
+		return chat, false, nil
+	}
+	return chat, false, nil
+}
+
+func (ch *chatUsecase) Dislike(user models.User, dislike models.Dislike) error {
+	if ch.chatRepo.CheckDislike(user.ID, dislike.Uid2) {
+		return nil
+	}
+
+	if ch.chatRepo.CheckLike(user.ID, dislike.Uid2) {
+		err := ch.chatRepo.DeleteLike(user.ID, dislike.Uid2)
+		if err != nil {
+			return models.ErrInternalServerError
+		}
+	}
+
+	err := ch.chatRepo.InsertDislike(user.ID, dislike.Uid2)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	return nil
+}
+
+func (ch *chatUsecase) Superlike(user models.User, superlike models.Superlike) error {
+	if ch.chatRepo.CheckDislike(user.ID, superlike.Uid2) {
+		err := ch.chatRepo.DeleteDislike(user.ID, superlike.Uid2)
+		if err != nil {
+			return models.ErrInternalServerError
+		}
+	}
+
+	err := ch.chatRepo.InsertSuperlike(user.ID, superlike.Uid2)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+
+	if !ch.chatRepo.CheckLike(user.ID, superlike.Uid2) {
+		err := ch.chatRepo.InsertLike(user.ID, superlike.Uid2)
+		if err != nil {
+			return models.ErrInternalServerError
+		}
+		return nil
+	}
+
+	return nil
+}

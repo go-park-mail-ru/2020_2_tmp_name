@@ -256,3 +256,55 @@ func (p *postgresChatRepository) SelectSessions(uid int) ([]string, error) {
 	}
 	return sessions, nil
 }
+
+func (p *postgresChatRepository) Match(uid1, uid2 int) bool {
+	var id1, id2 int
+	row := p.Conn.QueryRow(`Select user_id1, user_id2 FROM likes 
+							WHERE user_id1 = $1 AND user_id2 = $2;`, uid2, uid1)
+	err := row.Scan(&id1, &id2)
+	return err == nil
+}
+
+func (p *postgresChatRepository) InsertLike(uid1, uid2 int) error {
+	_, err := p.Conn.Exec(`INSERT INTO likes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
+	return err
+}
+
+func (p *postgresChatRepository) InsertDislike(uid1, uid2 int) error {
+	_, err := p.Conn.Exec(`INSERT INTO dislikes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
+	return err
+}
+
+func (p *postgresChatRepository) CheckLike(uid1, uid2 int) bool {
+	var count int
+	p.Conn.QueryRow(`SELECT value FROM likes WHERE user_id=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	return count > 0
+}
+
+func (p *postgresChatRepository) CheckDislike(uid1, uid2 int) bool {
+	var count int
+	p.Conn.QueryRow(`SELECT value FROM dislikes WHERE user_id=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	return count > 0
+}
+
+func (p *postgresChatRepository) DeleteLike(uid1, uid2 int) error {
+	_, err := p.Conn.Exec(`DELETE FROM likes WHERE user_id1=$1 AND user_id2=$2;`, uid1, uid2)
+	return err
+}
+
+func (p *postgresChatRepository) DeleteDislike(uid1, uid2 int) error {
+	_, err := p.Conn.Exec(`DELETE FROM dislikes WHERE user_id1=$1 AND user_id2=$2;`, uid1, uid2)
+	return err
+}
+
+func (p *postgresChatRepository) SelectChatID(uid1, uid2 int) (int, error) {
+	var chid int
+	row := p.Conn.QueryRow(`SELECT id FROM chat WHERE user_id1=$1 AND user_id2=$2;`, uid1, uid2)
+	err := row.Scan(&chid)
+	return chid, err
+}
+
+func (p *postgresChatRepository) InsertSuperlike(uid1, uid2 int) error {
+	_, err := p.Conn.Exec(`INSERT INTO superlikes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
+	return err
+}

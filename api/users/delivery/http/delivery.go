@@ -2,14 +2,14 @@ package http
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
+	"os"
 	domain "park_2020/2020_2_tmp_name/api/users"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
-
 	"time"
-
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -31,7 +31,10 @@ func NewUserHandler(r *mux.Router, us domain.UserUsecase) {
 	r.HandleFunc("/api/v1/me", handler.MeHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/feed", handler.FeedHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/user/{user_id}", handler.UserIDHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/telephone/{telephone}", handler.TelephoneHandler).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/is_premium", handler.IsPremiumHandler).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/telephone", handler.TelephoneHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/upload", handler.UploadAvatarHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/get_premium", handler.GetPremiumHandler).Methods(http.MethodPost)
 }
 
 func (u *UserHandlerType) HealthHandler(w http.ResponseWriter, r *http.Request) {
@@ -115,6 +118,75 @@ func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 	w.Write(body)
 }
 
+func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 10*1024*1024)
+	err := r.ParseMultipartForm(10 * 1024 * 1024)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	file, _, err := r.FormFile("photo")
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+	defer file.Close()
+	r.FormValue("photo")
+
+	str, err := os.Getwd()
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars"
+	os.Chdir(photoPath)
+
+	photoID, err := u.UUsecase.UploadAvatar()
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	f, err := os.OpenFile(photoID.String(), os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+	defer f.Close()
+
+	os.Chdir(str)
+
+	body, err := json.Marshal("https://mi-ami.ru/static/avatars/" + photoID.String())
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	_, err = io.Copy(f, file)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
 func (u *UserHandlerType) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 	err := json.NewDecoder(r.Body).Decode(&user)
@@ -175,6 +247,35 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	body, err := json.Marshal(userData)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (u *UserHandlerType) IsPremiumHandler(w http.ResponseWriter, r *http.Request) {
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
+	user, err := u.UUsecase.User(r.Cookies()[0].Value)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	var premium models.Premium
+	premium.IsPremium = u.UUsecase.IsPremium(user.ID)
+
+	body, err := json.Marshal(premium)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -275,8 +376,16 @@ func (u *UserHandlerType) UserIDHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (u *UserHandlerType) TelephoneHandler(w http.ResponseWriter, r *http.Request) {
-	telephone := strings.TrimPrefix(r.URL.Path, "/api/v1/telephone/")
-	hasUser := u.UUsecase.Telephone(telephone)
+	phoneData := models.Phone{}
+	err := json.NewDecoder(r.Body).Decode(&phoneData)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	hasUser := u.UUsecase.Telephone(phoneData.Telephone)
 
 	body, err := json.Marshal(hasUser)
 	if err != nil {
@@ -288,4 +397,36 @@ func (u *UserHandlerType) TelephoneHandler(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
+}
+
+func (u *UserHandlerType) GetPremiumHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+
+		return
+	}
+
+	label := r.PostFormValue("label")
+	userId, err := strconv.Atoi(label)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+
+		return
+	}
+
+	err = u.UUsecase.GetPremium(userId)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

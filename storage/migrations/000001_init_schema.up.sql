@@ -11,6 +11,15 @@ CREATE TABLE "users" (
   "group_id" int4
 );
 
+CREATE TABLE "premium_accounts" (
+  "id" SERIAL PRIMARY KEY,
+  "user_id" int4,
+  "date_from" date,
+  "date_to" date,
+
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 CREATE TABLE "groups" (
   "id" SERIAL PRIMARY KEY,
   "for_love" boolean,
@@ -19,6 +28,14 @@ CREATE TABLE "groups" (
 );
 
 CREATE TABLE "likes" (
+  "id" SERIAL PRIMARY KEY,
+  "user_id1" int4,
+  "user_id2" int4,
+
+  FOREIGN KEY (user_id1) REFERENCES users(id)
+);
+
+CREATE TABLE "superlikes" (
   "id" SERIAL PRIMARY KEY,
   "user_id1" int4,
   "user_id2" int4,

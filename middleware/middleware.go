@@ -18,7 +18,7 @@ func MyCORSMethodMiddleware(_ *mux.Router) mux.MiddlewareFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			fmt.Printf("URL: %s, METHOD: %s", req.RequestURI, req.Method)
 			w.Header().Set("Access-Control-Allow-Headers", "*")
-			w.Header().Set("Access-Control-Allow-Origin", "http://95.163.213.222:3000")
+			w.Header().Set("Access-Control-Allow-Origin", "https://mi-ami.ru")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 			if req.Method == "OPTIONS" {

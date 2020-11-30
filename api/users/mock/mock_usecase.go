@@ -6,6 +6,7 @@ package mock
 
 import (
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 	models "park_2020/2020_2_tmp_name/models"
 	reflect "reflect"
 )
@@ -46,6 +47,34 @@ func (m *MockUserUsecase) Feed(arg0 models.User) ([]models.UserFeed, error) {
 func (mr *MockUserUsecaseMockRecorder) Feed(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Feed", reflect.TypeOf((*MockUserUsecase)(nil).Feed), arg0)
+}
+
+// GetPremium mocks base method
+func (m *MockUserUsecase) GetPremium(arg0 int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPremium", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GetPremium indicates an expected call of GetPremium
+func (mr *MockUserUsecaseMockRecorder) GetPremium(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPremium", reflect.TypeOf((*MockUserUsecase)(nil).GetPremium), arg0)
+}
+
+// IsPremium mocks base method
+func (m *MockUserUsecase) IsPremium(arg0 int) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsPremium", arg0)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsPremium indicates an expected call of IsPremium
+func (mr *MockUserUsecaseMockRecorder) IsPremium(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsPremium", reflect.TypeOf((*MockUserUsecase)(nil).IsPremium), arg0)
 }
 
 // Login mocks base method
@@ -132,6 +161,21 @@ func (m *MockUserUsecase) Telephone(arg0 string) bool {
 func (mr *MockUserUsecaseMockRecorder) Telephone(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Telephone", reflect.TypeOf((*MockUserUsecase)(nil).Telephone), arg0)
+}
+
+// UploadAvatar mocks base method
+func (m *MockUserUsecase) UploadAvatar() (uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UploadAvatar")
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UploadAvatar indicates an expected call of UploadAvatar
+func (mr *MockUserUsecaseMockRecorder) UploadAvatar() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadAvatar", reflect.TypeOf((*MockUserUsecase)(nil).UploadAvatar))
 }
 
 // User mocks base method

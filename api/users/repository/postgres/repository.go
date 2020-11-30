@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	domain "park_2020/2020_2_tmp_name/api/users"
 	"park_2020/2020_2_tmp_name/models"
+	"time"
 )
 
 type postgresUserRepository struct {
@@ -42,7 +43,25 @@ func (p *postgresUserRepository) InsertUser(user models.User) error {
 		user.Education,
 		user.AboutMe,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	var uid int
+	row := p.Conn.QueryRow(`SELECT id FROM users WHERE  telephone=$1;`, user.Telephone)
+	err = row.Scan(&uid)
+	if err != nil {
+		return err
+	}
+
+	for _, path := range user.LinkImages {
+		_, err = p.Conn.Exec(`INSERT INTO photo(path, user_id) VALUES ($1, $2);`, path, uid)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (p *postgresUserRepository) SelectUser(telephone string) (models.User, error) {
@@ -117,6 +136,12 @@ func (p *postgresUserRepository) Match(uid1, uid2 int) bool {
 							WHERE user_id1 = $1 AND user_id2 = $2;`, uid2, uid1)
 	err := row.Scan(&id1, &id2)
 	return err == nil
+}
+
+func (p *postgresUserRepository) CheckPremium(uid int) bool {
+	var count int
+	p.Conn.QueryRow(`SELECT COUNT(user_id) FROM premium_accounts WHERE user_id=$1;`, uid).Scan(&count)
+	return count > 0
 }
 
 func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFeed, error) {
@@ -221,4 +246,11 @@ func (p *postgresUserRepository) SelectImages(uid int) ([]string, error) {
 		images = append(images, image)
 	}
 	return images, nil
+}
+
+func (p *postgresUserRepository) InsertPremium(uid int, dateFrom time.Time, dateTo time.Time) error {
+	_, err := p.Conn.Exec(`INSERT INTO premium_accounts(user_id, date_to, date_from) 
+								 VALUES ($1, $2, $3);`, uid, dateTo, dateFrom)
+
+	return err
 }

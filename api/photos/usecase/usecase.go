@@ -22,10 +22,17 @@ func (p *photoUsecase) AddPhoto(photo models.Photo) error {
 	if err != nil {
 		return models.ErrNotFound
 	}
-
 	user.LinkImages = append(user.LinkImages, photo.Path)
 
 	err = p.photoRepo.InsertPhoto(photo.Path, user.ID)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	return nil
+}
+
+func (p *photoUsecase) RemovePhoto(path string, uid int) error {
+	err := p.photoRepo.DeletePhoto(path, uid)
 	if err != nil {
 		return models.ErrInternalServerError
 	}
@@ -39,4 +46,13 @@ func (p *photoUsecase) UploadAvatar() (uuid.UUID, error) {
 	}
 
 	return photoID, nil
+}
+
+func (p *photoUsecase) User(cookie string) (models.User, error) {
+	telephone := p.photoRepo.CheckUserBySession(cookie)
+	user, err := p.photoRepo.SelectUser(telephone)
+	if err != nil {
+		return user, models.ErrNotFound
+	}
+	return user, nil
 }
