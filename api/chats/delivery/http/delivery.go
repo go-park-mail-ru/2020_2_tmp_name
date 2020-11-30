@@ -49,7 +49,7 @@ func NewChatHandler(r *mux.Router, chs domain.ChatUsecase) {
 	r.HandleFunc("/api/v1/chats/{chat_id}", handler.ChatIDHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/like", handler.LikeHandler).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/dislike", handler.DislikeHandler).Methods(http.MethodPost)
-	r.HandleFunc("api/v1/superlike", handler.SuperlikeHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/superlike", handler.SuperlikeHandler).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v1/gochat", handler.GochatHandler).Methods(http.MethodGet)
 }

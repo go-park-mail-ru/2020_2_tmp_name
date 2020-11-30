@@ -49,6 +49,20 @@ func (mr *MockUserUsecaseMockRecorder) Feed(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Feed", reflect.TypeOf((*MockUserUsecase)(nil).Feed), arg0)
 }
 
+// GetPremium mocks base method
+func (m *MockUserUsecase) GetPremium(arg0 int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPremium", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GetPremium indicates an expected call of GetPremium
+func (mr *MockUserUsecaseMockRecorder) GetPremium(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPremium", reflect.TypeOf((*MockUserUsecase)(nil).GetPremium), arg0)
+}
+
 // IsPremium mocks base method
 func (m *MockUserUsecase) IsPremium(arg0 int) bool {
 	m.ctrl.T.Helper()
