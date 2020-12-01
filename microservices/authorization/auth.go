@@ -7,6 +7,7 @@ import (
 type UserUsecase interface {
 	Login(data models.LoginData) (string, error)
 	Logout(session string) error
+	CheckSession(cookie string) (models.User, error)
 }
 
 type UserRepository interface {
@@ -14,7 +15,7 @@ type UserRepository interface {
 	SelectUser(telephone string) (models.User, error) // Tested
 	InsertSession(sid, telephone string) error        // Tested
 	DeleteSession(sid string) error
-	CheckUserBySession(sid string) bool
+	CheckUserBySession(sid string) string
 	SelectUserBySession(sid string) (string, error)
 	SelectImages(uid int) ([]string, error)
 }

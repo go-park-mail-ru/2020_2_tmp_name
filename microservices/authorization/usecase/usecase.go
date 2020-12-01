@@ -48,3 +48,12 @@ func (u *userUsecase) Login(data models.LoginData) (string, error) {
 func (u *userUsecase) Logout(session string) error {
 	return u.userRepo.DeleteSession(session)
 }
+
+func (u *userUsecase) CheckSession(cookie string) (models.User, error) {
+	telephone := u.userRepo.CheckUserBySession(cookie)
+	user, err := u.userRepo.SelectUser(telephone)
+	if err != nil {
+		return user, models.ErrNotFound
+	}
+	return user, nil
+}

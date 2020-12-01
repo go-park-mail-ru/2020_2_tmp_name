@@ -27,3 +27,8 @@ func (ac *AuthClient) Logout(ctx context.Context, in *auth.Session) error {
 	_, err := ac.client.Logout(ctx, in, grpc.EmptyCallOption{})
 	return err
 }
+
+func (ac *AuthClient) CheckSession(ctx context.Context, in *auth.Session) (*auth.User, error) {
+	user, err := ac.client.CheckSession(ctx, in, grpc.EmptyCallOption{})
+	return user, err
+}

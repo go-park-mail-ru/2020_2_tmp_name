@@ -44,10 +44,10 @@ func (p *postgresUserRepository) DeleteSession(sid string) error {
 	return err
 }
 
-func (p *postgresUserRepository) CheckUserBySession(sid string) bool {
-	var count int
+func (p *postgresUserRepository) CheckUserBySession(sid string) string {
+	var count string
 	p.Conn.QueryRow(`SELECT value FROM sessions WHERE key=$1;`, sid).Scan(&count)
-	return count > 0
+	return count
 }
 
 func (p *postgresUserRepository) SelectUserBySession(sid string) (string, error) {

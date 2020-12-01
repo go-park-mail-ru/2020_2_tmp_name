@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -59,25 +58,25 @@ func (ac *AccessLogger) AccessLogMiddleware(_ *mux.Router) mux.MiddlewareFunc {
 	}
 }
 
-func (s *SessionMiddleware) SessionMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if len(r.Cookies()) != 0 {
-			telephone, err := s.sessionRepo.SelectUserBySession(r.Cookies()[0].Value)
-			if err != nil {
-				return
-			}
+// func (s *SessionMiddleware) SessionMiddleware(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		if len(r.Cookies()) != 0 {
+// 			telephone, err := s.sessionRepo.SelectUserBySession(r.Cookies()[0].Value)
+// 			if err != nil {
+// 				return
+// 			}
 
-			if found := s.sessionRepo.CheckUserBySession(r.Cookies()[0].Value); !found {
-				err = s.sessionRepo.InsertSession(r.Cookies()[0].Value, telephone)
-				if err != nil {
-					return
-				}
-			}
+// 			if found := s.sessionRepo.CheckUserBySession(r.Cookies()[0].Value); !found {
+// 				err = s.sessionRepo.InsertSession(r.Cookies()[0].Value, telephone)
+// 				if err != nil {
+// 					return
+// 				}
+// 			}
 
-			r = r.WithContext(context.WithValue(r.Context(), "session", r.Cookies()[0].Value))
-		}
+// 			r = r.WithContext(context.WithValue(r.Context(), "session", r.Cookies()[0].Value))
+// 		}
 
-		next.ServeHTTP(w, r)
+// 		next.ServeHTTP(w, r)
 
-	})
-}
+// 	})
+// }

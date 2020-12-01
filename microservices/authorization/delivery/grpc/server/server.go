@@ -30,3 +30,8 @@ func (sm *SessionManager) Login(ctx context.Context, data *auth.LoginData) (*aut
 func (sm *SessionManager) Logout(ctx context.Context, session *auth.Session) error {
 	return sm.userUsecase.Logout(session.Sess)
 }
+
+func (sm *SessionManager) CheckSession(ctx context.Context, session *auth.Session) (*auth.User, error) {
+	user, err := sm.userUsecase.CheckSession(session.Sess)
+	return &user, err
+}

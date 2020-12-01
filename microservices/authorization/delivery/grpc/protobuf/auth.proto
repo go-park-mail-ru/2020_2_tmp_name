@@ -36,4 +36,5 @@ message Nothing {
 service AuthGRPCHandler {
     rpc Login (LoginData) returns (Session) {}
     rpc Logout (Session) returns (Nothing) {}
+    rpc CheckSession (Session) returns (User) {}
 }

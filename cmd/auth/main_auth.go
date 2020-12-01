@@ -88,9 +88,8 @@ func (app *application) initServer() {
 
 	middleware.MyCORSMethodMiddleware(router)
 
-	sessMiddleware := middleware.NewSessionMiddleware(ar)
-
-	router.Use(sessMiddleware.SessionMiddleware)
+	// sessMiddleware := middleware.NewSessionMiddleware(ar)
+	// router.Use(sessMiddleware.SessionMiddleware)
 
 	serv := &http.Server{
 		Addr:         ":8080",

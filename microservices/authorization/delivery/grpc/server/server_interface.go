@@ -7,4 +7,6 @@ import (
 type UserUsecase interface {
 	Login(data auth.LoginData) (string, error)
 	Logout(session string) error
+	CheckSession(cookie string) (auth.User, error)
+}
 }
