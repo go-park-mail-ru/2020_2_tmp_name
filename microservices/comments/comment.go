@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"park_2020/2020_2_tmp_name/models"
 )
 
@@ -8,9 +9,9 @@ import (
 //go:generate mockgen -destination=./mock/mock_repo.go -package=mock park_2020/2020_2_tmp_name/api/comments CommentRepository
 
 type CommentUsecase interface {
-	Comment(user models.User, comment models.Comment) error
-	CommentsByID(id int) (models.CommentsData, error)
-	User(cookie string) (models.User, error)
+	Comment(ctx context.Context, user models.User, comment models.Comment) error
+	CommentsByID(ctx context.Context, id int) (models.CommentsData, error)
+	User(ctx context.Context, cookie string) (models.User, error)
 }
 
 type CommentRepository interface {
