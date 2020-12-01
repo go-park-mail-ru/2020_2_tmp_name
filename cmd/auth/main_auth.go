@@ -31,6 +31,8 @@ import (
 	_userDelivery "park_2020/2020_2_tmp_name/api/users/delivery/http"
 	_userRepo "park_2020/2020_2_tmp_name/api/users/repository/postgres"
 	_userUcase "park_2020/2020_2_tmp_name/api/users/usecase"
+
+	_authRepo "park_2020/2020_2_tmp_name/microservices/authorization/repository/postgres"
 )
 
 type application struct {
@@ -110,7 +112,13 @@ func (app *application) initServer() {
 	uu := _userUcase.NewUserUsecase(ur)
 	_userDelivery.NewUserHandler(router, uu)
 
+	ar := _authRepo.NewPostgresUserRepository(dbConn)
+
 	middleware.MyCORSMethodMiddleware(router)
+
+	sessMiddleware := middleware.NewSessionMiddleware(ar)
+
+	router.Use(sessMiddleware.SessionMiddleware)
 
 	serv := &http.Server{
 		Addr:         ":8080",
