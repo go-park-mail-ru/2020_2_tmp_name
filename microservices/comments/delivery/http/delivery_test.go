@@ -6,7 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"park_2020/2020_2_tmp_name/api/comments/mock"
+	"park_2020/2020_2_tmp_name/microservices/comments/mock"
 	"park_2020/2020_2_tmp_name/models"
 	"testing"
 	"time"
@@ -14,8 +14,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
-
-	commentHttp "park_2020/2020_2_tmp_name/api/comments/delivery/http"
 )
 
 func TestNewCommentHandler(t *testing.T) {

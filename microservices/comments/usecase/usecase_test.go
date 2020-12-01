@@ -1,8 +1,8 @@
 package usecase
 
 import (
-	domain "park_2020/2020_2_tmp_name/api/comments"
-	"park_2020/2020_2_tmp_name/api/comments/mock"
+	domain "park_2020/2020_2_tmp_name/microservices/comments"
+	"park_2020/2020_2_tmp_name/microservices/comments/mock"
 	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/golang/mock/gomock"

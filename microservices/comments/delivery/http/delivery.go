@@ -3,7 +3,7 @@ package http
 import (
 	"encoding/json"
 	"net/http"
-	domain "park_2020/2020_2_tmp_name/api/comments"
+	domain "park_2020/2020_2_tmp_name/microservices/comments"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
