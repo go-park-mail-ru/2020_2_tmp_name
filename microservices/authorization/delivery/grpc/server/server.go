@@ -61,6 +61,9 @@ func (s *server) Logout(ctx context.Context, session *proto.Session) (*proto.Not
 
 func (s *server) CheckSession(ctx context.Context, session *proto.Session) (*proto.User, error) {
 	user, err := s.authUseCase.CheckSession(ctx, session.Sess)
+	if err != nil {
+		return nil, err
+	}
 	userProto := &proto.User{
 		Id:         int32(user.ID),
 		Name:       user.Name,
@@ -76,5 +79,5 @@ func (s *server) CheckSession(ctx context.Context, session *proto.Session) (*pro
 		Education:  user.Education,
 		AboutMe:    user.AboutMe,
 	}
-	return userProto, err
+	return userProto, nil
 }
