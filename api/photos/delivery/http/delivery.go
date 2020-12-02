@@ -1,11 +1,13 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/photos"
 	"park_2020/2020_2_tmp_name/models"
+	_authClientGRPC "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 
 	"io"
 
@@ -15,11 +17,13 @@ import (
 
 type PhotoHandlerType struct {
 	PUsecase domain.PhotoUsecase
+	AuthClient *_authClientGRPC.AuthClient
 }
 
-func NewPhotoHandler(r *mux.Router, ps domain.PhotoUsecase) {
+func NewPhotoHandler(r *mux.Router, ps domain.PhotoUsecase, ac *_authClientGRPC.AuthClient) {
 	handler := &PhotoHandlerType{
-		PUsecase: ps,
+		PUsecase:   ps,
+		AuthClient: ac,
 	}
 
 	path := "/static/avatars/"
@@ -39,14 +43,15 @@ func JSONError(message string) []byte {
 }
 
 func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Request) {
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
+	user, err := p.AuthClient.CheckSession(context.Background(), r.Cookies())
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
 		return
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, 10*1024*1024)
-	err := r.ParseMultipartForm(10 * 1024 * 1024)
+	err = r.ParseMultipartForm(10 * 1024 * 1024)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -101,13 +106,6 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	user, err := p.PUsecase.User(r.Cookies()[0].Value)
-	if err != nil {
-		w.WriteHeader(models.GetStatusCode(err))
-		w.Write(JSONError(err.Error()))
-		return
-	}
-
 	var photo models.Photo
 	photo.Telephone = user.Telephone
 	photo.Path = "https://mi-ami.ru/static/avatars/" + photoID.String()
@@ -142,13 +140,7 @@ func (p *PhotoHandlerType) RemovePhotoHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := p.PUsecase.User(r.Cookies()[0].Value)
+	user, err := p.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -172,5 +164,4 @@ func (p *PhotoHandlerType) RemovePhotoHandler(w http.ResponseWriter, r *http.Req
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
-
 }

@@ -2,11 +2,13 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	domain "park_2020/2020_2_tmp_name/api/chats"
 	"park_2020/2020_2_tmp_name/models"
+	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 	"strconv"
 	"strings"
 	"time"
@@ -17,8 +19,9 @@ import (
 )
 
 type ChatHandlerType struct {
-	ChUsecase domain.ChatUsecase
-	Hub       Hub
+	ChUsecase  domain.ChatUsecase
+	AuthClient *authClient.AuthClient
+	Hub        Hub
 }
 
 func (h Hub) run() {
@@ -35,10 +38,11 @@ func (h Hub) run() {
 	}
 }
 
-func NewChatHandler(r *mux.Router, chs domain.ChatUsecase) {
+func NewChatHandler(r *mux.Router, chs domain.ChatUsecase, ac *authClient.AuthClient) {
 	handler := &ChatHandlerType{
-		ChUsecase: chs,
-		Hub:       *NewHub(),
+		ChUsecase:  chs,
+		AuthClient: ac,
+		Hub:        *NewHub(),
 	}
 
 	go handler.Hub.run()
@@ -101,13 +105,7 @@ func (ch *ChatHandlerType) MessageHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -134,13 +132,7 @@ func (ch *ChatHandlerType) MessageHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (ch *ChatHandlerType) ChatsHandler(w http.ResponseWriter, r *http.Request) {
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -175,13 +167,7 @@ func (ch *ChatHandlerType) ChatIDHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -217,13 +203,7 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -328,13 +308,7 @@ func (ch *ChatHandlerType) DislikeHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -361,13 +335,7 @@ func (ch *ChatHandlerType) DislikeHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (ch *ChatHandlerType) GochatHandler(w http.ResponseWriter, r *http.Request) {
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -500,13 +468,7 @@ func (ch *ChatHandlerType) SuperlikeHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))

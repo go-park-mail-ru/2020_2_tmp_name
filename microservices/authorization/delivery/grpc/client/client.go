@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"google.golang.org/grpc"
+	"log"
 	"net/http"
 	proto "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/protobuf"
 	"park_2020/2020_2_tmp_name/models"
@@ -26,6 +27,7 @@ func NewAuthClient(conn *grpc.ClientConn) *AuthClient {
 //}
 
 func (ac *AuthClient) Login(ctx context.Context, in *models.LoginData) (string, error) {
+	log.Print("хаха1")
 	if in == nil {
 		return "", nil
 	}
@@ -41,6 +43,7 @@ func (ac *AuthClient) Login(ctx context.Context, in *models.LoginData) (string, 
 }
 
 func (ac *AuthClient) Logout(ctx context.Context, in string) error {
+	log.Print("хаха2")
 	session := &proto.Session{
 		Sess: in,
 	}
@@ -49,6 +52,7 @@ func (ac *AuthClient) Logout(ctx context.Context, in string) error {
 }
 
 func (ac *AuthClient) CheckSession(ctx context.Context, in []*http.Cookie) (models.User, error) {
+	log.Print("хаха3")
 	if len(in) == 0 {
 		return models.User{}, models.ErrUnauthorized
 	}

@@ -15,7 +15,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 
-
 	_ "github.com/lib/pq"
 
 	_chatDelivery "park_2020/2020_2_tmp_name/api/chats/delivery/http"
@@ -35,11 +34,10 @@ import (
 	_userRepo "park_2020/2020_2_tmp_name/api/users/repository/postgres"
 	_userUcase "park_2020/2020_2_tmp_name/api/users/usecase"
 
+	_authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 	_authDelivery "park_2020/2020_2_tmp_name/microservices/authorization/delivery/http"
 	_authRepo "park_2020/2020_2_tmp_name/microservices/authorization/repository/postgres"
 	_authUcase "park_2020/2020_2_tmp_name/microservices/authorization/usecase"
-
-	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 )
 
 type application struct {
@@ -102,20 +100,34 @@ func (app *application) initServer() {
 	AccessLogOut.LogrusLogger = contextLogger
 
 	// router.Use(AccessLogOut.AccessLogMiddleware(router))
+	ar := _authRepo.NewPostgresUserRepository(dbConn)
+	grpcConnAuth, err := grpc.Dial("0.0.0.0:8081", grpc.WithInsecure())
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	grpcAuthClient := _authClient.NewAuthClient(grpcConnAuth)
+	au := _authUcase.NewAuthUsecase(ar)
+	_authDelivery.NewUserHandler(router, au, grpcAuthClient)
 
 	chr := _chatRepo.NewPostgresChatRepository(dbConn)
 	chu := _chatUcase.NewChatUsecase(chr)
-	_chatDelivery.NewChatHandler(router, chu)
+	_chatDelivery.NewChatHandler(router, chu, grpcAuthClient)
 
 	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
 	cu := _commentUcase.NewCommentUsecase(cr)
-	grpcConn, err := grpc.Dial("localhost:8082", grpc.WithInsecure())
-	ccGRPC := _commentClientGRPC.NewCommentsClientGRPC(grpcConn)
-	_commentDelivery.NewCommentHandler(router, cu, ccGRPC)
+	grpcConnComments, err := grpc.Dial("localhost:8082", grpc.WithInsecure())
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+	ccGRPC := _commentClientGRPC.NewCommentsClientGRPC(grpcConnComments)
+	_commentDelivery.NewCommentHandler(router, cu, ccGRPC, grpcAuthClient)
 
 	pr := _photoRepo.NewPostgresPhotoRepository(dbConn)
 	pu := _photoUcase.NewPhotoUsecase(pr)
-	_photoDelivery.NewPhotoHandler(router, pu)
+	_photoDelivery.NewPhotoHandler(router, pu, grpcAuthClient)
 
 	middleware.MyCORSMethodMiddleware(router)
 
@@ -125,17 +137,6 @@ func (app *application) initServer() {
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}
-
-	ar := _authRepo.NewPostgresUserRepository(dbConn)
-	grpcConnAuth, err := grpc.Dial("0.0.0.0:8081", grpc.WithInsecure())
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	grpcAuthClient := authClient.NewAuthClient(grpcConnAuth)
-	au := _authUcase.NewAuthUsecase(ar)
-	_authDelivery.NewUserHandler(router, au, grpcAuthClient)
 
 	ur := _userRepo.NewPostgresUserRepository(dbConn)
 	uu := _userUcase.NewUserUsecase(ur)
