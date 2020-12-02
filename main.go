@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 
 	_ "github.com/lib/pq"
 
@@ -33,6 +34,12 @@ import (
 	_userDelivery "park_2020/2020_2_tmp_name/api/users/delivery/http"
 	_userRepo "park_2020/2020_2_tmp_name/api/users/repository/postgres"
 	_userUcase "park_2020/2020_2_tmp_name/api/users/usecase"
+
+	_authDelivery "park_2020/2020_2_tmp_name/microservices/authorization/delivery/http"
+	_authRepo "park_2020/2020_2_tmp_name/microservices/authorization/repository/postgres"
+	_authUcase "park_2020/2020_2_tmp_name/microservices/authorization/usecase"
+
+	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 )
 
 type application struct {
@@ -110,10 +117,6 @@ func (app *application) initServer() {
 	pu := _photoUcase.NewPhotoUsecase(pr)
 	_photoDelivery.NewPhotoHandler(router, pu)
 
-	ur := _userRepo.NewPostgresUserRepository(dbConn)
-	uu := _userUcase.NewUserUsecase(ur)
-	_userDelivery.NewUserHandler(router, uu)
-
 	middleware.MyCORSMethodMiddleware(router)
 
 	serv := &http.Server{
@@ -122,6 +125,21 @@ func (app *application) initServer() {
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}
+
+	ar := _authRepo.NewPostgresUserRepository(dbConn)
+	grpcConn, err := grpc.Dial("0.0.0.0:8081", grpc.WithInsecure())
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	grpcAuthClient := authClient.NewAuthClient(grpcConn)
+	au := _authUcase.NewAuthUsecase(ar, grpcAuthClient)
+	_authDelivery.NewUserHandler(router, au)
+
+	ur := _userRepo.NewPostgresUserRepository(dbConn)
+	uu := _userUcase.NewUserUsecase(ur)
+	_userDelivery.NewUserHandler(router, uu, grpcAuthClient)
 
 	fmt.Println("Starting server at: 8080")
 	err = serv.ListenAndServe()

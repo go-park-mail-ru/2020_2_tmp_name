@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+// protoc --go_out=plugins=grpc:. *.proto
+
+package auth;
+
+message LoginData {
+    string telephone = 1;
+    string password = 2;
+}
+
+message Session {
+    string sess = 1;
+}
+
+message User {
+    int32 id = 1;
+    string name = 2;
+    string telephone = 3;
+    string password = 4;
+    int32 date_birth = 5;
+    string sex = 6;
+    string day = 7;
+    string month = 8;
+    string year = 9;
+    repeated string linkImages = 10;
+    string job = 11;
+    string education = 12;
+    string aboutMe = 13;
+}
+
+message Nothing {
+    bool dummy = 1;
+}
+
+service AuthGRPCHandler {
+    rpc Login (LoginData) returns (Session) {}
+    rpc Logout (Session) returns (Nothing) {}
+    rpc CheckSession (Session) returns (User) {}
+}

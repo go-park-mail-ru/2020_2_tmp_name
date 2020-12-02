@@ -7,10 +7,24 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+
+	domain "park_2020/2020_2_tmp_name/microservices/authorization"
 )
 
 type AccessLogger struct {
 	LogrusLogger *logrus.Entry
+}
+
+const SessionCookieName = "authCookie"
+
+type SessionMiddleware struct {
+	sessionRepo domain.UserRepository
+}
+
+func NewSessionMiddleware(u domain.UserRepository) *SessionMiddleware {
+	return &SessionMiddleware{
+		sessionRepo: u,
+	}
 }
 
 func MyCORSMethodMiddleware(_ *mux.Router) mux.MiddlewareFunc {
@@ -43,3 +57,26 @@ func (ac *AccessLogger) AccessLogMiddleware(_ *mux.Router) mux.MiddlewareFunc {
 		})
 	}
 }
+
+// func (s *SessionMiddleware) SessionMiddleware(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		if len(r.Cookies()) != 0 {
+// 			telephone, err := s.sessionRepo.SelectUserBySession(r.Cookies()[0].Value)
+// 			if err != nil {
+// 				return
+// 			}
+
+// 			if found := s.sessionRepo.CheckUserBySession(r.Cookies()[0].Value); !found {
+// 				err = s.sessionRepo.InsertSession(r.Cookies()[0].Value, telephone)
+// 				if err != nil {
+// 					return
+// 				}
+// 			}
+
+// 			r = r.WithContext(context.WithValue(r.Context(), "session", r.Cookies()[0].Value))
+// 		}
+
+// 		next.ServeHTTP(w, r)
+
+// 	})
+// }
