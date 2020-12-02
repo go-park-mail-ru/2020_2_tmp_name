@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"log"
 	"net"
 	auth "park_2020/2020_2_tmp_name/microservices/authorization"
 	proto "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/protobuf"
@@ -45,7 +46,8 @@ func StartAuthGRPCServer(authUCase auth.UserUsecase, url string) {
 
 func (s *server) Login(ctx context.Context, data *proto.LoginData) (*proto.Session, error) {
 	var err error
-	var session *proto.Session
+	session := &proto.Session{}
+
 	var loginData models.LoginData
 	loginData.Password = data.Password
 	loginData.Telephone = data.Telephone
@@ -54,13 +56,16 @@ func (s *server) Login(ctx context.Context, data *proto.LoginData) (*proto.Sessi
 }
 
 func (s *server) Logout(ctx context.Context, session *proto.Session) (*proto.Nothing, error) {
-	var nothing *proto.Nothing
+	nothing := &proto.Nothing{}
 	err := s.authUseCase.Logout(ctx, session.Sess)
 	return nothing, err
 }
 
 func (s *server) CheckSession(ctx context.Context, session *proto.Session) (*proto.User, error) {
 	user, err := s.authUseCase.CheckSession(ctx, session.Sess)
+	if err != nil {
+		return nil, err
+	}
 	userProto := &proto.User{
 		Id:         int32(user.ID),
 		Name:       user.Name,
@@ -76,5 +81,5 @@ func (s *server) CheckSession(ctx context.Context, session *proto.Session) (*pro
 		Education:  user.Education,
 		AboutMe:    user.AboutMe,
 	}
-	return userProto, err
+	return userProto, nil
 }

@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	domain "park_2020/2020_2_tmp_name/microservices/comments"
-	grpcClient "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
+	_commentClientGRPC "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
+	_authClientGRPC "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
@@ -17,13 +18,15 @@ import (
 
 type CommentHandlerType struct {
 	CUsecase domain.CommentUsecase
-	ClientGRPC *grpcClient.CommentClient
+	AuthClient *_authClientGRPC.AuthClient
+	CommentClient *_commentClientGRPC.CommentClient
 }
 
-func NewCommentHandler(r *mux.Router, cs domain.CommentUsecase, clientGRPC *grpcClient.CommentClient) {
+func NewCommentHandler(r *mux.Router, cs domain.CommentUsecase, cc *_commentClientGRPC.CommentClient, ac *_authClientGRPC.AuthClient) {
 	handler := &CommentHandlerType{
-		CUsecase: cs,
-		ClientGRPC: clientGRPC,
+		CUsecase:      cs,
+		AuthClient:    ac,
+		CommentClient: cc,
 	}
 
 	r.HandleFunc("/api/v1/comment", handler.CommentHandler).Methods(http.MethodPost)
@@ -50,20 +53,14 @@ func (c *CommentHandlerType) CommentHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := c.CUsecase.User(ctx, r.Cookies()[0].Value)
+	user, err := c.AuthClient.CheckSession(ctx, r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
 	}
 
-	err = c.ClientGRPC.Comment(ctx, user, comment)
+	err = c.CommentClient.Comment(ctx, user, comment)
 	//err = c.CUsecase.Comment(ctx, user, comment)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
@@ -87,6 +84,13 @@ func (c *CommentHandlerType) CommentHandler(w http.ResponseWriter, r *http.Reque
 func (c *CommentHandlerType) CommentsByIdHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
+	_, err := c.AuthClient.CheckSession(ctx, r.Cookies())
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
 	userID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/comments/"))
 	if err != nil {
 		logrus.Error(err)
@@ -96,7 +100,7 @@ func (c *CommentHandlerType) CommentsByIdHandler(w http.ResponseWriter, r *http.
 	}
 
 	//comments, err := c.CUsecase.CommentsByID(ctx, userID)
-	comments, err := c.ClientGRPC.CommentsById(ctx, userID)
+	comments, err := c.CommentClient.CommentsById(ctx, userID)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
