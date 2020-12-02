@@ -8,7 +8,6 @@ import (
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/users"
 	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
-	auth "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/protobuf"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
@@ -160,13 +159,7 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := u.UUsecase.User(r.Cookies()[0].Value)
+	user, err := u.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -193,13 +186,7 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (u *UserHandlerType) IsPremiumHandler(w http.ResponseWriter, r *http.Request) {
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := u.UUsecase.User(r.Cookies()[0].Value)
+	user, err := u.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -222,15 +209,7 @@ func (u *UserHandlerType) IsPremiumHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (u *UserHandlerType) MeHandler(w http.ResponseWriter, r *http.Request) {
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	var in auth.Session
-	in.Sess = r.Cookies()[0].Value
-	user, err := u.AuthClient.CheckSession(context.Background(), &in)
+	user, err := u.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -257,13 +236,7 @@ func (u *UserHandlerType) MeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserHandlerType) FeedHandler(w http.ResponseWriter, r *http.Request) {
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := u.UUsecase.User(r.Cookies()[0].Value)
+	user, err := u.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -374,3 +347,4 @@ func (u *UserHandlerType) GetPremiumHandler(w http.ResponseWriter, r *http.Reque
 
 	w.WriteHeader(http.StatusOK)
 }
+
