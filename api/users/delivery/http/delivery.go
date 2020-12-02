@@ -339,6 +339,7 @@ func (u *UserHandlerType) GetPremiumHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	label := r.PostFormValue("label")
+	logrus.Println(label)
 	userId, err := strconv.Atoi(label)
 	if err != nil {
 		logrus.Error(err)
