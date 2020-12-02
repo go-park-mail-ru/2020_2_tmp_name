@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	auth "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/protobuf"
+	"park_2020/2020_2_tmp_name/models"
 
 	"google.golang.org/grpc"
 )
@@ -16,6 +17,12 @@ func NewAuthClient(conn *grpc.ClientConn) *AuthClient {
 	return &AuthClient{
 		client: c,
 	}
+}
+
+type AuthClientInterface interface {
+	Login(data models.LoginData) (string, error)
+	Logout(session string) error
+	CheckSession(cookie string) (auth.User, error)
 }
 
 func (ac *AuthClient) Login(ctx context.Context, in *auth.LoginData) (*auth.Session, error) {

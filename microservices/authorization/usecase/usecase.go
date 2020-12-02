@@ -2,18 +2,21 @@ package usecase
 
 import (
 	domain "park_2020/2020_2_tmp_name/microservices/authorization"
+	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/google/uuid"
 )
 
 type userUsecase struct {
-	userRepo domain.UserRepository
+	userRepo   domain.UserRepository
+	authClient *authClient.AuthClient
 }
 
-func NewUserUsecase(u domain.UserRepository) domain.UserUsecase {
+func NewAuthUsecase(u domain.UserRepository, ac *authClient.AuthClient) *userUsecase {
 	return &userUsecase{
-		userRepo: u,
+		userRepo:   u,
+		authClient: ac,
 	}
 }
 

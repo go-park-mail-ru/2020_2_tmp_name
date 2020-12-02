@@ -9,4 +9,3 @@ type UserUsecase interface {
 	Logout(session string) error
 	CheckSession(cookie string) (auth.User, error)
 }
-}
