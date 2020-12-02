@@ -47,9 +47,21 @@ message User{
   string AboutMe = 13;
 }
 
+message UserFeed{
+  int32 ID = 1;
+  string Name = 2;
+  int32 DateBirth = 3;
+  repeated string LinkImages = 4;
+  string Job = 5;
+  string Education = 6;
+  string AboutMe = 7;
+  bool IsSuperLike = 8;
+}
+
 message CommentId{
-  string CommentText = 1;
-  string TimeDelivery = 2;
+  UserFeed User = 1;
+  string CommentText = 2;
+  string TimeDelivery = 3;
 }
 
 message CommentsById{
@@ -57,5 +69,5 @@ message CommentsById{
 }
 
 message CommentsData{
-  repeated CommentsById Data = 1;
+  CommentsById Data = 1;
 }
