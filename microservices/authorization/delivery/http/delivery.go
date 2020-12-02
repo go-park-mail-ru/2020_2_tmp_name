@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	domain "park_2020/2020_2_tmp_name/microservices/authorization"
+	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
 
@@ -14,11 +15,13 @@ import (
 
 type UserHandlerType struct {
 	UUsecase domain.UserUsecase
+	client *authClient.AuthClient
 }
 
-func NewUserHandler(r *mux.Router, us domain.UserUsecase) {
+func NewUserHandler(r *mux.Router, us domain.UserUsecase, client *authClient.AuthClient) {
 	handler := &UserHandlerType{
 		UUsecase: us,
+		client: client,
 	}
 
 	r.HandleFunc("/api/v1/login", handler.LoginHandler).Methods(http.MethodGet, http.MethodPost)
@@ -43,7 +46,8 @@ func (u *UserHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sidString, err := u.UUsecase.Login(context.Background(), loginData)
+	sidString, err := u.client.Login(context.Background(), &loginData)
+	//sidString, err := u.UUsecase.Login(context.Background(), loginData)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -80,7 +84,8 @@ func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = u.UUsecase.Logout(context.Background(), session.Value)
+	err = u.client.Logout(context.Background(), session.Value)
+	//err = u.UUsecase.Logout(context.Background(), session.Value)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
