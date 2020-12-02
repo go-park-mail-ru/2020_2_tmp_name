@@ -18,7 +18,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	prometheusMW "github.com/albertogviana/prometheus-middleware"
+	metrics "park_2020/2020_2_tmp_name/prometheus"
 
 	_chatDelivery "park_2020/2020_2_tmp_name/api/chats/delivery/http"
 	_chatRepo "park_2020/2020_2_tmp_name/api/chats/repository/postgres"
@@ -86,6 +86,9 @@ func (app *application) initServer() {
 
 	router := mux.NewRouter()
 
+	metricsProm := metrics.RegisterMetrics(router)
+	middleware.NewLoggingMiddleware(metricsProm)
+
 	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	logrus.WithFields(logrus.Fields{
 		"logger": "LOGRUS",
@@ -133,9 +136,6 @@ func (app *application) initServer() {
 	_photoDelivery.NewPhotoHandler(router, pu, grpcAuthClient)
 
 	middleware.MyCORSMethodMiddleware(router)
-
-	middleware := prometheusMW.NewPrometheusMiddleware(prometheusMW.Opts{})
-	router.Use(middleware.InstrumentHandlerDuration)
 
 	serv := &http.Server{
 		Addr:         ":8080",

@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"log"
 	"net"
 	auth "park_2020/2020_2_tmp_name/microservices/authorization"
 	proto "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/protobuf"

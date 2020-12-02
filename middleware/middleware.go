@@ -2,8 +2,12 @@ package middleware
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 	"time"
+
+	metrics "park_2020/2020_2_tmp_name/prometheus"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -12,18 +16,6 @@ import (
 type AccessLogger struct {
 	LogrusLogger *logrus.Entry
 }
-
-// const SessionCookieName = "authCookie"
-
-// type SessionMiddleware struct {
-// 	sessionRepo domain.UserRepository
-// }
-
-// func NewSessionMiddleware(u domain.UserRepository) *SessionMiddleware {
-// 	return &SessionMiddleware{
-// 		sessionRepo: u,
-// 	}
-// }
 
 func MyCORSMethodMiddleware(_ *mux.Router) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
@@ -56,25 +48,21 @@ func (ac *AccessLogger) AccessLogMiddleware(_ *mux.Router) mux.MiddlewareFunc {
 	}
 }
 
-// func (s *SessionMiddleware) SessionMiddleware(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		if len(r.Cookies()) != 0 {
-// 			telephone, err := s.sessionRepo.SelectUserBySession(r.Cookies()[0].Value)
-// 			if err != nil {
-// 				return
-// 			}
+func NewLoggingMiddleware(metrics *metrics.PromMetrics) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			msg := fmt.Sprintf("URL: %s, METHOD: %s", r.RequestURI, r.Method)
+			log.Println(msg)
 
-// 			if found := s.sessionRepo.CheckUserBySession(r.Cookies()[0].Value); !found {
-// 				err = s.sessionRepo.InsertSession(r.Cookies()[0].Value, telephone)
-// 				if err != nil {
-// 					return
-// 				}
-// 			}
-
-// 			r = r.WithContext(context.WithValue(r.Context(), "session", r.Cookies()[0].Value))
-// 		}
-
-// 		next.ServeHTTP(w, r)
-
-// 	})
-// }
+			reqTime := time.Now()
+			next.ServeHTTP(w, r)
+			respTime := time.Since(reqTime)
+			if r.URL.Path != "/metrics" {
+				//If status is 500 => response will be in panic middleware
+				metrics.Hits.WithLabelValues(strconv.Itoa(http.StatusOK), r.URL.String(), r.Method).Inc()
+				metrics.Timings.WithLabelValues(
+					strconv.Itoa(http.StatusOK), r.URL.String(), r.Method).Observe(respTime.Seconds())
+			}
+		})
+	}
+}
