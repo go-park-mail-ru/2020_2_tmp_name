@@ -102,13 +102,13 @@ func (app *application) initServer() {
 	// router.Use(sessMiddleware.SessionMiddleware)
 
 	serv := &http.Server{
-		Addr:         ":8081",
+		Addr:         ":8082",
 		Handler:      handlers.CORS(originsOk, headersOk, methodsOk, handlers.AllowCredentials())(router),
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}
 
-	fmt.Println("Starting server at: 8081")
+	fmt.Println("Starting server at: 8082")
 	err = serv.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)

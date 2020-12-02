@@ -1,11 +1,14 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/users"
+	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
+	auth "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/protobuf"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
@@ -15,12 +18,14 @@ import (
 )
 
 type UserHandlerType struct {
-	UUsecase domain.UserUsecase
+	UUsecase   domain.UserUsecase
+	AuthClient *authClient.AuthClient
 }
 
-func NewUserHandler(r *mux.Router, us domain.UserUsecase) {
+func NewUserHandler(r *mux.Router, us domain.UserUsecase, ac *authClient.AuthClient) {
 	handler := &UserHandlerType{
-		UUsecase: us,
+		UUsecase:   us,
+		AuthClient: ac,
 	}
 
 	r.HandleFunc("/health", handler.HealthHandler).Methods(http.MethodGet)
@@ -223,12 +228,21 @@ func (u *UserHandlerType) MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := u.UUsecase.Me(r.Cookies()[0].Value)
+	var in auth.Session
+	in.Sess = r.Cookies()[0].Value
+	user, err := u.AuthClient.CheckSession(context.Background(), &in)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
 	}
+
+	// user, err := u.UUsecase.Me(r.Cookies()[0].Value)
+	// if err != nil {
+	// 	w.WriteHeader(models.GetStatusCode(err))
+	// 	w.Write(JSONError(err.Error()))
+	// 	return
+	// }
 
 	body, err := json.Marshal(user)
 	if err != nil {

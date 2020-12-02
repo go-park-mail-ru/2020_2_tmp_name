@@ -27,10 +27,6 @@ import (
 	_photoDelivery "park_2020/2020_2_tmp_name/api/photos/delivery/http"
 	_photoRepo "park_2020/2020_2_tmp_name/api/photos/repository/postgres"
 	_photoUcase "park_2020/2020_2_tmp_name/api/photos/usecase"
-
-	_userDelivery "park_2020/2020_2_tmp_name/api/users/delivery/http"
-	_userRepo "park_2020/2020_2_tmp_name/api/users/repository/postgres"
-	_userUcase "park_2020/2020_2_tmp_name/api/users/usecase"
 )
 
 type application struct {
@@ -106,9 +102,9 @@ func (app *application) initServer() {
 	pu := _photoUcase.NewPhotoUsecase(pr)
 	_photoDelivery.NewPhotoHandler(router, pu)
 
-	ur := _userRepo.NewPostgresUserRepository(dbConn)
-	uu := _userUcase.NewUserUsecase(ur)
-	_userDelivery.NewUserHandler(router, uu)
+	// ur := _userRepo.NewPostgresUserRepository(dbConn)
+	// uu := _userUcase.NewUserUsecase(ur)
+	// _userDelivery.NewUserHandler(router, uu)
 
 	middleware.MyCORSMethodMiddleware(router)
 

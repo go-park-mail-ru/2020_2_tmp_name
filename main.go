@@ -113,10 +113,6 @@ func (app *application) initServer() {
 	pu := _photoUcase.NewPhotoUsecase(pr)
 	_photoDelivery.NewPhotoHandler(router, pu)
 
-	ur := _userRepo.NewPostgresUserRepository(dbConn)
-	uu := _userUcase.NewUserUsecase(ur)
-	_userDelivery.NewUserHandler(router, uu)
-
 	middleware.MyCORSMethodMiddleware(router)
 
 	serv := &http.Server{
@@ -136,6 +132,10 @@ func (app *application) initServer() {
 	grpcAuthClient := authClient.NewAuthClient(grpcConn)
 	au := _authUcase.NewAuthUsecase(ar, grpcAuthClient)
 	_authDelivery.NewUserHandler(router, au)
+
+	ur := _userRepo.NewPostgresUserRepository(dbConn)
+	uu := _userUcase.NewUserUsecase(ur)
+	_userDelivery.NewUserHandler(router, uu, grpcAuthClient)
 
 	fmt.Println("Starting server at: 8080")
 	err = serv.ListenAndServe()
