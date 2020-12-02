@@ -7,25 +7,23 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
-
-	domain "park_2020/2020_2_tmp_name/microservices/authorization"
 )
 
 type AccessLogger struct {
 	LogrusLogger *logrus.Entry
 }
 
-const SessionCookieName = "authCookie"
+// const SessionCookieName = "authCookie"
 
-type SessionMiddleware struct {
-	sessionRepo domain.UserRepository
-}
+// type SessionMiddleware struct {
+// 	sessionRepo domain.UserRepository
+// }
 
-func NewSessionMiddleware(u domain.UserRepository) *SessionMiddleware {
-	return &SessionMiddleware{
-		sessionRepo: u,
-	}
-}
+// func NewSessionMiddleware(u domain.UserRepository) *SessionMiddleware {
+// 	return &SessionMiddleware{
+// 		sessionRepo: u,
+// 	}
+// }
 
 func MyCORSMethodMiddleware(_ *mux.Router) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {

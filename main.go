@@ -3,10 +3,11 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"google.golang.org/grpc"
 	"log"
 	"net/http"
 	"time"
+
+	"google.golang.org/grpc"
 
 	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
@@ -17,6 +18,8 @@ import (
 	"google.golang.org/grpc"
 
 	_ "github.com/lib/pq"
+
+	prometheusMW "github.com/albertogviana/prometheus-middleware"
 
 	_chatDelivery "park_2020/2020_2_tmp_name/api/chats/delivery/http"
 	_chatRepo "park_2020/2020_2_tmp_name/api/chats/repository/postgres"
@@ -118,6 +121,9 @@ func (app *application) initServer() {
 	_photoDelivery.NewPhotoHandler(router, pu)
 
 	middleware.MyCORSMethodMiddleware(router)
+
+	middleware := prometheusMW.NewPrometheusMiddleware(prometheusMW.Opts{})
+	router.Use(middleware.InstrumentHandlerDuration)
 
 	serv := &http.Server{
 		Addr:         ":8080",
