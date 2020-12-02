@@ -26,6 +26,7 @@ type application struct {
 var conf models.Config
 
 func init() {
+	fmt.Println("я в ините")
 	models.LoadConfig(&conf)
 }
 
@@ -37,18 +38,20 @@ func DBConnection(conf *models.Config) *sql.DB {
 		conf.SQLDataBase.Database,
 	)
 
+	fmt.Println(connString)
+
 	db, err := sql.Open("postgres", connString)
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	
 	db.SetMaxOpenConns(10)
 
 	err = db.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	//fmt.Println("я в мейне")
 	return db
 }
 
@@ -110,7 +113,6 @@ func (app *application) initServer() {
 
 func main() {
 	dbConn := DBConnection(&conf)
-
 	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	logrus.WithFields(logrus.Fields{
 		"logger": "LOGRUS",
@@ -130,5 +132,5 @@ func main() {
 	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
 	cu := _commentUcase.NewCommentUsecase(cr)
 
-	grpcServer.StartCommentsGRPCServer(cu, "localhost:8082")
+	grpcServer.StartCommentsGRPCServer(cu, ":8082")
 }

@@ -23,7 +23,7 @@ type SQLDataBase struct {
 type duration time.Duration
 
 var (
-	configPath = "config/config.toml"
+	configPath = "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/config/config.toml"
 	hashPaths  = []string{configPath}
 )
 
