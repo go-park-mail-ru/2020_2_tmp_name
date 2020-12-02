@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"google.golang.org/grpc"
 	"log"
 	"net/http"
 	"time"
@@ -21,9 +22,10 @@ import (
 	_chatRepo "park_2020/2020_2_tmp_name/api/chats/repository/postgres"
 	_chatUcase "park_2020/2020_2_tmp_name/api/chats/usecase"
 
-	_commentDelivery "park_2020/2020_2_tmp_name/api/comments/delivery/http"
-	_commentRepo "park_2020/2020_2_tmp_name/api/comments/repository/postgres"
-	_commentUcase "park_2020/2020_2_tmp_name/api/comments/usecase"
+	_commentClientGRPC "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
+	_commentDelivery "park_2020/2020_2_tmp_name/microservices/comments/delivery/http"
+	_commentRepo "park_2020/2020_2_tmp_name/microservices/comments/repository/postgres"
+	_commentUcase "park_2020/2020_2_tmp_name/microservices/comments/usecase"
 
 	_photoDelivery "park_2020/2020_2_tmp_name/api/photos/delivery/http"
 	_photoRepo "park_2020/2020_2_tmp_name/api/photos/repository/postgres"
@@ -107,7 +109,9 @@ func (app *application) initServer() {
 
 	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
 	cu := _commentUcase.NewCommentUsecase(cr)
-	_commentDelivery.NewCommentHandler(router, cu)
+	grpcConn, err := grpc.Dial("localhost:8082", grpc.WithInsecure())
+	ccGRPC := _commentClientGRPC.NewCommentsClientGRPC(grpcConn)
+	_commentDelivery.NewCommentHandler(router, cu, ccGRPC)
 
 	pr := _photoRepo.NewPostgresPhotoRepository(dbConn)
 	pu := _photoUcase.NewPhotoUsecase(pr)
