@@ -4,13 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
-	"time"
-
 	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 
@@ -57,19 +53,19 @@ func DBConnection(conf *models.Config) *sql.DB {
 }
 
 func (app *application) initServer() {
-	headersOk := handlers.AllowedHeaders([]string{"Content-Type", "Content-Disposition"})
-	originsOk := handlers.AllowedOrigins([]string{"https://mi-ami.ru"})
-	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE"})
+	//headersOk := handlers.AllowedHeaders([]string{"Content-Type", "Content-Disposition"})
+	//originsOk := handlers.AllowedOrigins([]string{"https://mi-ami.ru"})
+	//methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE"})
 
 	dbConn := DBConnection(&conf)
 
-	router := mux.NewRouter()
+	//router := mux.NewRouter()
 
 	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	logrus.WithFields(logrus.Fields{
 		"logger": "LOGRUS",
 		"host":   "95.163.213.222",
-		"port":   ":8080",
+		"port":   ":8082",
 	}).Info("Starting server")
 
 	AccessLogOut := new(middleware.AccessLogger)
@@ -89,31 +85,50 @@ func (app *application) initServer() {
 	go grpcServer.StartCommentsGRPCServer(cu, "localhost:8082")
 	// _commentDelivery.NewCommentHandler(router, cu)
 
-	middleware.MyCORSMethodMiddleware(router)
+	//middleware.MyCORSMethodMiddleware(router)
+	//
+	//serv := &http.Server{
+	//	Addr:         "localhost:8083",
+	//	Handler:      handlers.CORS(originsOk, headersOk, methodsOk, handlers.AllowCredentials())(router),
+	//	WriteTimeout: 60 * time.Second,
+	//	ReadTimeout:  60 * time.Second,
+	//}
 
-	serv := &http.Server{
-		Addr:         "localhost:8083",
-		Handler:      handlers.CORS(originsOk, headersOk, methodsOk, handlers.AllowCredentials())(router),
-		WriteTimeout: 60 * time.Second,
-		ReadTimeout:  60 * time.Second,
-	}
-
-	fmt.Println("Starting server at: 8083")
-	err := serv.ListenAndServe()
-	if err != nil {
-		log.Fatal(err)
-	}
+	//fmt.Println("Starting server at: 8083")
+	//err := serv.ListenAndServe()
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 }
-
-func newApplication(conf models.Config) *application {
-	return &application{
-		servicePort: 8083,
-		serv:        mux.NewRouter().StrictSlash(true),
-	}
-}
+//
+//func newApplication(conf models.Config) *application {
+//	return &application{
+//		servicePort: 8083,
+//		serv:        mux.NewRouter().StrictSlash(true),
+//	}
+//}
 
 func main() {
-	app := newApplication(conf)
-	app.initServer()
+	dbConn := DBConnection(&conf)
 
+	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
+	logrus.WithFields(logrus.Fields{
+		"logger": "LOGRUS",
+		"host":   "95.163.213.222",
+		"port":   ":8082",
+	}).Info("Starting server")
+
+	AccessLogOut := new(middleware.AccessLogger)
+
+	contextLogger := logrus.WithFields(logrus.Fields{
+		"mode":   "[access_log]",
+		"logger": "LOGRUS",
+	})
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+	AccessLogOut.LogrusLogger = contextLogger
+
+	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
+	cu := _commentUcase.NewCommentUsecase(cr)
+
+	grpcServer.StartCommentsGRPCServer(cu, "localhost:8082")
 }

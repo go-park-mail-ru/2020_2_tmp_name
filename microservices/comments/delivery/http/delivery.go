@@ -1,13 +1,14 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	domain "park_2020/2020_2_tmp_name/microservices/comments"
+	grpcClient "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
-
 	"time"
 
 	"github.com/gorilla/mux"
@@ -16,11 +17,13 @@ import (
 
 type CommentHandlerType struct {
 	CUsecase domain.CommentUsecase
+	ClientGRPC *grpcClient.CommentClient
 }
 
-func NewCommentHandler(r *mux.Router, cs domain.CommentUsecase) {
+func NewCommentHandler(r *mux.Router, cs domain.CommentUsecase, clientGRPC *grpcClient.CommentClient) {
 	handler := &CommentHandlerType{
 		CUsecase: cs,
+		ClientGRPC: clientGRPC,
 	}
 
 	r.HandleFunc("/api/v1/comment", handler.CommentHandler).Methods(http.MethodPost)
@@ -36,6 +39,8 @@ func JSONError(message string) []byte {
 }
 
 func (c *CommentHandlerType) CommentHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+
 	comment := models.Comment{}
 	err := json.NewDecoder(r.Body).Decode(&comment)
 	if err != nil {
@@ -51,14 +56,15 @@ func (c *CommentHandlerType) CommentHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user, err := c.CUsecase.User(r.Cookies()[0].Value)
+	user, err := c.CUsecase.User(ctx, r.Cookies()[0].Value)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
 	}
 
-	err = c.CUsecase.Comment(user, comment)
+	err = c.ClientGRPC.Comment(ctx, user, comment)
+	//err = c.CUsecase.Comment(ctx, user, comment)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -79,6 +85,8 @@ func (c *CommentHandlerType) CommentHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (c *CommentHandlerType) CommentsByIdHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+
 	userID, err := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/api/v1/comments/"))
 	if err != nil {
 		logrus.Error(err)
@@ -87,7 +95,8 @@ func (c *CommentHandlerType) CommentsByIdHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	comments, err := c.CUsecase.CommentsByID(userID)
+	//comments, err := c.CUsecase.CommentsByID(ctx, userID)
+	comments, err := c.ClientGRPC.CommentsById(ctx, userID)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))

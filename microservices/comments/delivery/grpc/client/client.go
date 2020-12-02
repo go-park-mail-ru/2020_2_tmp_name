@@ -19,36 +19,37 @@ func NewCommentsClientGRPC(conn *grpc.ClientConn) *CommentClient{
 	}
 }
 
-func transformIntoUserComment(userComment *proto.UserComment) (models.User, models.Comment) {
-	if userComment == nil {
-		return models.User{}, models.Comment{}
+func transformIntoUserComment(user models.User, comment models.Comment) *proto.UserComment {
+	userProto := &proto.User{
+		ID:         int32(user.ID),
+		Name:       user.Name,
+		Telephone:  user.Telephone,
+		Password:   user.Password,
+		DateBirth:  int32(user.DateBirth),
+		Day:        user.Day,
+		Month:      user.Month,
+		Year:       user.Year,
+		Sex:        user.Sex,
+		LinkImages: user.LinkImages,
+		Job:        user.Job,
+		Education:  user.Education,
+		AboutMe:    user.AboutMe,
 	}
 
-	user := models.User{
-		ID:         int(userComment.User.ID),
-		Name:       userComment.User.Name,
-		Telephone:  userComment.User.Telephone,
-		Password:   userComment.User.Password,
-		DateBirth:  int(userComment.User.DateBirth),
-		Day:        userComment.User.Day,
-		Month:      userComment.User.Month,
-		Year:       userComment.User.Year,
-		Sex:        userComment.User.Sex,
-		LinkImages: userComment.User.LinkImages,
-		Job:       	userComment.User.Job,
-		Education:  userComment.User.Education,
-		AboutMe:    userComment.User.AboutMe,
+	commentProto := &proto.Comment{
+		ID:           int32(comment.ID),
+		Uid1:         int32(comment.Uid1),
+		Uid2:         int32(comment.Uid2),
+		TimeDelivery: comment.TimeDelivery,
+		CommentText:  comment.CommentText,
 	}
 
-	comment := models.Comment{
-		ID:           int(userComment.Comment.ID),
-		Uid1:         int(userComment.Comment.Uid1),
-		Uid2:         int(userComment.Comment.Uid2),
-		TimeDelivery: userComment.Comment.TimeDelivery,
-		CommentText:  userComment.Comment.CommentText,
+	userComment := &proto.UserComment{
+		User:    userProto,
+		Comment: commentProto,
 	}
 
-	return user, comment
+	return userComment
 }
 
 func transformFromCommentsData(data *proto.CommentsData) models.CommentsData {
@@ -85,7 +86,9 @@ func transformFromCommentsData(data *proto.CommentsData) models.CommentsData {
 }
 
 
-func (c *CommentClient) Comment(ctx context.Context, userComment *proto.UserComment) error {
+func (c *CommentClient) Comment(ctx context.Context, user models.User, comment models.Comment) error {
+	userComment := transformIntoUserComment(user, comment)
+
 	_, err := c.client.Comment(ctx, userComment)
 	if err != nil {
 		logrus.Error(err)
@@ -95,8 +98,9 @@ func (c *CommentClient) Comment(ctx context.Context, userComment *proto.UserComm
 	return nil
 }
 
-func (c *CommentClient) CommentsById(ctx context.Context, id *proto.Id) (models.CommentsData, error) {
-	commentsData, err := c.client.CommentsById(ctx, id)
+func (c *CommentClient) CommentsById(ctx context.Context, id int) (models.CommentsData, error) {
+	idProto := &proto.Id{Id: int32(id)}
+	commentsData, err := c.client.CommentsById(ctx, idProto)
 	if err != nil {
 		logrus.Error(err)
 		return models.CommentsData{}, nil

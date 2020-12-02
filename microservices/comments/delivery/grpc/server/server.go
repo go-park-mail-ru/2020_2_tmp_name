@@ -2,6 +2,7 @@ package comments
 
 import (
 	"context"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -43,6 +44,7 @@ func StartCommentsGRPCServer(commentsUCase comments.CommentUsecase, url string) 
 }
 
 func (s *server) Comment(ctx context.Context, userComment *proto.UserComment) (*proto.Empty, error) {
+	fmt.Println("ЭТО КОММЕНТ ХАХАХАХА")
 	user, comment := transformIntoUserComment(userComment)
 	err := s.commentsUseCase.Comment(ctx, user, comment)
 	if err != nil {
@@ -54,6 +56,7 @@ func (s *server) Comment(ctx context.Context, userComment *proto.UserComment) (*
 }
 
 func (s *server) CommentsById(ctx context.Context, id *proto.Id) (*proto.CommentsData, error) {
+	fmt.Println("ЭТО КОММЕНТ БАЙ АЙДИ ХАХАХАХА")
 	userId := int(id.Id)
 	commentsData, err := s.commentsUseCase.CommentsByID(ctx, userId)
 	if err != nil {

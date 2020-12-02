@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"google.golang.org/grpc"
 	"log"
 	"net/http"
 	"time"
@@ -20,6 +21,7 @@ import (
 	_chatRepo "park_2020/2020_2_tmp_name/api/chats/repository/postgres"
 	_chatUcase "park_2020/2020_2_tmp_name/api/chats/usecase"
 
+	_commentClientGRPC "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
 	_commentDelivery "park_2020/2020_2_tmp_name/microservices/comments/delivery/http"
 	_commentRepo "park_2020/2020_2_tmp_name/microservices/comments/repository/postgres"
 	_commentUcase "park_2020/2020_2_tmp_name/microservices/comments/usecase"
@@ -100,7 +102,9 @@ func (app *application) initServer() {
 
 	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
 	cu := _commentUcase.NewCommentUsecase(cr)
-	_commentDelivery.NewCommentHandler(router, cu)
+	grpcConn, err := grpc.Dial("localhost:8082", grpc.WithInsecure())
+	ccGRPC := _commentClientGRPC.NewCommentsClientGRPC(grpcConn)
+	_commentDelivery.NewCommentHandler(router, cu, ccGRPC)
 
 	pr := _photoRepo.NewPostgresPhotoRepository(dbConn)
 	pu := _photoUcase.NewPhotoUsecase(pr)
@@ -120,7 +124,7 @@ func (app *application) initServer() {
 	}
 
 	fmt.Println("Starting server at: 8080")
-	err := serv.ListenAndServe()
+	err = serv.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}
