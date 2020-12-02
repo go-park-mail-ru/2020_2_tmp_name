@@ -46,6 +46,7 @@ func (s *server) Comment(ctx context.Context, userComment *proto.UserComment) (*
 	user, comment := transformIntoUserComment(userComment)
 	err := s.commentsUseCase.Comment(ctx, user, comment)
 	if err != nil {
+		logrus.Error(err)
 		return nil, err
 	}
 	empty := proto.Empty{}
@@ -56,6 +57,7 @@ func (s *server) CommentsById(ctx context.Context, id *proto.Id) (*proto.Comment
 	userId := int(id.Id)
 	commentsData, err := s.commentsUseCase.CommentsByID(ctx, userId)
 	if err != nil {
+		logrus.Error(err)
 		return nil, err
 	}
 	res := transformIntoGRPCCommentsData(commentsData)
