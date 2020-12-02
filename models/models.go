@@ -85,6 +85,24 @@ type Message struct {
 	UserID       int       `json:"-"`
 }
 
+type Phone struct {
+	Telephone string `json:"telephone"`
+}
+
+type Image struct {
+	LinkImage string `json:"link_image"`
+}
+
+type Premium struct {
+	IsPremium bool `json:"is_premium"`
+}
+
 type Error struct {
 	Message string `json:"message"`
+}
+
+type Superlike struct {
+	ID   int `json:"-"`
+	Uid1 int `json:"-"`
+	Uid2 int `json:"user_id2"`
 }

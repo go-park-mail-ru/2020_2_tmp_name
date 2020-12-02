@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"google.golang.org/grpc"
 	"log"
 	"net/http"
 	"time"
@@ -12,13 +13,33 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/spf13/viper"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 
 	_ "github.com/lib/pq"
 
-	_userHttpDelivery "park_2020/2020_2_tmp_name/users/delivery/http"
-	_userRepo "park_2020/2020_2_tmp_name/users/repository/postgres"
-	_userUcase "park_2020/2020_2_tmp_name/users/usecase"
+	_chatDelivery "park_2020/2020_2_tmp_name/api/chats/delivery/http"
+	_chatRepo "park_2020/2020_2_tmp_name/api/chats/repository/postgres"
+	_chatUcase "park_2020/2020_2_tmp_name/api/chats/usecase"
+
+	_commentClientGRPC "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
+	_commentDelivery "park_2020/2020_2_tmp_name/microservices/comments/delivery/http"
+	_commentRepo "park_2020/2020_2_tmp_name/microservices/comments/repository/postgres"
+	_commentUcase "park_2020/2020_2_tmp_name/microservices/comments/usecase"
+
+	_photoDelivery "park_2020/2020_2_tmp_name/api/photos/delivery/http"
+	_photoRepo "park_2020/2020_2_tmp_name/api/photos/repository/postgres"
+	_photoUcase "park_2020/2020_2_tmp_name/api/photos/usecase"
+
+	_userDelivery "park_2020/2020_2_tmp_name/api/users/delivery/http"
+	_userRepo "park_2020/2020_2_tmp_name/api/users/repository/postgres"
+	_userUcase "park_2020/2020_2_tmp_name/api/users/usecase"
+
+	_authDelivery "park_2020/2020_2_tmp_name/microservices/authorization/delivery/http"
+	_authRepo "park_2020/2020_2_tmp_name/microservices/authorization/repository/postgres"
+	_authUcase "park_2020/2020_2_tmp_name/microservices/authorization/usecase"
+
+	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 )
 
 type application struct {
@@ -57,20 +78,44 @@ func DBConnection(conf *models.Config) *sql.DB {
 
 func (app *application) initServer() {
 	headersOk := handlers.AllowedHeaders([]string{"Content-Type", "Content-Disposition"})
-	originsOk := handlers.AllowedOrigins([]string{"http://95.163.213.222:3000"})
+	originsOk := handlers.AllowedOrigins([]string{"https://mi-ami.ru"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE"})
 
-	var err error
 	dbConn := DBConnection(&conf)
 
 	router := mux.NewRouter()
 
-	u := _userRepo.NewPostgresUserRepository(dbConn)
+	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
+	logrus.WithFields(logrus.Fields{
+		"logger": "LOGRUS",
+		"host":   "95.163.213.222",
+		"port":   ":8080",
+	}).Info("Starting server")
 
-	timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
-	uu := _userUcase.NewUserUsecase(u, timeoutContext)
+	AccessLogOut := new(middleware.AccessLogger)
 
-	_userHttpDelivery.NewUserHandler(router, uu)
+	contextLogger := logrus.WithFields(logrus.Fields{
+		"mode":   "[access_log]",
+		"logger": "LOGRUS",
+	})
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+	AccessLogOut.LogrusLogger = contextLogger
+
+	// router.Use(AccessLogOut.AccessLogMiddleware(router))
+
+	chr := _chatRepo.NewPostgresChatRepository(dbConn)
+	chu := _chatUcase.NewChatUsecase(chr)
+	_chatDelivery.NewChatHandler(router, chu)
+
+	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
+	cu := _commentUcase.NewCommentUsecase(cr)
+	grpcConn, err := grpc.Dial("localhost:8082", grpc.WithInsecure())
+	ccGRPC := _commentClientGRPC.NewCommentsClientGRPC(grpcConn)
+	_commentDelivery.NewCommentHandler(router, cu, ccGRPC)
+
+	pr := _photoRepo.NewPostgresPhotoRepository(dbConn)
+	pu := _photoUcase.NewPhotoUsecase(pr)
+	_photoDelivery.NewPhotoHandler(router, pu)
 
 	middleware.MyCORSMethodMiddleware(router)
 
@@ -80,6 +125,21 @@ func (app *application) initServer() {
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
 	}
+
+	ar := _authRepo.NewPostgresUserRepository(dbConn)
+	grpcConn, err := grpc.Dial("0.0.0.0:8081", grpc.WithInsecure())
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	grpcAuthClient := authClient.NewAuthClient(grpcConn)
+	au := _authUcase.NewAuthUsecase(ar, grpcAuthClient)
+	_authDelivery.NewUserHandler(router, au)
+
+	ur := _userRepo.NewPostgresUserRepository(dbConn)
+	uu := _userUcase.NewUserUsecase(ur)
+	_userDelivery.NewUserHandler(router, uu, grpcAuthClient)
 
 	fmt.Println("Starting server at: 8080")
 	err = serv.ListenAndServe()

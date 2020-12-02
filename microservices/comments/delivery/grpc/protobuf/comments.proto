@@ -1,0 +1,73 @@
+syntax = "proto3";
+package comments;
+option go_package = ".;comments";
+
+// protoc --go_out=plugins=grpc:. *.proto
+
+
+service CommentsGRPCHandler{
+  rpc Comment(UserComment) returns (Empty);
+  rpc CommentsById(Id) returns (CommentsData);
+}
+
+message UserComment {
+  User user = 1;
+  Comment comment = 2;
+}
+
+message Empty{
+
+}
+
+message Id{
+  int32 Id = 1;
+}
+
+message Comment{
+  int32 ID = 1;
+  int32 Uid1 = 2;
+  int32 Uid2 = 3;
+  string TimeDelivery = 4;
+  string CommentText = 5;
+}
+
+message User{
+  int32 ID = 1;
+  string Name = 2;
+  string Telephone = 3;
+  string Password = 4;
+  int32 DateBirth = 5;
+  string Day = 6;
+  string Month = 7;
+  string Year = 8;
+  string Sex = 9;
+  repeated string LinkImages = 10;
+  string Job = 11;
+  string Education = 12;
+  string AboutMe = 13;
+}
+
+message UserFeed{
+  int32 ID = 1;
+  string Name = 2;
+  int32 DateBirth = 3;
+  repeated string LinkImages = 4;
+  string Job = 5;
+  string Education = 6;
+  string AboutMe = 7;
+  bool IsSuperLike = 8;
+}
+
+message CommentId{
+  UserFeed User = 1;
+  string CommentText = 2;
+  string TimeDelivery = 3;
+}
+
+message CommentsById{
+  repeated CommentId CommentById = 1;
+}
+
+message CommentsData{
+  CommentsById Data = 1;
+}
