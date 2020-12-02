@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/genproto/googleapis/datastore/admin/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
@@ -12,39 +13,21 @@ import (
 	"time"
 )
 
-type server struct {
-	commentsUseCase comments.CommentUsecase
+type CommentClient struct {
+	client proto.CommentsGRPCHandlerClient
 }
 
-func NewCommentsServerGRPC(gServer *grpc.Server, commentsUCase comments.CommentUsecase) {
-	articleServer := &server{
-		commentsUseCase: commentsUCase,
+func NewCommentsClientGRPC(conn *grpc.ClientConn) *CommentClient{
+	c := proto.NewCommentsGRPCHandlerClient(conn)
+	return &CommentClient{
+		client: c,
 	}
-	proto.RegisterCommentsGRPCHandlerServer(gServer, articleServer)
-	reflection.Register(gServer)
 }
 
-func StartCommentsGRPCServer(commentsUCase comments.CommentUsecase, url string) {
-	list, err := net.Listen("tcp", url)
-	if err != nil {
-		logrus.Error(err)
-	}
-
-	server := grpc.NewServer(
-		grpc.KeepaliveParams(keepalive.ServerParameters{
-			MaxConnectionIdle: 5 * time.Minute,
-		}),
-	)
-
-	NewCommentsServerGRPC(server, commentsUCase)
-
-	_ = server.Serve(list)
-}
-
-func (s *server) Comment(ctx context.Context, userComment *proto.UserComment) (*proto.Empty, error) {
+func (c *CommentClient) Comment(ctx context.Context, userComment *proto.UserComment) (*proto.Empty, error) {
 
 }
 
-func (s *server) CommentsById(ctx context.Context, id *proto.Id) (*proto.CommentsData, error) {
+func (c *CommentClient) CommentsById(ctx context.Context, id *proto.Id) (*proto.CommentsData, error) {
 
 }
