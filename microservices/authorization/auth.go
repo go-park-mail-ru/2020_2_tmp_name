@@ -1,13 +1,14 @@
-package domain
+package auth
 
 import (
+	"context"
 	"park_2020/2020_2_tmp_name/models"
 )
 
 type UserUsecase interface {
-	Login(data models.LoginData) (string, error)
-	Logout(session string) error
-	CheckSession(cookie string) (models.User, error)
+	Login(ctx context.Context, data models.LoginData) (string, error)
+	Logout(ctx context.Context, session string) error
+	CheckSession(ctx context.Context, cookie string) (models.User, error)
 }
 
 type UserRepository interface {

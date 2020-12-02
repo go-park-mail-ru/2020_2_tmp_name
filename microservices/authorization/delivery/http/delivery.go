@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	domain "park_2020/2020_2_tmp_name/microservices/authorization"
@@ -42,7 +43,7 @@ func (u *UserHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sidString, err := u.UUsecase.Login(loginData)
+	sidString, err := u.UUsecase.Login(context.Background(), loginData)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -79,7 +80,7 @@ func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = u.UUsecase.Logout(session.Value)
+	err = u.UUsecase.Logout(context.Background(), session.Value)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -108,7 +109,7 @@ func (u *UserHandlerType) CheckSessionHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	user, err := u.UUsecase.CheckSession(r.Cookies()[0].Value)
+	user, err := u.UUsecase.CheckSession(context.Background(), r.Cookies()[0].Value)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))

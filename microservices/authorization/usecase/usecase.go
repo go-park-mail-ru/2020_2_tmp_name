@@ -1,26 +1,24 @@
 package usecase
 
 import (
+	"context"
 	domain "park_2020/2020_2_tmp_name/microservices/authorization"
-	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/google/uuid"
 )
 
 type userUsecase struct {
-	userRepo   domain.UserRepository
-	authClient *authClient.AuthClient
+	userRepo domain.UserRepository
 }
 
-func NewAuthUsecase(u domain.UserRepository, ac *authClient.AuthClient) *userUsecase {
+func NewAuthUsecase(u domain.UserRepository) *userUsecase {
 	return &userUsecase{
-		userRepo:   u,
-		authClient: ac,
+		userRepo: u,
 	}
 }
 
-func (u *userUsecase) Login(data models.LoginData) (string, error) {
+func (u *userUsecase) Login(ctx context.Context, data models.LoginData) (string, error) {
 	var check bool
 	if check = u.userRepo.CheckUser(data.Telephone); !check {
 		return "", models.ErrUnauthorized
@@ -48,11 +46,11 @@ func (u *userUsecase) Login(data models.LoginData) (string, error) {
 	return SID.String(), nil
 }
 
-func (u *userUsecase) Logout(session string) error {
+func (u *userUsecase) Logout(ctx context.Context, session string) error {
 	return u.userRepo.DeleteSession(session)
 }
 
-func (u *userUsecase) CheckSession(cookie string) (models.User, error) {
+func (u *userUsecase) CheckSession(ctx context.Context, cookie string) (models.User, error) {
 	telephone := u.userRepo.CheckUserBySession(cookie)
 	user, err := u.userRepo.SelectUser(telephone)
 	if err != nil {

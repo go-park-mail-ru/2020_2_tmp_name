@@ -2,36 +2,79 @@ package server
 
 import (
 	"context"
-	auth "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/protobuf"
-	"sync"
+	"net"
+	auth "park_2020/2020_2_tmp_name/microservices/authorization"
+	proto "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/protobuf"
+	"park_2020/2020_2_tmp_name/models"
+	"time"
+
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/reflection"
 )
 
-type SessionManager struct {
-	mu          sync.RWMutex
-	userUsecase UserUsecase
+type server struct {
+	authUseCase auth.UserUsecase
 }
 
-func NewSessionManager(u UserUsecase) *SessionManager {
-	return &SessionManager{
-		mu:          sync.RWMutex{},
-		userUsecase: u,
+func NewAuthServerGRPC(gServer *grpc.Server, authUCase auth.UserUsecase) {
+	articleServer := &server{
+		authUseCase: authUCase,
 	}
+	proto.RegisterAuthGRPCHandlerServer(gServer, articleServer)
+	reflection.Register(gServer)
 }
 
-func (sm *SessionManager) Login(ctx context.Context, data *auth.LoginData) (*auth.Session, error) {
+func StartAuthGRPCServer(authUCase auth.UserUsecase, url string) {
+	list, err := net.Listen("tcp", url)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	server := grpc.NewServer(
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle: 5 * time.Minute,
+		}),
+	)
+
+	NewAuthServerGRPC(server, authUCase)
+
+	_ = server.Serve(list)
+}
+
+func (s *server) Login(ctx context.Context, data *proto.LoginData) (*proto.Session, error) {
 	var err error
-	var session *auth.Session
-	sm.mu.Lock()
-	session.Sess, err = sm.userUsecase.Login(*data)
-	sm.mu.Unlock()
+	var session *proto.Session
+	var loginData models.LoginData
+	loginData.Password = data.Password
+	loginData.Telephone = data.Telephone
+	session.Sess, err = s.authUseCase.Login(ctx, loginData)
 	return session, err
 }
 
-func (sm *SessionManager) Logout(ctx context.Context, session *auth.Session) error {
-	return sm.userUsecase.Logout(session.Sess)
+func (s *server) Logout(ctx context.Context, session *proto.Session) (*proto.Nothing, error) {
+	var nothing *proto.Nothing
+	err := s.authUseCase.Logout(ctx, session.Sess)
+	return nothing, err
 }
 
-func (sm *SessionManager) CheckSession(ctx context.Context, session *auth.Session) (*auth.User, error) {
-	user, err := sm.userUsecase.CheckSession(session.Sess)
-	return &user, err
+func (s *server) CheckSession(ctx context.Context, session *proto.Session) (*proto.User, error) {
+	user, err := s.authUseCase.CheckSession(ctx, session.Sess)
+	userProto := &proto.User{
+		Id:         int32(user.ID),
+		Name:       user.Name,
+		Telephone:  user.Telephone,
+		Password:   user.Password,
+		DateBirth:  int32(user.DateBirth),
+		Day:        user.Day,
+		Month:      user.Month,
+		Year:       user.Year,
+		Sex:        user.Sex,
+		LinkImages: user.LinkImages,
+		Job:        user.Job,
+		Education:  user.Education,
+		AboutMe:    user.AboutMe,
+	}
+	return userProto, err
 }
