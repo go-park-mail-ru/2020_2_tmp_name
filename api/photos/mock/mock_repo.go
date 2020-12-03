@@ -32,18 +32,6 @@ func (_m *MockPhotoRepository) EXPECT() *MockPhotoRepositoryMockRecorder {
 	return _m.recorder
 }
 
-// CheckUserBySession mocks base method
-func (_m *MockPhotoRepository) CheckUserBySession(_param0 string) string {
-	ret := _m.ctrl.Call(_m, "CheckUserBySession", _param0)
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// CheckUserBySession indicates an expected call of CheckUserBySession
-func (_mr *MockPhotoRepositoryMockRecorder) CheckUserBySession(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "CheckUserBySession", reflect.TypeOf((*MockPhotoRepository)(nil).CheckUserBySession), arg0)
-}
-
 // DeletePhoto mocks base method
 func (_m *MockPhotoRepository) DeletePhoto(_param0 string, _param1 int) error {
 	ret := _m.ctrl.Call(_m, "DeletePhoto", _param0, _param1)
@@ -79,19 +67,6 @@ func (_m *MockPhotoRepository) SelectImages(_param0 int) ([]string, error) {
 // SelectImages indicates an expected call of SelectImages
 func (_mr *MockPhotoRepositoryMockRecorder) SelectImages(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "SelectImages", reflect.TypeOf((*MockPhotoRepository)(nil).SelectImages), arg0)
-}
-
-// SelectUser mocks base method
-func (_m *MockPhotoRepository) SelectUser(_param0 string) (models.User, error) {
-	ret := _m.ctrl.Call(_m, "SelectUser", _param0)
-	ret0, _ := ret[0].(models.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SelectUser indicates an expected call of SelectUser
-func (_mr *MockPhotoRepositoryMockRecorder) SelectUser(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "SelectUser", reflect.TypeOf((*MockPhotoRepository)(nil).SelectUser), arg0)
 }
 
 // SelectUserFeed mocks base method

@@ -36,12 +36,3 @@ func (p *photoUsecase) RemovePhoto(path string, uid int) error {
 	}
 	return nil
 }
-
-func (p *photoUsecase) User(cookie string) (models.User, error) {
-	telephone := p.photoRepo.CheckUserBySession(cookie)
-	user, err := p.photoRepo.SelectUser(telephone)
-	if err != nil {
-		return user, models.ErrNotFound
-	}
-	return user, nil
-}

@@ -17,10 +17,10 @@ import (
 
 type PhotoHandlerType struct {
 	PUsecase   domain.PhotoUsecase
-	AuthClient *_authClientGRPC.AuthClient
+	AuthClient _authClientGRPC.AuthClientInterface
 }
 
-func NewPhotoHandler(r *mux.Router, ps domain.PhotoUsecase, ac *_authClientGRPC.AuthClient) {
+func NewPhotoHandler(r *mux.Router, ps domain.PhotoUsecase, ac _authClientGRPC.AuthClientInterface) {
 	handler := &PhotoHandlerType{
 		PUsecase:   ps,
 		AuthClient: ac,

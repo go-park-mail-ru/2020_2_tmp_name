@@ -73,22 +73,6 @@ func TestUserUsecase_Logout(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestUserUsecase_UploadAvatarSuccess(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := mock.NewMockUserRepository(ctrl)
-
-	us := userUsecase{
-		userRepo: mock,
-	}
-
-	uid, err := us.UploadAvatar()
-
-	require.NoError(t, err)
-	require.NotEqual(t, uid.String(), "")
-}
-
 func TestUserUsecase_SignUpSuccess(t *testing.T) {
 	user := models.User{
 		ID:         0,

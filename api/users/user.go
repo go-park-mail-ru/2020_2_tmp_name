@@ -9,8 +9,8 @@ import (
 //go:generate mockgen -destination=./mock/mock_repo.go -package=mock park_2020/2020_2_tmp_name/api/users UserRepository
 
 type UserUsecase interface {
-	Login(data models.LoginData) (string, error)
-	Logout(session string) error
+	// Login(data models.LoginData) (string, error)
+	// Logout(session string) error
 	Signup(user models.User) error
 	Settings(uid int, user models.User) error
 	IsPremium(uid int) bool

@@ -144,6 +144,47 @@ func TestChatUsecase_MsgFail(t *testing.T) {
 	require.Equal(t, models.ErrInternalServerError, err)
 }
 
+func TestChatUsecase_Sessions(t *testing.T) {
+	uid := 1
+
+	sessions := []string{"aaa", "bbb"}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().SelectSessions(uid).Return(sessions, nil)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	result, err := chs.Sessions(uid)
+
+	require.NoError(t, err)
+	require.Equal(t, result, sessions)
+}
+
+func TestChatUsecase_SessionsF(t *testing.T) {
+	uid := 1
+
+	sessions := []string{"aaa", "bbb"}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().SelectSessions(uid).Return(sessions, models.ErrNotFound)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	_, err := chs.Sessions(uid)
+
+	require.Equal(t, models.ErrNotFound, err)
+}
+
 func TestChatUsecase_ChatSuccess(t *testing.T) {
 	chat := models.Chat{
 		ID:      0,
@@ -443,6 +484,83 @@ func TestChatUsecase_СhatSelectIDFail(t *testing.T) {
 	require.NotEqual(t, err, nil)
 }
 
+func TestChatUsecase_PartnerSuccess(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	userfeed := models.UserFeed{
+		ID:         0,
+		Name:       "Masha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	chid := 1
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().SelectUserByChat(user.ID, chid).Return(userfeed, nil)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	result, err := chs.Partner(user, chid)
+
+	require.NoError(t, err)
+	require.Equal(t, result, userfeed)
+}
+
+func TestChatUsecase_PartnerFail(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	userfeed := models.UserFeed{
+		ID:         0,
+		Name:       "Masha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	chid := 1
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().SelectUserByChat(user.ID, chid).Return(userfeed, models.ErrNotFound)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	_, err := chs.Partner(user, chid)
+
+	require.Error(t, models.ErrNotFound, err)
+}
+
 func TestChatUsecase_UserSuccess(t *testing.T) {
 	user := models.User{
 		ID:         0,
@@ -504,6 +622,67 @@ func TestChatUsecase_UserFail(t *testing.T) {
 	require.Equal(t, err, models.ErrNotFound)
 }
 
+func TestChatUsecase_UserFeedSuccess(t *testing.T) {
+	user := models.UserFeed{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	telephone := "(944) 546 98 24"
+	sid := "something-like-this"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Return(telephone)
+	mock.EXPECT().SelectUserFeed(telephone).Return(user, nil)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	result, err := chs.UserFeed(sid)
+
+	require.NoError(t, err)
+	require.Equal(t, result, user)
+}
+
+func TestChatUsecase_UserFeedFail(t *testing.T) {
+	user := models.UserFeed{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	telephone := "(944) 546 98 24"
+	sid := "something-like-this"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Return(telephone)
+	mock.EXPECT().SelectUserFeed(telephone).Return(user, models.ErrNotFound)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	_, err := chs.UserFeed(sid)
+
+	require.Equal(t, err, models.ErrNotFound)
+}
+
 func TestChatUsecase_LikeSuccess(t *testing.T) {
 	like := models.Like{
 		ID:   0,
@@ -521,21 +700,14 @@ func TestChatUsecase_LikeSuccess(t *testing.T) {
 		AboutMe:    "",
 	}
 
-	chat := models.Chat{
-		ID:      0,
-		Uid1:    user.ID,
-		Uid2:    like.Uid2,
-		LastMsg: "",
-	}
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckLike(user.ID, like.Uid2).Return(false)
+	mock.EXPECT().CheckDislike(user.ID, like.Uid2).Return(true)
+	mock.EXPECT().DeleteDislike(user.ID, like.Uid2).Return(nil)
 	mock.EXPECT().InsertLike(user.ID, like.Uid2).Return(nil)
-	mock.EXPECT().Match(user.ID, like.Uid2).Return(true)
-	mock.EXPECT().CheckChat(chat).Return(false)
-	mock.EXPECT().InsertChat(chat).Return(nil)
 
 	chs := chatUsecase{
 		chatRepo: mock,
@@ -548,7 +720,7 @@ func TestChatUsecase_LikeSuccess(t *testing.T) {
 
 }
 
-func TestChatUsecase_LikeFail(t *testing.T) {
+func TestChatUsecase_LikeFailInsert(t *testing.T) {
 	like := models.Like{
 		ID:   0,
 		Uid1: 1,
@@ -564,21 +736,15 @@ func TestChatUsecase_LikeFail(t *testing.T) {
 		Education:  "BMSTU",
 		AboutMe:    "",
 	}
-	chat := models.Chat{
-		ID:      0,
-		Uid1:    user.ID,
-		Uid2:    like.Uid2,
-		LastMsg: "",
-	}
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatRepository(ctrl)
-	mock.EXPECT().InsertLike(user.ID, like.Uid2).Return(nil)
-	mock.EXPECT().Match(user.ID, like.Uid2).Return(true)
-	mock.EXPECT().CheckChat(chat).Return(false)
-	mock.EXPECT().InsertChat(chat).Return(models.ErrInternalServerError)
+	mock.EXPECT().CheckLike(user.ID, like.Uid2).Return(false)
+	mock.EXPECT().CheckDislike(user.ID, like.Uid2).Return(true)
+	mock.EXPECT().DeleteDislike(user.ID, like.Uid2).Return(nil)
+	mock.EXPECT().InsertLike(user.ID, like.Uid2).Return(models.ErrInternalServerError)
 
 	chs := chatUsecase{
 		chatRepo: mock,
@@ -588,7 +754,7 @@ func TestChatUsecase_LikeFail(t *testing.T) {
 	require.Equal(t, models.ErrInternalServerError, err)
 }
 
-func TestChatUsecase_LikeFaiInsert(t *testing.T) {
+func TestChatUsecase_LikeFailDD(t *testing.T) {
 	like := models.Like{
 		ID:   0,
 		Uid1: 1,
@@ -609,7 +775,9 @@ func TestChatUsecase_LikeFaiInsert(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatRepository(ctrl)
-	mock.EXPECT().InsertLike(user.ID, like.Uid2).Return(models.ErrInternalServerError)
+	mock.EXPECT().CheckLike(user.ID, like.Uid2).Return(false)
+	mock.EXPECT().CheckDislike(user.ID, like.Uid2).Return(true)
+	mock.EXPECT().DeleteDislike(user.ID, like.Uid2).Return(models.ErrInternalServerError)
 
 	chs := chatUsecase{
 		chatRepo: mock,
@@ -617,6 +785,234 @@ func TestChatUsecase_LikeFaiInsert(t *testing.T) {
 
 	err := chs.Like(user, like)
 	require.Equal(t, models.ErrInternalServerError, err)
+}
+
+func TestChatUsecase_LikeFailCL(t *testing.T) {
+	like := models.Like{
+		ID:   0,
+		Uid1: 1,
+		Uid2: 2,
+	}
+
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckLike(user.ID, like.Uid2).Return(true)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	err := chs.Like(user, like)
+	require.NoError(t, err)
+}
+
+func TestChatUsecase_MatchSuccess(t *testing.T) {
+	like := models.Like{
+		ID:   0,
+		Uid1: 1,
+		Uid2: 0,
+	}
+
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	chat := models.Chat{
+		ID:   0,
+		Uid1: 0,
+		Uid2: 0,
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	chid := 1
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().Match(user.ID, like.Uid2).Return(true)
+	mock.EXPECT().CheckChat(chat).Return(false)
+	mock.EXPECT().InsertChat(chat).Return(nil)
+	mock.EXPECT().SelectChatID(user.ID, like.Uid2).Return(chid, nil)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	_, _, err := chs.MatchUser(user, like)
+
+	require.NoError(t, err)
+}
+
+func TestChatUsecase_MatchFailSelect(t *testing.T) {
+	like := models.Like{
+		ID:   0,
+		Uid1: 1,
+		Uid2: 0,
+	}
+
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	chat := models.Chat{
+		ID:   0,
+		Uid1: 0,
+		Uid2: 0,
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	chid := 1
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().Match(user.ID, like.Uid2).Return(true)
+	mock.EXPECT().CheckChat(chat).Return(false)
+	mock.EXPECT().InsertChat(chat).Return(nil)
+	mock.EXPECT().SelectChatID(user.ID, like.Uid2).Return(chid, models.ErrNotFound)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	_, _, err := chs.MatchUser(user, like)
+
+	require.Equal(t, models.ErrNotFound, err)
+}
+
+func TestChatUsecase_MatchFailInsert(t *testing.T) {
+	like := models.Like{
+		ID:   0,
+		Uid1: 1,
+		Uid2: 0,
+	}
+
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	chat := models.Chat{
+		ID:   0,
+		Uid1: 0,
+		Uid2: 0,
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().Match(user.ID, like.Uid2).Return(true)
+	mock.EXPECT().CheckChat(chat).Return(false)
+	mock.EXPECT().InsertChat(chat).Return(models.ErrInternalServerError)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	_, _, err := chs.MatchUser(user, like)
+
+	require.Equal(t, models.ErrInternalServerError, err)
+}
+
+func TestChatUsecase_MatchSuccessCheck(t *testing.T) {
+	like := models.Like{
+		ID:   0,
+		Uid1: 1,
+		Uid2: 0,
+	}
+
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	chat := models.Chat{
+		ID:   0,
+		Uid1: 0,
+		Uid2: 0,
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().Match(user.ID, like.Uid2).Return(true)
+	mock.EXPECT().CheckChat(chat).Return(true)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	_, _, err := chs.MatchUser(user, like)
+
+	require.Equal(t, nil, err)
+}
+
+func TestChatUsecase_MatchSuccessMatch(t *testing.T) {
+	like := models.Like{
+		ID:   0,
+		Uid1: 1,
+		Uid2: 0,
+	}
+
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().Match(user.ID, like.Uid2).Return(false)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	_, _, err := chs.MatchUser(user, like)
+
+	require.Equal(t, nil, err)
 }
 
 func TestChatUsecase_DislikeSuccess(t *testing.T) {
@@ -640,6 +1036,9 @@ func TestChatUsecase_DislikeSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckDislike(user.ID, dislike.Uid2).Return(false)
+	mock.EXPECT().CheckLike(user.ID, dislike.Uid2).Return(true)
+	mock.EXPECT().DeleteLike(user.ID, dislike.Uid2).Return(nil)
 	mock.EXPECT().InsertDislike(user.ID, dislike.Uid2).Return(nil)
 
 	chs := chatUsecase{
@@ -673,6 +1072,9 @@ func TestChatUsecase_DislikeFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckDislike(user.ID, dislike.Uid2).Return(false)
+	mock.EXPECT().CheckLike(user.ID, dislike.Uid2).Return(true)
+	mock.EXPECT().DeleteLike(user.ID, dislike.Uid2).Return(nil)
 	mock.EXPECT().InsertDislike(user.ID, dislike.Uid2).Return(models.ErrInternalServerError)
 
 	chs := chatUsecase{
@@ -682,4 +1084,245 @@ func TestChatUsecase_DislikeFail(t *testing.T) {
 	err := chs.Dislike(user, dislike)
 	require.Equal(t, models.ErrInternalServerError, err)
 
+}
+
+func TestChatUsecase_DislikeFailDelete(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	dislike := models.Dislike{
+		ID:   0,
+		Uid1: user.ID,
+		Uid2: 2,
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckDislike(user.ID, dislike.Uid2).Return(false)
+	mock.EXPECT().CheckLike(user.ID, dislike.Uid2).Return(true)
+	mock.EXPECT().DeleteLike(user.ID, dislike.Uid2).Return(models.ErrInternalServerError)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	err := chs.Dislike(user, dislike)
+	require.Equal(t, models.ErrInternalServerError, err)
+}
+
+func TestChatUsecase_DislikeFailCD(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	dislike := models.Dislike{
+		ID:   0,
+		Uid1: user.ID,
+		Uid2: 2,
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckDislike(user.ID, dislike.Uid2).Return(true)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	err := chs.Dislike(user, dislike)
+	require.NoError(t, err)
+
+}
+
+func TestChatUsecase_SuperlikeSuccess(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	superlike := models.Superlike{
+		ID:   0,
+		Uid1: user.ID,
+		Uid2: 2,
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckDislike(user.ID, superlike.Uid2).Return(true)
+	mock.EXPECT().DeleteDislike(user.ID, superlike.Uid2).Return(nil)
+	mock.EXPECT().InsertSuperlike(user.ID, superlike.Uid2).Return(nil)
+	mock.EXPECT().CheckLike(user.ID, superlike.Uid2).Return(false)
+	mock.EXPECT().InsertLike(user.ID, superlike.Uid2).Return(nil)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	err := chs.Superlike(user, superlike)
+
+	require.NoError(t, err)
+	require.Equal(t, nil, err)
+}
+
+func TestChatUsecase_SuperlikeSuccessCL(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	superlike := models.Superlike{
+		ID:   0,
+		Uid1: user.ID,
+		Uid2: 2,
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckDislike(user.ID, superlike.Uid2).Return(true)
+	mock.EXPECT().DeleteDislike(user.ID, superlike.Uid2).Return(nil)
+	mock.EXPECT().InsertSuperlike(user.ID, superlike.Uid2).Return(nil)
+	mock.EXPECT().CheckLike(user.ID, superlike.Uid2).Return(true)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	err := chs.Superlike(user, superlike)
+
+	require.NoError(t, err)
+	require.Equal(t, nil, err)
+}
+
+func TestChatUsecase_SuperlikeFailInsert(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	superlike := models.Superlike{
+		ID:   0,
+		Uid1: user.ID,
+		Uid2: 2,
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckDislike(user.ID, superlike.Uid2).Return(true)
+	mock.EXPECT().DeleteDislike(user.ID, superlike.Uid2).Return(nil)
+	mock.EXPECT().InsertSuperlike(user.ID, superlike.Uid2).Return(nil)
+	mock.EXPECT().CheckLike(user.ID, superlike.Uid2).Return(false)
+	mock.EXPECT().InsertLike(user.ID, superlike.Uid2).Return(models.ErrInternalServerError)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	err := chs.Superlike(user, superlike)
+
+	require.Equal(t, models.ErrInternalServerError, err)
+}
+
+func TestChatUsecase_SuperlikeFailInsertSuper(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	superlike := models.Superlike{
+		ID:   0,
+		Uid1: user.ID,
+		Uid2: 2,
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckDislike(user.ID, superlike.Uid2).Return(true)
+	mock.EXPECT().DeleteDislike(user.ID, superlike.Uid2).Return(nil)
+	mock.EXPECT().InsertSuperlike(user.ID, superlike.Uid2).Return(models.ErrInternalServerError)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	err := chs.Superlike(user, superlike)
+
+	require.Equal(t, models.ErrInternalServerError, err)
+}
+
+func TestChatUsecase_SuperlikeFailDD(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	superlike := models.Superlike{
+		ID:   0,
+		Uid1: user.ID,
+		Uid2: 2,
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockChatRepository(ctrl)
+	mock.EXPECT().CheckDislike(user.ID, superlike.Uid2).Return(true)
+	mock.EXPECT().DeleteDislike(user.ID, superlike.Uid2).Return(models.ErrInternalServerError)
+
+	chs := chatUsecase{
+		chatRepo: mock,
+	}
+
+	err := chs.Superlike(user, superlike)
+
+	require.Equal(t, models.ErrInternalServerError, err)
 }

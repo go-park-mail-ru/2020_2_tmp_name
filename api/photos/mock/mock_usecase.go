@@ -55,16 +55,3 @@ func (_m *MockPhotoUsecase) RemovePhoto(_param0 string, _param1 int) error {
 func (_mr *MockPhotoUsecaseMockRecorder) RemovePhoto(arg0, arg1 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "RemovePhoto", reflect.TypeOf((*MockPhotoUsecase)(nil).RemovePhoto), arg0, arg1)
 }
-
-// User mocks base method
-func (_m *MockPhotoUsecase) User(_param0 string) (models.User, error) {
-	ret := _m.ctrl.Call(_m, "User", _param0)
-	ret0, _ := ret[0].(models.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// User indicates an expected call of User
-func (_mr *MockPhotoUsecaseMockRecorder) User(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "User", reflect.TypeOf((*MockPhotoUsecase)(nil).User), arg0)
-}
