@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	_authClientGRPC "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 	domain "park_2020/2020_2_tmp_name/microservices/comments"
 	_commentClientGRPC "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
-	_authClientGRPC "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
@@ -17,12 +17,12 @@ import (
 )
 
 type CommentHandlerType struct {
-	CUsecase domain.CommentUsecase
-	AuthClient *_authClientGRPC.AuthClient
-	CommentClient *_commentClientGRPC.CommentClient
+	CUsecase      domain.CommentUsecase
+	AuthClient    _authClientGRPC.AuthClientInterface
+	CommentClient _commentClientGRPC.CommentClient
 }
 
-func NewCommentHandler(r *mux.Router, cs domain.CommentUsecase, cc *_commentClientGRPC.CommentClient, ac *_authClientGRPC.AuthClient) {
+func NewCommentHandler(r *mux.Router, cs domain.CommentUsecase, cc _commentClientGRPC.CommentClient, ac _authClientGRPC.AuthClientInterface) {
 	handler := &CommentHandlerType{
 		CUsecase:      cs,
 		AuthClient:    ac,
