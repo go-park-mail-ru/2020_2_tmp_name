@@ -2,6 +2,7 @@ package http_test
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"park_2020/2020_2_tmp_name/api/chats/mock"
@@ -160,7 +161,7 @@ func TestChatHandler_MessageHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatUsecase(ctrl)
-	mock.EXPECT().User(sid).Return(user, nil)
+	mock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
 	mock.EXPECT().Message(user, message).Return(nil)
 	chatHandler := chatHttp.ChatHandlerType{
 		ChUsecase: mock,

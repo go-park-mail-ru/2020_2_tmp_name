@@ -6,6 +6,7 @@ package mock
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
+	http "net/http"
 	models "park_2020/2020_2_tmp_name/models"
 	reflect "reflect"
 )
@@ -72,7 +73,7 @@ func (_mr *MockChatUsecaseMockRecorder) Chats(arg0 interface{}) *gomock.Call {
 }
 
 // CheckSession mocks base method
-func (_m *MockChatUsecase) CheckSession(_param0 context.Context, _param1 string) (models.User, error) {
+func (_m *MockChatUsecase) CheckSession(_param0 context.Context, _param1 []*http.Cookie) (models.User, error) {
 	ret := _m.ctrl.Call(_m, "CheckSession", _param0, _param1)
 	ret0, _ := ret[0].(models.User)
 	ret1, _ := ret[1].(error)
