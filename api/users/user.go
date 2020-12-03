@@ -3,8 +3,6 @@ package domain
 import (
 	"park_2020/2020_2_tmp_name/models"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 //go:generate mockgen -destination=./mock/mock_usecase.go -package=mock park_2020/2020_2_tmp_name/api/users UserUsecase
@@ -13,7 +11,6 @@ import (
 type UserUsecase interface {
 	Login(data models.LoginData) (string, error)
 	Logout(session string) error
-	UploadAvatar() (uuid.UUID, error)
 	Signup(user models.User) error
 	Settings(uid int, user models.User) error
 	IsPremium(uid int) bool

@@ -3,8 +3,6 @@ package usecase
 import (
 	domain "park_2020/2020_2_tmp_name/api/photos"
 	"park_2020/2020_2_tmp_name/models"
-
-	"github.com/google/uuid"
 )
 
 type photoUsecase struct {
@@ -37,15 +35,6 @@ func (p *photoUsecase) RemovePhoto(path string, uid int) error {
 		return models.ErrInternalServerError
 	}
 	return nil
-}
-
-func (p *photoUsecase) UploadAvatar() (uuid.UUID, error) {
-	photoID, err := uuid.NewRandom()
-	if err != nil {
-		return photoID, models.ErrInternalServerError
-	}
-
-	return photoID, nil
 }
 
 func (p *photoUsecase) User(cookie string) (models.User, error) {

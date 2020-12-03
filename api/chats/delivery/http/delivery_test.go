@@ -14,15 +14,18 @@ import (
 	"github.com/stretchr/testify/require"
 
 	chatHttp "park_2020/2020_2_tmp_name/api/chats/delivery/http"
+	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 )
 
-func TestNewchatHandler(t *testing.T) {
+func TestNewChatHandler(t *testing.T) {
 	router := mux.NewRouter()
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatUsecase(ctrl)
-	chatHttp.NewChatHandler(router, mock)
+
+	authClient := &authClient.AuthClient{}
+	chatHttp.NewChatHandler(router, mock, authClient)
 }
 
 func TestChatHandler_ChatHandlerSuccess(t *testing.T) {
@@ -159,7 +162,6 @@ func TestChatHandler_MessageHandlerSuccess(t *testing.T) {
 	mock := mock.NewMockChatUsecase(ctrl)
 	mock.EXPECT().User(sid).Return(user, nil)
 	mock.EXPECT().Message(user, message).Return(nil)
-
 	chatHandler := chatHttp.ChatHandlerType{
 		ChUsecase: mock,
 	}

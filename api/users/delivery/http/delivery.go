@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -82,7 +83,7 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars"
 	os.Chdir(photoPath)
 
-	photoID, err := u.UUsecase.UploadAvatar()
+	photoID, err := uuid.NewRandom()
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -347,4 +348,3 @@ func (u *UserHandlerType) GetPremiumHandler(w http.ResponseWriter, r *http.Reque
 
 	w.WriteHeader(http.StatusOK)
 }
-

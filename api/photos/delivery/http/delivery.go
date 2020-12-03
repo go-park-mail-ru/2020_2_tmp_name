@@ -3,20 +3,20 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/photos"
-	"park_2020/2020_2_tmp_name/models"
 	_authClientGRPC "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
+	"park_2020/2020_2_tmp_name/models"
 
-	"io"
-
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
 type PhotoHandlerType struct {
-	PUsecase domain.PhotoUsecase
+	PUsecase   domain.PhotoUsecase
 	AuthClient *_authClientGRPC.AuthClient
 }
 
@@ -80,7 +80,7 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars"
 	os.Chdir(photoPath)
 
-	photoID, err := p.PUsecase.UploadAvatar()
+	photoID, err := uuid.NewRandom()
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -124,7 +124,6 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 		w.Write(JSONError(err.Error()))
 		return
 	}
-
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)

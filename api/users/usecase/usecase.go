@@ -50,15 +50,6 @@ func (u *userUsecase) Logout(session string) error {
 	return u.userRepo.DeleteSession(session)
 }
 
-func (u *userUsecase) UploadAvatar() (uuid.UUID, error) {
-	photoID, err := uuid.NewRandom()
-	if err != nil {
-		return photoID, models.ErrInternalServerError
-	}
-
-	return photoID, nil
-}
-
 func (u *userUsecase) Signup(user models.User) error {
 	var check bool
 	if check = u.userRepo.CheckUser(user.Telephone); check {
