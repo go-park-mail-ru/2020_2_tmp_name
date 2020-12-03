@@ -39,8 +39,6 @@ func DBConnection(conf *models.Config) *sql.DB {
 		conf.SQLDataBase.Database,
 	)
 
-	fmt.Println(connString)
-
 	db, err := sql.Open("postgres", connString)
 	if err != nil {
 		log.Fatal(err)
@@ -52,7 +50,7 @@ func DBConnection(conf *models.Config) *sql.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//fmt.Println("я в мейне")
+
 	return db
 }
 

@@ -15,10 +15,10 @@ import (
 )
 
 type server struct {
-	authUseCase auth.UserUsecase
+	authUseCase auth.AuthUsecase
 }
 
-func NewAuthServerGRPC(gServer *grpc.Server, authUCase auth.UserUsecase) {
+func NewAuthServerGRPC(gServer *grpc.Server, authUCase auth.AuthUsecase) {
 	articleServer := &server{
 		authUseCase: authUCase,
 	}
@@ -26,7 +26,7 @@ func NewAuthServerGRPC(gServer *grpc.Server, authUCase auth.UserUsecase) {
 	reflection.Register(gServer)
 }
 
-func StartAuthGRPCServer(authUCase auth.UserUsecase, url string) {
+func StartAuthGRPCServer(authUCase auth.AuthUsecase, url string) {
 	list, err := net.Listen("tcp", url)
 	if err != nil {
 		logrus.Error(err)
