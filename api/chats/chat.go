@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"context"
-	"net/http"
 	"park_2020/2020_2_tmp_name/models"
 )
 
@@ -23,7 +21,6 @@ type ChatUsecase interface {
 	Dislike(user models.User, dislike models.Dislike) error
 	MatchUser(user models.User, like models.Like) (models.Chat, bool, error)
 	Superlike(user models.User, superlike models.Superlike) error
-	CheckSession(ctx context.Context, in []*http.Cookie) (models.User, error)
 }
 
 type ChatRepository interface {

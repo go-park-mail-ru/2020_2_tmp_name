@@ -5,9 +5,7 @@
 package mock
 
 import (
-	context "context"
 	gomock "github.com/golang/mock/gomock"
-	http "net/http"
 	models "park_2020/2020_2_tmp_name/models"
 	reflect "reflect"
 )
@@ -77,21 +75,6 @@ func (m *MockChatUsecase) Chats(arg0 models.User) (models.ChatModel, error) {
 func (mr *MockChatUsecaseMockRecorder) Chats(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Chats", reflect.TypeOf((*MockChatUsecase)(nil).Chats), arg0)
-}
-
-// CheckSession mocks base method
-func (m *MockChatUsecase) CheckSession(arg0 context.Context, arg1 []*http.Cookie) (models.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckSession", arg0, arg1)
-	ret0, _ := ret[0].(models.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CheckSession indicates an expected call of CheckSession
-func (mr *MockChatUsecaseMockRecorder) CheckSession(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckSession", reflect.TypeOf((*MockChatUsecase)(nil).CheckSession), arg0, arg1)
 }
 
 // Dislike mocks base method
