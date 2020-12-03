@@ -106,7 +106,7 @@ func (app *application) initServer() {
 	AccessLogOut.LogrusLogger = contextLogger
 
 	// router.Use(AccessLogOut.AccessLogMiddleware(router))
-	ar := _authRepo.NewPostgresUserRepository(dbConn)
+	ar := _authRepo.NewPostgresAuthRepository(dbConn)
 	grpcConnAuth, err := grpc.Dial("0.0.0.0:8081", grpc.WithInsecure())
 	if err != nil {
 		log.Println(err)
