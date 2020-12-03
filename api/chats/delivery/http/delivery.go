@@ -7,8 +7,8 @@ import (
 	"log"
 	"net/http"
 	domain "park_2020/2020_2_tmp_name/api/chats"
-	"park_2020/2020_2_tmp_name/models"
 	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
+	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
 	"time"
@@ -20,7 +20,7 @@ import (
 
 type ChatHandlerType struct {
 	ChUsecase  domain.ChatUsecase
-	AuthClient *authClient.AuthClient
+	AuthClient authClient.AuthClientInterface
 	Hub        Hub
 }
 
@@ -38,7 +38,7 @@ func (h Hub) run() {
 	}
 }
 
-func NewChatHandler(r *mux.Router, chs domain.ChatUsecase, ac *authClient.AuthClient) {
+func NewChatHandler(r *mux.Router, chs domain.ChatUsecase, ac authClient.AuthClientInterface) {
 	handler := &ChatHandlerType{
 		ChUsecase:  chs,
 		AuthClient: ac,
