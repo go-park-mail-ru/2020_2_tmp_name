@@ -22,6 +22,57 @@ func TestNewUserUsecase(t *testing.T) {
 	require.Empty(t, uu)
 }
 
+func TestUserUsecase_LoginFail(t *testing.T) {
+	login := models.LoginData{
+		Telephone: "944-739-32-28",
+		Password:  "password",
+	}
+
+	user := models.User{
+		ID:         1,
+		Name:       "Andrey",
+		Telephone:  "944-739-32-28",
+		Password:   "password",
+		DateBirth:  20,
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().CheckUser(login.Telephone).Times(1).Return(true)
+	mock.EXPECT().SelectUser(login.Telephone).Times(1).Return(user, nil)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	_, err := us.Login(login)
+
+	require.NotEqual(t, err, nil)
+}
+
+func TestUserUsecase_Logout(t *testing.T) {
+	sid := "something-like-this"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserRepository(ctrl)
+	mock.EXPECT().DeleteSession(sid).Times(1).Return(nil)
+
+	us := userUsecase{
+		userRepo: mock,
+	}
+
+	err := us.Logout(sid)
+	require.NoError(t, err)
+}
+
 func TestUserUsecase_SignUpSuccess(t *testing.T) {
 	user := models.User{
 		ID:         0,
@@ -427,24 +478,6 @@ func TestUserUsecase_TelephoneSuccess(t *testing.T) {
 	}
 
 	result := us.Telephone(telephone)
-
-	require.Equal(t, result, true)
-}
-
-func TestUserUsecase_IsPremuim(t *testing.T) {
-	uid := 1
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := mock.NewMockUserRepository(ctrl)
-	mock.EXPECT().CheckPremium(uid).Return(true)
-
-	us := userUsecase{
-		userRepo: mock,
-	}
-
-	result := us.IsPremium(uid)
 
 	require.Equal(t, result, true)
 }
