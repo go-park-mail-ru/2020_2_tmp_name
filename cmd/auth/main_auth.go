@@ -80,7 +80,7 @@ func (app *application) initServer() {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 	AccessLogOut.LogrusLogger = contextLogger
 
-	ar := _authRepo.NewPostgresUserRepository(dbConn)
+	ar := _authRepo.NewPostgresAuthRepository(dbConn)
 	au := _authUcase.NewAuthUsecase(ar)
 
 	grpcServer.StartAuthGRPCServer(au, "localhost:8081")
@@ -112,7 +112,7 @@ func main() {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 	AccessLogOut.LogrusLogger = contextLogger
 
-	ar := _authRepo.NewPostgresUserRepository(dbConn)
+	ar := _authRepo.NewPostgresAuthRepository(dbConn)
 	au := _authUcase.NewAuthUsecase(ar)
 
 	grpcServer.StartAuthGRPCServer(au, "localhost:8081")

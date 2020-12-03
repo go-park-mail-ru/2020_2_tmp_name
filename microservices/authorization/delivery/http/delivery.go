@@ -13,15 +13,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type UserHandlerType struct {
-	UUsecase domain.UserUsecase
-	client *authClient.AuthClient
+type AuthHandlerType struct {
+	AUsecase domain.AuthUsecase
+	client   *authClient.AuthClient
 }
 
-func NewUserHandler(r *mux.Router, us domain.UserUsecase, client *authClient.AuthClient) {
-	handler := &UserHandlerType{
-		UUsecase: us,
-		client: client,
+func NewAuthHandler(r *mux.Router, us domain.AuthUsecase, client *authClient.AuthClient) {
+	handler := &AuthHandlerType{
+		AUsecase: us,
+		client:   client,
 	}
 
 	r.HandleFunc("/api/v1/login", handler.LoginHandler).Methods(http.MethodGet, http.MethodPost)
@@ -36,7 +36,7 @@ func JSONError(message string) []byte {
 	return jsonError
 }
 
-func (u *UserHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
+func (a *AuthHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	loginData := models.LoginData{}
 	err := json.NewDecoder(r.Body).Decode(&loginData)
 	if err != nil {
@@ -46,8 +46,7 @@ func (u *UserHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sidString, err := u.client.Login(context.Background(), &loginData)
-	//sidString, err := u.UUsecase.Login(context.Background(), loginData)
+	sidString, err := a.client.Login(context.Background(), &loginData)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -75,7 +74,7 @@ func (u *UserHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+func (a *AuthHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	session, err := r.Cookie("session_id")
 	if err == http.ErrNoCookie {
 		logrus.Error(err)
@@ -84,8 +83,7 @@ func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = u.client.Logout(context.Background(), session.Value)
-	//err = u.UUsecase.Logout(context.Background(), session.Value)
+	err = a.client.Logout(context.Background(), session.Value)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -107,14 +105,14 @@ func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 	w.Write(body)
 }
 
-func (u *UserHandlerType) CheckSessionHandler(w http.ResponseWriter, r *http.Request) {
+func (a *AuthHandlerType) CheckSessionHandler(w http.ResponseWriter, r *http.Request) {
 	if len(r.Cookies()) == 0 {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(JSONError("User not authorized"))
 		return
 	}
 
-	user, err := u.UUsecase.CheckSession(context.Background(), r.Cookies()[0].Value)
+	user, err := a.AUsecase.CheckSession(context.Background(), r.Cookies()[0].Value)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))

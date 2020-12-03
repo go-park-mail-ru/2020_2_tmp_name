@@ -115,7 +115,7 @@ func (app *application) initServer() {
 
 	grpcAuthClient := _authClient.NewAuthClient(grpcConnAuth)
 	au := _authUcase.NewAuthUsecase(ar)
-	_authDelivery.NewUserHandler(router, au, grpcAuthClient)
+	_authDelivery.NewAuthHandler(router, au, grpcAuthClient)
 
 	chr := _chatRepo.NewPostgresChatRepository(dbConn)
 	chu := _chatUcase.NewChatUsecase(chr)
