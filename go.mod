@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/albertogviana/prometheus-middleware v0.0.2 // indirect
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
