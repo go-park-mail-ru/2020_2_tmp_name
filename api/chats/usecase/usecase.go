@@ -78,15 +78,6 @@ func (ch *chatUsecase) Partner(user models.User, chid int) (models.UserFeed, err
 	return partner, nil
 }
 
-func (ch *chatUsecase) User(cookie string) (models.User, error) {
-	telephone := ch.chatRepo.CheckUserBySession(cookie)
-	user, err := ch.chatRepo.SelectUser(telephone)
-	if err != nil {
-		return user, models.ErrNotFound
-	}
-	return user, nil
-}
-
 func (ch *chatUsecase) UserFeed(cookie string) (models.UserFeed, error) {
 	telephone := ch.chatRepo.CheckUserBySession(cookie)
 	user, err := ch.chatRepo.SelectUserFeed(telephone)

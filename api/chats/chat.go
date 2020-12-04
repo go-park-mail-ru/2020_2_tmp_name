@@ -15,7 +15,6 @@ type ChatUsecase interface {
 	ChatID(user models.User, chid int) (models.ChatData, error)
 	Partner(user models.User, chid int) (models.UserFeed, error)
 	Sessions(uid int) ([]string, error)
-	User(cookie string) (models.User, error)
 	UserFeed(cookie string) (models.UserFeed, error)
 	Like(user models.User, like models.Like) error
 	Dislike(user models.User, dislike models.Dislike) error
@@ -26,7 +25,6 @@ type ChatUsecase interface {
 type ChatRepository interface {
 	SelectUserFeed(telephone string) (models.UserFeed, error) // Tested
 	SelectUserFeedByID(uid int) (models.UserFeed, error)      // Tested
-	SelectUser(telephone string) (models.User, error)         // Tested
 	SelectImages(uid int) ([]string, error)                   // Tested
 	CheckChat(chat models.Chat) bool
 	InsertChat(chat models.Chat) error                // Tested
