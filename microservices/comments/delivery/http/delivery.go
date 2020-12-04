@@ -19,10 +19,10 @@ import (
 type CommentHandlerType struct {
 	CUsecase      domain.CommentUsecase
 	AuthClient    _authClientGRPC.AuthClientInterface
-	CommentClient _commentClientGRPC.CommentClient
+	CommentClient _commentClientGRPC.CommentClientInterface
 }
 
-func NewCommentHandler(r *mux.Router, cs domain.CommentUsecase, cc _commentClientGRPC.CommentClient, ac _authClientGRPC.AuthClientInterface) {
+func NewCommentHandler(r *mux.Router, cs domain.CommentUsecase, cc _commentClientGRPC.CommentClientInterface, ac _authClientGRPC.AuthClientInterface) {
 	handler := &CommentHandlerType{
 		CUsecase:      cs,
 		AuthClient:    ac,
@@ -42,8 +42,6 @@ func JSONError(message string) []byte {
 }
 
 func (c *CommentHandlerType) CommentHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-
 	comment := models.Comment{}
 	err := json.NewDecoder(r.Body).Decode(&comment)
 	if err != nil {
@@ -53,15 +51,14 @@ func (c *CommentHandlerType) CommentHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user, err := c.AuthClient.CheckSession(ctx, r.Cookies())
+	user, err := c.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
 	}
 
-	err = c.CommentClient.Comment(ctx, user, comment)
-	//err = c.CUsecase.Comment(ctx, user, comment)
+	err = c.CommentClient.Comment(context.Background(), user, comment)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -82,9 +79,7 @@ func (c *CommentHandlerType) CommentHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (c *CommentHandlerType) CommentsByIdHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-
-	_, err := c.AuthClient.CheckSession(ctx, r.Cookies())
+	_, err := c.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -99,8 +94,7 @@ func (c *CommentHandlerType) CommentsByIdHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	//comments, err := c.CUsecase.CommentsByID(ctx, userID)
-	comments, err := c.CommentClient.CommentsById(ctx, userID)
+	comments, err := c.CommentClient.CommentsByID(context.Background(), userID)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))

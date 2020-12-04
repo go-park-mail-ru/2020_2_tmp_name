@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"park_2020/2020_2_tmp_name/microservices/comments/mock"
@@ -17,8 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
-	mockClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client/mock"
-	_commentClientGRPC "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
+	authMock "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client/mock"
+	commentClientGRPC "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
+	commentMock "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client/mock"
 	commentHttp "park_2020/2020_2_tmp_name/microservices/comments/delivery/http"
 )
 
@@ -28,13 +28,14 @@ func TestNewCommentHandler(t *testing.T) {
 	defer ctrl.Finish()
 
 	authClient := &authClient.AuthClient{}
-	commentClient := _commentClientGRPC.CommentClient{}
+	commentClient := &commentClientGRPC.CommentClient{}
 	mock := mock.NewMockCommentUsecase(ctrl)
 	commentHttp.NewCommentHandler(router, mock, commentClient, authClient)
 }
 
 func TestCommentHandler_CommentsByIdHandlerSuccess(t *testing.T) {
 	user := models.User{
+		ID:         12,
 		Name:       "Misha",
 		Telephone:  "909-277-47-21",
 		Password:   "1234",
@@ -47,9 +48,8 @@ func TestCommentHandler_CommentsByIdHandlerSuccess(t *testing.T) {
 
 	comments := models.CommentsData{}
 	outerComments := models.CommentsData{}
-	var ByteData = []byte(`{}`)
-	body := bytes.NewReader(ByteData)
-	req, err := http.NewRequest("GET", "/api/v1/comments/12", body)
+
+	req, err := http.NewRequest("GET", "/api/v1/comments/12", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,13 +58,15 @@ func TestCommentHandler_CommentsByIdHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockCommentUsecase(ctrl)
-	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
-	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
-	mock.EXPECT().CommentsByID(context.Background(), 12).Return(comments, nil)
+	commentMock := commentMock.NewMockCommentClientInterface(ctrl)
+	authMock := authMock.NewMockAuthClientInterface(ctrl)
+	authMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
+	commentMock.EXPECT().CommentsByID(context.Background(), user.ID).Return(comments, nil)
 
 	commentHandler := commentHttp.CommentHandlerType{
-		CUsecase:   mock,
-		AuthClient: clientMock,
+		CUsecase:      mock,
+		AuthClient:    authMock,
+		CommentClient: commentMock,
 	}
 
 	rr := httptest.NewRecorder()
@@ -82,6 +84,7 @@ func TestCommentHandler_CommentsByIdHandlerSuccess(t *testing.T) {
 
 func TestCommentHandler_CommentsByIdHandlerFail(t *testing.T) {
 	user := models.User{
+		ID:         12,
 		Name:       "Misha",
 		Telephone:  "909-277-47-21",
 		Password:   "1234",
@@ -93,42 +96,101 @@ func TestCommentHandler_CommentsByIdHandlerFail(t *testing.T) {
 	}
 
 	comments := models.CommentsData{}
-	var ByteData = []byte(`{}`)
-	body := bytes.NewReader(ByteData)
-	req, err := http.NewRequest("GET", "/api/v1/comments/nickName", body)
+	req, err := http.NewRequest("GET", "/api/v1/comments/12", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	req2, err := http.NewRequest("GET", "/api/v1/comments/12", body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	requests := make([]*http.Request, 0, 1)
-	requests = append(requests, req)
-	requests = append(requests, req2)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mock := mock.NewMockCommentUsecase(ctrl)
-	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
-	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
-	mock.EXPECT().CommentsByID(context.Background(), 12).Return(comments, errors.New("error"))
+	commentMock := commentMock.NewMockCommentClientInterface(ctrl)
+	authMock := authMock.NewMockAuthClientInterface(ctrl)
+	authMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
+	commentMock.EXPECT().CommentsByID(context.Background(), user.ID).Return(comments, models.ErrNotFound)
 
 	commentHandler := commentHttp.CommentHandlerType{
-		CUsecase:   mock,
-		AuthClient: clientMock,
+		CUsecase:      mock,
+		AuthClient:    authMock,
+		CommentClient: commentMock,
 	}
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(commentHandler.CommentsByIdHandler)
-	for i := 0; i < 2; i++ {
-		handler.ServeHTTP(rr, requests[i])
-		status := rr.Code
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
 
-		require.NoError(t, err)
-		require.Equal(t, 400, status)
+	require.Equal(t, 404, status)
+}
+
+func TestCommentHandler_CommentsByIdHandlerFailAtoi(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
 	}
+
+	req, err := http.NewRequest("GET", "/api/v1/comments/nickName", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockCommentUsecase(ctrl)
+	commentMock := commentMock.NewMockCommentClientInterface(ctrl)
+	authMock := authMock.NewMockAuthClientInterface(ctrl)
+	authMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
+
+	commentHandler := commentHttp.CommentHandlerType{
+		CUsecase:      mock,
+		AuthClient:    authMock,
+		CommentClient: commentMock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(commentHandler.CommentsByIdHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 400, status)
+}
+
+func TestCommentHandler_CommentsByIdHandlerFailUser(t *testing.T) {
+	user := models.User{}
+	req, err := http.NewRequest("GET", "/api/v1/comments/12", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockCommentUsecase(ctrl)
+	commentMock := commentMock.NewMockCommentClientInterface(ctrl)
+	authMock := authMock.NewMockAuthClientInterface(ctrl)
+	authMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, models.ErrUnauthorized)
+
+	commentHandler := commentHttp.CommentHandlerType{
+		CUsecase:      mock,
+		AuthClient:    authMock,
+		CommentClient: commentMock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(commentHandler.CommentsByIdHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 401, status)
+
 }
 
 func TestCommentHandler_CommentHandlerSuccess(t *testing.T) {
@@ -171,13 +233,15 @@ func TestCommentHandler_CommentHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockCommentUsecase(ctrl)
-	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
-	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
-	mock.EXPECT().Comment(context.Background(), user, comment).Return(nil)
+	commentMock := commentMock.NewMockCommentClientInterface(ctrl)
+	authMock := authMock.NewMockAuthClientInterface(ctrl)
+	authMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
+	commentMock.EXPECT().Comment(context.Background(), user, comment).Return(nil)
 
 	commentHandler := commentHttp.CommentHandlerType{
-		CUsecase:   mock,
-		AuthClient: clientMock,
+		CUsecase:      mock,
+		AuthClient:    authMock,
+		CommentClient: commentMock,
 	}
 
 	rr := httptest.NewRecorder()
@@ -186,7 +250,6 @@ func TestCommentHandler_CommentHandlerSuccess(t *testing.T) {
 	status := rr.Code
 
 	require.Equal(t, 200, status)
-
 }
 
 func TestCommentHandler_CommentHandlerFail(t *testing.T) {
@@ -200,6 +263,7 @@ func TestCommentHandler_CommentHandlerFail(t *testing.T) {
 		Education:  "BMSTU",
 		AboutMe:    "",
 	}
+
 	comment := models.Comment{
 		Uid2:         10,
 		TimeDelivery: "18:54",
@@ -228,13 +292,15 @@ func TestCommentHandler_CommentHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockCommentUsecase(ctrl)
-	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
-	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
-	mock.EXPECT().Comment(context.Background(), user, comment).Return(models.ErrInternalServerError)
+	commentMock := commentMock.NewMockCommentClientInterface(ctrl)
+	authMock := authMock.NewMockAuthClientInterface(ctrl)
+	authMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
+	commentMock.EXPECT().Comment(context.Background(), user, comment).Return(models.ErrInternalServerError)
 
 	commentHandler := commentHttp.CommentHandlerType{
-		CUsecase:   mock,
-		AuthClient: clientMock,
+		CUsecase:      mock,
+		AuthClient:    authMock,
+		CommentClient: commentMock,
 	}
 
 	rr := httptest.NewRecorder()
@@ -243,31 +309,6 @@ func TestCommentHandler_CommentHandlerFail(t *testing.T) {
 	status := rr.Code
 
 	require.Equal(t, 500, status)
-}
-
-func TestCommentHandler_CommentHandlerFailDecode(t *testing.T) {
-	var byteData = []byte(``)
-	body := bytes.NewReader(byteData)
-	req, err := http.NewRequest("POST", "/comment", body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := mock.NewMockCommentUsecase(ctrl)
-
-	commentHandler := commentHttp.CommentHandlerType{
-		CUsecase: mock,
-	}
-
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(commentHandler.CommentHandler)
-	handler.ServeHTTP(rr, req)
-	status := rr.Code
-
-	require.Equal(t, 400, status)
 }
 
 func TestCommentHandler_CommentHandlerFailUser(t *testing.T) {
@@ -305,13 +346,14 @@ func TestCommentHandler_CommentHandlerFailUser(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockCommentUsecase(ctrl)
-	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
-	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
-	mock.EXPECT().User(context.Background(), sid).Return(user, models.ErrNotFound)
+	commentMock := commentMock.NewMockCommentClientInterface(ctrl)
+	authMock := authMock.NewMockAuthClientInterface(ctrl)
+	authMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, models.ErrUnauthorized)
 
 	commentHandler := commentHttp.CommentHandlerType{
-		CUsecase:   mock,
-		AuthClient: clientMock,
+		CUsecase:      mock,
+		AuthClient:    authMock,
+		CommentClient: commentMock,
 	}
 
 	rr := httptest.NewRecorder()
@@ -319,5 +361,42 @@ func TestCommentHandler_CommentHandlerFailUser(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
-	require.Equal(t, 404, status)
+	require.Equal(t, 401, status)
+}
+
+func TestCommentHandler_CommentHandlerFailDecode(t *testing.T) {
+	var byteData = []byte(``)
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/comment", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockCommentUsecase(ctrl)
+	commentMock := commentMock.NewMockCommentClientInterface(ctrl)
+	authMock := authMock.NewMockAuthClientInterface(ctrl)
+
+	commentHandler := commentHttp.CommentHandlerType{
+		CUsecase:      mock,
+		AuthClient:    authMock,
+		CommentClient: commentMock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(commentHandler.CommentHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 400, status)
 }

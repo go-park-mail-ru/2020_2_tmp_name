@@ -69,31 +69,6 @@ func (_mr *MockUserUsecaseMockRecorder) IsPremium(arg0 interface{}) *gomock.Call
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "IsPremium", reflect.TypeOf((*MockUserUsecase)(nil).IsPremium), arg0)
 }
 
-// Login mocks base method
-func (_m *MockUserUsecase) Login(_param0 models.LoginData) (string, error) {
-	ret := _m.ctrl.Call(_m, "Login", _param0)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Login indicates an expected call of Login
-func (_mr *MockUserUsecaseMockRecorder) Login(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "Login", reflect.TypeOf((*MockUserUsecase)(nil).Login), arg0)
-}
-
-// Logout mocks base method
-func (_m *MockUserUsecase) Logout(_param0 string) error {
-	ret := _m.ctrl.Call(_m, "Logout", _param0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Logout indicates an expected call of Logout
-func (_mr *MockUserUsecaseMockRecorder) Logout(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "Logout", reflect.TypeOf((*MockUserUsecase)(nil).Logout), arg0)
-}
-
 // Me mocks base method
 func (_m *MockUserUsecase) Me(_param0 string) (models.UserFeed, error) {
 	ret := _m.ctrl.Call(_m, "Me", _param0)

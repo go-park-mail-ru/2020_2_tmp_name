@@ -24,7 +24,7 @@ import (
 	_chatRepo "park_2020/2020_2_tmp_name/api/chats/repository/postgres"
 	_chatUcase "park_2020/2020_2_tmp_name/api/chats/usecase"
 
-	_commentClientGRPC "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
+	_commentClient "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
 	_commentDelivery "park_2020/2020_2_tmp_name/microservices/comments/delivery/http"
 	_commentRepo "park_2020/2020_2_tmp_name/microservices/comments/repository/postgres"
 	_commentUcase "park_2020/2020_2_tmp_name/microservices/comments/usecase"
@@ -106,6 +106,7 @@ func (app *application) initServer() {
 	AccessLogOut.LogrusLogger = contextLogger
 
 	// router.Use(AccessLogOut.AccessLogMiddleware(router))
+
 	ar := _authRepo.NewPostgresAuthRepository(dbConn)
 	grpcConnAuth, err := grpc.Dial("0.0.0.0:8081", grpc.WithInsecure())
 	if err != nil {
@@ -122,14 +123,15 @@ func (app *application) initServer() {
 	_chatDelivery.NewChatHandler(router, chu, grpcAuthClient)
 
 	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
-	cu := _commentUcase.NewCommentUsecase(cr)
 	grpcConnComments, err := grpc.Dial("localhost:8082", grpc.WithInsecure())
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
-	ccGRPC := _commentClientGRPC.NewCommentsClientGRPC(grpcConnComments)
-	_commentDelivery.NewCommentHandler(router, cu, ccGRPC, grpcAuthClient)
+
+	grpcCommentClient := _commentClient.NewCommentsClientGRPC(grpcConnComments)
+	cu := _commentUcase.NewCommentUsecase(cr)
+	_commentDelivery.NewCommentHandler(router, cu, grpcCommentClient, grpcAuthClient)
 
 	pr := _photoRepo.NewPostgresPhotoRepository(dbConn)
 	pu := _photoUcase.NewPhotoUsecase(pr)
