@@ -2,9 +2,8 @@ package postgres
 
 import (
 	"database/sql"
-	"fmt"
-
 	"database/sql/driver"
+	"fmt"
 	"park_2020/2020_2_tmp_name/models"
 	"testing"
 
@@ -14,24 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type anyPassword struct{}
-
-func (a anyPassword) Match(v driver.Value) bool {
-	_, ok := v.(string)
-	return ok
-}
-
-type anyTime struct{}
-
-func (a anyTime) Match(v driver.Value) bool {
-	_, ok := v.(string)
-	return ok
-}
-
-func TestPostgresCommentRepository_SelectUserFeed(t *testing.T) {
+func TestPostgresUserRepository_SelectUser(t *testing.T) {
 	type insertUserTestCase struct {
 		telephone  string
-		outputUser models.UserFeed
+		outputUser models.User
 		err        error
 	}
 
@@ -45,22 +30,31 @@ func TestPostgresCommentRepository_SelectUserFeed(t *testing.T) {
 	columns := []string{
 		"id",
 		"name",
+		"telephone",
+		"password",
 		"date_birth",
+		"sex",
 		"education",
 		"job",
 		"about_me",
 	}
 
-	query := `SELECT id, name, date_birth, education, job, about_me FROM users
+	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
 			  WHERE  telephone=$1;`
 
 	var telephone string
 	err = faker.FakeData(&telephone)
 	require.NoError(t, err)
 
-	var outputUser models.UserFeed
+	var outputUser models.User
 	err = faker.FakeData(&outputUser)
 	require.NoError(t, err)
+
+	outputUser.Day = ""
+	outputUser.Month = ""
+	outputUser.Year = ""
+	outputUser.DateBirth = 19
+	outputUser.Telephone = telephone
 
 	testCases := []insertUserTestCase{
 		{
@@ -80,7 +74,10 @@ func TestPostgresCommentRepository_SelectUserFeed(t *testing.T) {
 		data := []driver.Value{
 			testCase.outputUser.ID,
 			testCase.outputUser.Name,
+			testCase.outputUser.Telephone,
+			testCase.outputUser.Password,
 			testCase.outputUser.DateBirth,
+			testCase.outputUser.Sex,
 			testCase.outputUser.Education,
 			testCase.outputUser.Job,
 			testCase.outputUser.AboutMe,
@@ -88,7 +85,7 @@ func TestPostgresCommentRepository_SelectUserFeed(t *testing.T) {
 
 		if testCase.err == nil {
 			rows := sqlmock.NewRows(columns).AddRow(data...)
-			dbMock.ExpectQuery(query).WithArgs(telephone).WillReturnRows(rows)
+			dbMock.ExpectQuery(query).WithArgs(outputUser.Telephone).WillReturnRows(rows)
 
 			subQuery := `SELECT path FROM photo WHERE user_id=$1;`
 			subColumns := []string{
@@ -100,12 +97,12 @@ func TestPostgresCommentRepository_SelectUserFeed(t *testing.T) {
 			}
 			dbMock.ExpectQuery(subQuery).WithArgs(testCase.outputUser.ID).WillReturnRows(subRows)
 		} else {
-			dbMock.ExpectQuery(query).WithArgs(telephone).WillReturnError(testCase.err)
+			dbMock.ExpectQuery(query).WithArgs(outputUser.Telephone).WillReturnError(testCase.err)
 		}
 
-		repo := NewPostgresCommentRepository(sqlxDB.DB)
+		repo := NewPostgresAuthRepository(sqlxDB.DB)
 
-		user, err := repo.SelectUserFeed(telephone)
+		user, err := repo.SelectUser(testCase.outputUser.Telephone)
 		require.Equal(t, testCase.err, err)
 		if err == nil {
 			require.Equal(t, testCase.outputUser, user)
@@ -116,97 +113,11 @@ func TestPostgresCommentRepository_SelectUserFeed(t *testing.T) {
 	}
 }
 
-func TestPostgresCommentRepository_SelectUserFeedByID(t *testing.T) {
-	type insertUserTestCase struct {
-		id         int
-		outputUser models.UserFeed
-		err        error
-	}
-
-	db, dbMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("error '%s' when opening a stub database connection", err)
-	}
-	defer db.Close()
-	sqlxDB := sqlx.NewDb(db, "sqlmock")
-
-	columns := []string{
-		"name",
-		"date_birth",
-		"job",
-		"education",
-		"about_me",
-	}
-
-	query := `SELECT name, date_birth, job, education, about_me FROM users
-			  WHERE id=$1;`
-
-	var telephone string
-	err = faker.FakeData(&telephone)
-	require.NoError(t, err)
-
-	var outputUser models.UserFeed
-	err = faker.FakeData(&outputUser)
-	outputUser.IsSuperlike = false
-	require.NoError(t, err)
-
-	testCases := []insertUserTestCase{
-		{
-			id:         1,
-			outputUser: outputUser,
-			err:        sql.ErrNoRows,
-		},
-		{
-			id:         1,
-			outputUser: outputUser,
-			err:        nil,
-		},
-	}
-
-	for i, testCase := range testCases {
-		msg := fmt.Sprintf("case %d aaaaaaaaaaaa", i)
-		data := []driver.Value{
-			testCase.outputUser.Name,
-			testCase.outputUser.DateBirth,
-			testCase.outputUser.Job,
-			testCase.outputUser.Education,
-			testCase.outputUser.AboutMe,
-		}
-
-		if testCase.err == nil {
-			rows := sqlmock.NewRows(columns).AddRow(data...)
-			dbMock.ExpectQuery(query).WithArgs(outputUser.ID).WillReturnRows(rows)
-
-			subQuery := `SELECT path FROM photo WHERE user_id=$1;`
-			subColumns := []string{
-				"path",
-			}
-			subRows := sqlmock.NewRows(subColumns)
-			for _, img := range testCase.outputUser.LinkImages {
-				subRows.AddRow(img)
-			}
-			dbMock.ExpectQuery(subQuery).WithArgs(testCase.outputUser.ID).WillReturnRows(subRows)
-		} else {
-			dbMock.ExpectQuery(query).WithArgs(outputUser.ID).WillReturnError(testCase.err)
-		}
-
-		repo := NewPostgresCommentRepository(sqlxDB.DB)
-
-		user, err := repo.SelectUserFeedByID(testCase.outputUser.ID)
-		require.Equal(t, testCase.err, err)
-		if err == nil {
-			require.Equal(t, testCase.outputUser, user)
-		}
-
-		err = dbMock.ExpectationsWereMet()
-		require.NoError(t, err, "unfulfilled expectations: %s\n%s", err, msg)
-	}
-}
-
-func TestPostgresCommentRepository_InsertComment(t *testing.T) {
-	type insertCommentTestCase struct {
-		comment models.Comment
-		err     error
+func TestPostgresUserRepository_InsertSession(t *testing.T) {
+	type insertSessionTestCase struct {
+		key   string
+		value string
+		err   error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -218,48 +129,44 @@ func TestPostgresCommentRepository_InsertComment(t *testing.T) {
 
 	columns := []string{
 		"id",
-		"user_id1",
-		"user_id2",
-		"time_delivery",
-		"text",
+		"key",
+		"value",
 	}
 
-	query := `INSERT INTO comments(user_id1, user_id2, time_delivery, text) VALUES ($1, $2, $3, $4);`
+	query := `INSERT INTO sessions(key, value) VALUES ($1, $2);`
 
-	var comment models.Comment
-
-	err = faker.FakeData(&comment)
+	var key, value string
+	err = faker.FakeData(&key)
+	require.NoError(t, err)
+	err = faker.FakeData(&value)
 	require.NoError(t, err)
 
-	testCases := []insertCommentTestCase{
+	testCases := []insertSessionTestCase{
 		{
-			comment: comment,
-			err:     nil,
+			key:   key,
+			value: value,
+			err:   nil,
 		},
 	}
 
 	for _, testCase := range testCases {
 		args := []driver.Value{
-			comment.Uid1,
-			comment.Uid2,
-			anyTime{},
-			comment.CommentText,
+			testCase.key,
+			testCase.value,
 		}
 
 		rows := []driver.Value{
-			comment.ID,
-			comment.Uid1,
-			comment.Uid2,
-			comment.TimeDelivery,
-			comment.CommentText,
+			1,
+			testCase.key,
+			testCase.value,
 		}
 
 		sqlmock.NewRows(columns).AddRow(rows...)
 		mock.ExpectExec(query).WithArgs(args...).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		repo := NewPostgresCommentRepository(sqlxDB.DB)
+		repo := NewPostgresAuthRepository(sqlxDB.DB)
 
-		err = repo.InsertComment(testCase.comment, testCase.comment.Uid1)
+		err = repo.InsertSession(testCase.key, testCase.value)
 		require.Equal(t, testCase.err, err)
 
 		err = mock.ExpectationsWereMet()
@@ -267,7 +174,7 @@ func TestPostgresCommentRepository_InsertComment(t *testing.T) {
 	}
 }
 
-func TestPostgresCommentRepository_SelectImages(t *testing.T) {
+func TestPostgresUserRepository_SelectImages(t *testing.T) {
 	type insertPhotoTestCase struct {
 		uid  int
 		path []string
@@ -319,7 +226,7 @@ func TestPostgresCommentRepository_SelectImages(t *testing.T) {
 			mock.ExpectQuery(query).WithArgs(testCase.uid).WillReturnRows(rows)
 		}
 
-		repo := NewPostgresCommentRepository(sqlxDB.DB)
+		repo := NewPostgresAuthRepository(sqlxDB.DB)
 
 		images, err := repo.SelectImages(testCase.uid)
 		t.Log(images)

@@ -21,7 +21,7 @@ func TestNewPhotoUsecase(t *testing.T) {
 	require.Empty(t, pu)
 }
 
-func TestAddPhotoSuccess(t *testing.T) {
+func TestPhotoUsecase_TestAddPhotoSuccess(t *testing.T) {
 	photo := models.Photo{
 		Path:      "path",
 		Telephone: "944-739-32-28",
@@ -53,7 +53,7 @@ func TestAddPhotoSuccess(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestAddPhotoFail(t *testing.T) {
+func TestPhotoUsecase_TestAddPhotoFail(t *testing.T) {
 	photo := models.Photo{
 		Path:      "path",
 		Telephone: "944-739-32-28",
@@ -84,7 +84,7 @@ func TestAddPhotoFail(t *testing.T) {
 	require.NotEqual(t, err, nil)
 }
 
-func TestAddPhotoFailSelect(t *testing.T) {
+func TestPhotoUsecase_TestAddPhotoFailSelect(t *testing.T) {
 	photo := models.Photo{
 		Path:      "path",
 		Telephone: "944-739-32-28",
@@ -113,5 +113,42 @@ func TestAddPhotoFailSelect(t *testing.T) {
 
 	err := ps.AddPhoto(photo)
 
+	require.NotEqual(t, err, nil)
+}
+
+func TestPhotoUsecase_TestRemovePhotoSuccess(t *testing.T) {
+	path := "path"
+	uid := 1
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockPhotoRepository(ctrl)
+	mock.EXPECT().DeletePhoto(path, uid).Times(1).Return(nil)
+
+	ps := photoUsecase{
+		photoRepo: mock,
+	}
+
+	err := ps.RemovePhoto(path, uid)
+
+	require.NoError(t, err)
+}
+
+func TestPhotoUsecase_TestRemovePhotoFail(t *testing.T) {
+	path := "path"
+	uid := 1
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockPhotoRepository(ctrl)
+	mock.EXPECT().DeletePhoto(path, uid).Times(1).Return(models.ErrInternalServerError)
+
+	ps := photoUsecase{
+		photoRepo: mock,
+	}
+
+	err := ps.RemovePhoto(path, uid)
 	require.NotEqual(t, err, nil)
 }

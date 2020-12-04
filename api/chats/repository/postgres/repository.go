@@ -47,19 +47,6 @@ func (p *postgresChatRepository) SelectImages(uid int) ([]string, error) {
 	return images, nil
 }
 
-func (p *postgresChatRepository) SelectUser(telephone string) (models.User, error) {
-	var u models.User
-	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
-						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe)
-	if err != nil {
-		return u, err
-	}
-
-	u.LinkImages, err = p.SelectImages(u.ID)
-	return u, err
-}
-
 func (p *postgresChatRepository) CheckChat(chat models.Chat) bool {
 	var id1, id2 int
 	row := p.Conn.QueryRow(`SELECT user_id1, user_id2 FROM chat 

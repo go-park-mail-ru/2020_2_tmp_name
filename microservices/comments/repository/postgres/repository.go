@@ -15,12 +15,6 @@ func NewPostgresCommentRepository(Conn *sql.DB) domain.CommentRepository {
 	return &postgresCommentRepository{Conn}
 }
 
-func (p *postgresCommentRepository) CheckUserBySession(sid string) string {
-	var count string
-	p.Conn.QueryRow(`SELECT value FROM sessions WHERE key=$1;`, sid).Scan(&count)
-	return count
-}
-
 func (p *postgresCommentRepository) SelectUserFeed(telephone string) (models.UserFeed, error) {
 	var u models.UserFeed
 	row := p.Conn.QueryRow(`SELECT id, name, date_birth, education, job, about_me FROM users
@@ -43,19 +37,6 @@ func (p *postgresCommentRepository) SelectUserFeedByID(uid int) (models.UserFeed
 		return u, err
 	}
 	u.ID = uid
-
-	u.LinkImages, err = p.SelectImages(u.ID)
-	return u, err
-}
-
-func (p *postgresCommentRepository) SelectUser(telephone string) (models.User, error) {
-	var u models.User
-	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
-						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe)
-	if err != nil {
-		return u, err
-	}
 
 	u.LinkImages, err = p.SelectImages(u.ID)
 	return u, err

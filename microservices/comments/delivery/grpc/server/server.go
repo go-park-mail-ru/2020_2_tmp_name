@@ -2,16 +2,16 @@ package comments
 
 import (
 	"context"
-	"fmt"
-	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/keepalive"
-	"google.golang.org/grpc/reflection"
 	"net"
 	comments "park_2020/2020_2_tmp_name/microservices/comments"
 	proto "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/protobuf"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/reflection"
 )
 
 type server struct {
@@ -44,7 +44,6 @@ func StartCommentsGRPCServer(commentsUCase comments.CommentUsecase, url string) 
 }
 
 func (s *server) Comment(ctx context.Context, userComment *proto.UserComment) (*proto.Empty, error) {
-	fmt.Println("ЭТО КОММЕНТ ХАХАХАХА")
 	user, comment := transformIntoUserComment(userComment)
 	err := s.commentsUseCase.Comment(ctx, user, comment)
 	if err != nil {
@@ -56,7 +55,6 @@ func (s *server) Comment(ctx context.Context, userComment *proto.UserComment) (*
 }
 
 func (s *server) CommentsById(ctx context.Context, id *proto.Id) (*proto.CommentsData, error) {
-	fmt.Println("ЭТО КОММЕНТ БАЙ АЙДИ ХАХАХАХА")
 	userId := int(id.Id)
 	commentsData, err := s.commentsUseCase.CommentsByID(ctx, userId)
 	if err != nil {
@@ -84,7 +82,7 @@ func transformIntoUserComment(userComment *proto.UserComment) (models.User, mode
 		Year:       userComment.User.Year,
 		Sex:        userComment.User.Sex,
 		LinkImages: userComment.User.LinkImages,
-		Job:       	userComment.User.Job,
+		Job:        userComment.User.Job,
 		Education:  userComment.User.Education,
 		AboutMe:    userComment.User.AboutMe,
 	}
@@ -114,8 +112,8 @@ func transformIntoGRPCCommentsData(commentsData models.CommentsData) *proto.Comm
 			IsSuperLike: item.User.IsSuperlike,
 		}
 		commentId := &proto.CommentId{
-			User: user,
-			CommentText: item.CommentText,
+			User:         user,
+			CommentText:  item.CommentText,
 			TimeDelivery: item.TimeDelivery,
 		}
 		commentsById = append(commentsById, commentId)

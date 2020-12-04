@@ -2,6 +2,7 @@ package http_test
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	userHttp "park_2020/2020_2_tmp_name/api/users/delivery/http"
+	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
+	mockClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client/mock"
 )
 
 func TestHealthCheckHandler(t *testing.T) {
@@ -40,8 +43,9 @@ func TestNewUserHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	authClient := &authClient.AuthClient{}
 	mock := mock.NewMockUserUsecase(ctrl)
-	userHttp.NewUserHandler(router, mock)
+	userHttp.NewUserHandler(router, mock, authClient)
 }
 
 func TestUserHandler_UploadAvatarHandlerFail(t *testing.T) {
@@ -235,11 +239,13 @@ func TestUserHandler_SettingsHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().User(sid).Return(user, nil)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
 	mock.EXPECT().Settings(uid, user).Return(nil)
 
 	userHandler := userHttp.UserHandlerType{
-		UUsecase: mock,
+		UUsecase:   mock,
+		AuthClient: clientMock,
 	}
 
 	rr := httptest.NewRecorder()
@@ -318,11 +324,13 @@ func TestUserHandler_SettingsHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().User(sid).Return(user, nil)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
 	mock.EXPECT().Settings(uid, user).Return(models.ErrInternalServerError)
 
 	userHandler := userHttp.UserHandlerType{
-		UUsecase: mock,
+		UUsecase:   mock,
+		AuthClient: clientMock,
 	}
 
 	rr := httptest.NewRecorder()
@@ -366,46 +374,12 @@ func TestUserHandler_SettingsHandlerFailUser(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().User(sid).Return(user, models.ErrNotFound)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, models.ErrUnauthorized)
 
 	userHandler := userHttp.UserHandlerType{
-		UUsecase: mock,
-	}
-
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.SettingsHandler)
-	handler.ServeHTTP(rr, req)
-	status := rr.Code
-
-	require.Equal(t, 404, status)
-}
-
-func TestUserHandler_SettingsHandlerFailCookie(t *testing.T) {
-	var byteData = []byte(`{
-		"id":         "0",
-		"name":       "Misha",
-		"telephone":  "909-277-47-21",
-		"password":   "1234",
-		"sex":        "male",
-		"linkImages": null,
-		"job":        "Fullstack",
-		"education":  "BMSTU",
-		"aboutMe":    ""
-	}`)
-
-	body := bytes.NewReader(byteData)
-	req, err := http.NewRequest("POST", "/settings", body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := mock.NewMockUserUsecase(ctrl)
-
-	userHandler := userHttp.UserHandlerType{
-		UUsecase: mock,
+		UUsecase:   mock,
+		AuthClient: clientMock,
 	}
 
 	rr := httptest.NewRecorder()
@@ -416,8 +390,95 @@ func TestUserHandler_SettingsHandlerFailCookie(t *testing.T) {
 	require.Equal(t, 401, status)
 }
 
+func TestUserHandler_IsPremiumHandlerSuccess(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	uid := 0
+
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	req, err := http.NewRequest("GET", "/is_premium", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserUsecase(ctrl)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
+	mock.EXPECT().IsPremium(uid).Return(true)
+
+	userHandler := userHttp.UserHandlerType{
+		UUsecase:   mock,
+		AuthClient: clientMock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(userHandler.IsPremiumHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 200, status)
+}
+
+func TestUserHandler_IsPremiumHandlerFail(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	req, err := http.NewRequest("GET", "/is_premium", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserUsecase(ctrl)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, models.ErrUnauthorized)
+
+	userHandler := userHttp.UserHandlerType{
+		UUsecase:   mock,
+		AuthClient: clientMock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(userHandler.IsPremiumHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 401, status)
+}
+
 func TestUserHandler_MeHandlerSuccess(t *testing.T) {
-	user := models.UserFeed{
+	user := models.User{
 		Name:       "Misha",
 		LinkImages: nil,
 		Job:        "Fullstack",
@@ -442,10 +503,12 @@ func TestUserHandler_MeHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Me(sid).Return(user, nil)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
 
 	userHandler := userHttp.UserHandlerType{
-		UUsecase: mock,
+		UUsecase:   mock,
+		AuthClient: clientMock,
 	}
 
 	rr := httptest.NewRecorder()
@@ -457,7 +520,7 @@ func TestUserHandler_MeHandlerSuccess(t *testing.T) {
 }
 
 func TestUserHandler_MeHandlerFail(t *testing.T) {
-	user := models.UserFeed{
+	user := models.User{
 		Name:       "Misha",
 		LinkImages: nil,
 		Job:        "Fullstack",
@@ -482,33 +545,12 @@ func TestUserHandler_MeHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Me(sid).Return(user, models.ErrInternalServerError)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, models.ErrUnauthorized)
 
 	userHandler := userHttp.UserHandlerType{
-		UUsecase: mock,
-	}
-
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.MeHandler)
-	handler.ServeHTTP(rr, req)
-	status := rr.Code
-
-	require.Equal(t, 500, status)
-}
-
-func TestUserHandler_MeHandlerFailCookie(t *testing.T) {
-	req, err := http.NewRequest("GET", "/me", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := mock.NewMockUserUsecase(ctrl)
-
-	userHandler := userHttp.UserHandlerType{
-		UUsecase: mock,
+		UUsecase:   mock,
+		AuthClient: clientMock,
 	}
 
 	rr := httptest.NewRecorder()
@@ -563,11 +605,13 @@ func TestUserHandler_FeedHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().User(sid).Return(user, nil)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
 	mock.EXPECT().Feed(user).Return(users, nil)
 
 	userHandler := userHttp.UserHandlerType{
-		UUsecase: mock,
+		UUsecase:   mock,
+		AuthClient: clientMock,
 	}
 
 	rr := httptest.NewRecorder()
@@ -615,11 +659,13 @@ func TestUserHandler_FeedHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().User(sid).Return(user, nil)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
 	mock.EXPECT().Feed(user).Return(users, models.ErrInternalServerError)
 
 	userHandler := userHttp.UserHandlerType{
-		UUsecase: mock,
+		UUsecase:   mock,
+		AuthClient: clientMock,
 	}
 
 	rr := httptest.NewRecorder()
@@ -667,39 +713,12 @@ func TestUserHandler_FeedHandlerFailUser(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().User(sid).Return(user, models.ErrNotFound)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, models.ErrUnauthorized)
 
 	userHandler := userHttp.UserHandlerType{
-		UUsecase: mock,
-	}
-
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(userHandler.FeedHandler)
-	handler.ServeHTTP(rr, req)
-	status := rr.Code
-
-	require.Equal(t, 404, status)
-}
-
-func TestUserHandler_FeedHandlerFailUserCookie(t *testing.T) {
-	var users []models.UserFeed
-	user1 := models.UserFeed{}
-
-	user2 := models.UserFeed{}
-	users = append(users, user1, user2)
-
-	req, err := http.NewRequest("GET", "/me", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := mock.NewMockUserUsecase(ctrl)
-
-	userHandler := userHttp.UserHandlerType{
-		UUsecase: mock,
+		UUsecase:   mock,
+		AuthClient: clientMock,
 	}
 
 	rr := httptest.NewRecorder()
@@ -794,9 +813,16 @@ func TestUserHandler_UserIDHandlerFailAtoi(t *testing.T) {
 }
 
 func TestUserHandler_TelephoneHandlerSuccess(t *testing.T) {
-	telephone := "telephone"
+	phone := models.Phone{
+		Telephone: "telephone",
+	}
 
-	req, err := http.NewRequest("GET", "/api/v1/telephone/telephone", nil)
+	var byteData = []byte(`{
+		"telephone" : "telephone"
+	}`)
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/api/v1/telephone/telephone", body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -805,7 +831,7 @@ func TestUserHandler_TelephoneHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockUserUsecase(ctrl)
-	mock.EXPECT().Telephone(telephone).Return(true)
+	mock.EXPECT().Telephone(phone.Telephone).Return(true)
 
 	userHandler := userHttp.UserHandlerType{
 		UUsecase: mock,
@@ -817,4 +843,61 @@ func TestUserHandler_TelephoneHandlerSuccess(t *testing.T) {
 	status := rr.Code
 
 	require.Equal(t, 200, status)
+}
+
+func TestUserHandler_TelephoneHandlerFail(t *testing.T) {
+	var byteData = []byte(``)
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/api/v1/telephone/telephone", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserUsecase(ctrl)
+
+	userHandler := userHttp.UserHandlerType{
+		UUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(userHandler.TelephoneHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 400, status)
+}
+
+func TestUserHandler_GetPremiumHandlerFail(t *testing.T) {
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	req, err := http.NewRequest("POST", "/get_premium", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockUserUsecase(ctrl)
+
+	userHandler := userHttp.UserHandlerType{
+		UUsecase: mock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(userHandler.GetPremiumHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 400, status)
 }

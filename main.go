@@ -3,10 +3,11 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"google.golang.org/grpc"
 	"log"
 	"net/http"
 	"time"
+
+	"google.golang.org/grpc"
 
 	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
@@ -17,11 +18,13 @@ import (
 
 	_ "github.com/lib/pq"
 
+	metrics "park_2020/2020_2_tmp_name/prometheus"
+
 	_chatDelivery "park_2020/2020_2_tmp_name/api/chats/delivery/http"
 	_chatRepo "park_2020/2020_2_tmp_name/api/chats/repository/postgres"
 	_chatUcase "park_2020/2020_2_tmp_name/api/chats/usecase"
 
-	_commentClientGRPC "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
+	_commentClient "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
 	_commentDelivery "park_2020/2020_2_tmp_name/microservices/comments/delivery/http"
 	_commentRepo "park_2020/2020_2_tmp_name/microservices/comments/repository/postgres"
 	_commentUcase "park_2020/2020_2_tmp_name/microservices/comments/usecase"
@@ -83,6 +86,9 @@ func (app *application) initServer() {
 
 	router := mux.NewRouter()
 
+	metricsProm := metrics.RegisterMetrics(router)
+	middleware.NewLoggingMiddleware(metricsProm)
+
 	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	logrus.WithFields(logrus.Fields{
 		"logger": "LOGRUS",
@@ -100,7 +106,8 @@ func (app *application) initServer() {
 	AccessLogOut.LogrusLogger = contextLogger
 
 	// router.Use(AccessLogOut.AccessLogMiddleware(router))
-	ar := _authRepo.NewPostgresUserRepository(dbConn)
+
+	ar := _authRepo.NewPostgresAuthRepository(dbConn)
 	grpcConnAuth, err := grpc.Dial("0.0.0.0:8081", grpc.WithInsecure())
 	if err != nil {
 		log.Println(err)
@@ -109,21 +116,22 @@ func (app *application) initServer() {
 
 	grpcAuthClient := _authClient.NewAuthClient(grpcConnAuth)
 	au := _authUcase.NewAuthUsecase(ar)
-	_authDelivery.NewUserHandler(router, au, grpcAuthClient)
+	_authDelivery.NewAuthHandler(router, au, grpcAuthClient)
 
 	chr := _chatRepo.NewPostgresChatRepository(dbConn)
 	chu := _chatUcase.NewChatUsecase(chr)
 	_chatDelivery.NewChatHandler(router, chu, grpcAuthClient)
 
 	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
-	cu := _commentUcase.NewCommentUsecase(cr)
 	grpcConnComments, err := grpc.Dial("localhost:8082", grpc.WithInsecure())
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
-	ccGRPC := _commentClientGRPC.NewCommentsClientGRPC(grpcConnComments)
-	_commentDelivery.NewCommentHandler(router, cu, ccGRPC, grpcAuthClient)
+
+	grpcCommentClient := _commentClient.NewCommentsClientGRPC(grpcConnComments)
+	cu := _commentUcase.NewCommentUsecase(cr)
+	_commentDelivery.NewCommentHandler(router, cu, grpcCommentClient, grpcAuthClient)
 
 	pr := _photoRepo.NewPostgresPhotoRepository(dbConn)
 	pu := _photoUcase.NewPhotoUsecase(pr)

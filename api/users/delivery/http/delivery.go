@@ -12,16 +12,17 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
 type UserHandlerType struct {
 	UUsecase   domain.UserUsecase
-	AuthClient *authClient.AuthClient
+	AuthClient authClient.AuthClientInterface
 }
 
-func NewUserHandler(r *mux.Router, us domain.UserUsecase, ac *authClient.AuthClient) {
+func NewUserHandler(r *mux.Router, us domain.UserUsecase, ac authClient.AuthClientInterface) {
 	handler := &UserHandlerType{
 		UUsecase:   us,
 		AuthClient: ac,
@@ -82,7 +83,7 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars"
 	os.Chdir(photoPath)
 
-	photoID, err := u.UUsecase.UploadAvatar()
+	photoID, err := uuid.NewRandom()
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -216,13 +217,6 @@ func (u *UserHandlerType) MeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// user, err := u.UUsecase.Me(r.Cookies()[0].Value)
-	// if err != nil {
-	// 	w.WriteHeader(models.GetStatusCode(err))
-	// 	w.Write(JSONError(err.Error()))
-	// 	return
-	// }
-
 	body, err := json.Marshal(user)
 	if err != nil {
 		logrus.Error(err)
@@ -321,7 +315,6 @@ func (u *UserHandlerType) GetPremiumHandler(w http.ResponseWriter, r *http.Reque
 		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
-
 		return
 	}
 
@@ -347,4 +340,3 @@ func (u *UserHandlerType) GetPremiumHandler(w http.ResponseWriter, r *http.Reque
 
 	w.WriteHeader(http.StatusOK)
 }
-

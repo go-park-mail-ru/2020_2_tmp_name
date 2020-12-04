@@ -24,7 +24,7 @@ func (c *commentUsecase) Comment(ctx context.Context, user models.User, comment 
 	return nil
 }
 
-func (c *commentUsecase) CommentsByID(ctx context.Context,id int) (models.CommentsData, error) {
+func (c *commentUsecase) CommentsByID(ctx context.Context, id int) (models.CommentsData, error) {
 	var data models.CommentsData
 	comments, err := c.commentRepo.SelectComments(id)
 	if err != nil {
@@ -33,13 +33,4 @@ func (c *commentUsecase) CommentsByID(ctx context.Context,id int) (models.Commen
 	data.Data = comments
 
 	return data, nil
-}
-
-func (c *commentUsecase) User(ctx context.Context, cookie string) (models.User, error) {
-	telephone := c.commentRepo.CheckUserBySession(cookie)
-	user, err := c.commentRepo.SelectUser(telephone)
-	if err != nil {
-		return user, models.ErrNotFound
-	}
-	return user, nil
 }

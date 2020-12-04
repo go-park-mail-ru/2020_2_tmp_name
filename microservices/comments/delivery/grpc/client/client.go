@@ -2,17 +2,18 @@ package client
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 	proto "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/protobuf"
 	"park_2020/2020_2_tmp_name/models"
+
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 )
 
 type CommentClient struct {
 	client proto.CommentsGRPCHandlerClient
 }
 
-func NewCommentsClientGRPC(conn *grpc.ClientConn) *CommentClient{
+func NewCommentsClientGRPC(conn *grpc.ClientConn) *CommentClient {
 	c := proto.NewCommentsGRPCHandlerClient(conn)
 	return &CommentClient{
 		client: c,
@@ -85,7 +86,6 @@ func transformFromCommentsData(data *proto.CommentsData) models.CommentsData {
 	return comments
 }
 
-
 func (c *CommentClient) Comment(ctx context.Context, user models.User, comment models.Comment) error {
 	userComment := transformIntoUserComment(user, comment)
 
@@ -98,7 +98,7 @@ func (c *CommentClient) Comment(ctx context.Context, user models.User, comment m
 	return nil
 }
 
-func (c *CommentClient) CommentsById(ctx context.Context, id int) (models.CommentsData, error) {
+func (c *CommentClient) CommentsByID(ctx context.Context, id int) (models.CommentsData, error) {
 	idProto := &proto.Id{Id: int32(id)}
 	commentsData, err := c.client.CommentsById(ctx, idProto)
 	if err != nil {

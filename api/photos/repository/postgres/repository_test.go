@@ -182,6 +182,7 @@ func TestPostgresPhotoRepository_SelectUserFeed(t *testing.T) {
 
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
+	outputUser.IsSuperlike = false
 	require.NoError(t, err)
 
 	testCases := []insertUserTestCase{

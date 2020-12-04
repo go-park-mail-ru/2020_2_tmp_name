@@ -13,6 +13,8 @@ import (
 
 	_ "github.com/lib/pq"
 
+	metrics "park_2020/2020_2_tmp_name/prometheus"
+
 	_authRepo "park_2020/2020_2_tmp_name/microservices/authorization/repository/postgres"
 	_authUcase "park_2020/2020_2_tmp_name/microservices/authorization/usecase"
 
@@ -54,13 +56,13 @@ func DBConnection(conf *models.Config) *sql.DB {
 }
 
 func (app *application) initServer() {
-	// headersOk := handlers.AllowedHeaders([]string{"Content-Type", "Content-Disposition"})
-	// originsOk := handlers.AllowedOrigins([]string{"https://mi-ami.ru"})
-	// methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE"})
 
 	dbConn := DBConnection(&conf)
 
-	// router := mux.NewRouter()
+	router := mux.NewRouter()
+
+	metricsProm := metrics.RegisterMetrics(router)
+	middleware.NewLoggingMiddleware(metricsProm)
 
 	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	logrus.WithFields(logrus.Fields{
@@ -78,39 +80,10 @@ func (app *application) initServer() {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 	AccessLogOut.LogrusLogger = contextLogger
 
-	// router.Use(AccessLogOut.AccessLogMiddleware(router))
-
-	ar := _authRepo.NewPostgresUserRepository(dbConn)
+	ar := _authRepo.NewPostgresAuthRepository(dbConn)
 	au := _authUcase.NewAuthUsecase(ar)
 
 	grpcServer.StartAuthGRPCServer(au, "localhost:8081")
-
-	// grpcAuthConn, err := grpc.Dial("0.0.0.0:8081", grpc.WithInsecure())
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return
-	// }
-	// grpcAuthClient := authClient.NewAuthClient(grpcAuthConn)
-
-	// _authDelivery.NewUserHandler(router, au)
-
-	// middleware.MyCORSMethodMiddleware(router)
-
-	// sessMiddleware := middleware.NewSessionMiddleware(ar)
-	// router.Use(sessMiddleware.SessionMiddleware)
-
-	// serv := &http.Server{
-	// 	Addr:         ":8082",
-	// 	Handler:      handlers.CORS(originsOk, headersOk, methodsOk, handlers.AllowCredentials())(router),
-	// 	WriteTimeout: 60 * time.Second,
-	// 	ReadTimeout:  60 * time.Second,
-	// }
-
-	// fmt.Println("Starting server at: 8082")
-	// err = serv.ListenAndServe()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 }
 
 func newApplication(conf models.Config) *application {
@@ -139,7 +112,7 @@ func main() {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 	AccessLogOut.LogrusLogger = contextLogger
 
-	ar := _authRepo.NewPostgresUserRepository(dbConn)
+	ar := _authRepo.NewPostgresAuthRepository(dbConn)
 	au := _authUcase.NewAuthUsecase(ar)
 
 	grpcServer.StartAuthGRPCServer(au, "localhost:8081")
