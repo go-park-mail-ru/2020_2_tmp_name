@@ -64,45 +64,6 @@ func (p *postgresUserRepository) InsertUser(user models.User) error {
 	return nil
 }
 
-func (p *postgresUserRepository) SelectUser(telephone string) (models.User, error) {
-	var u models.User
-	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
-						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe)
-	if err != nil {
-		return u, err
-	}
-
-	u.LinkImages, err = p.SelectImages(u.ID)
-	return u, err
-}
-
-func (p *postgresUserRepository) SelectUserMe(telephone string) (models.UserMe, error) {
-	var u models.UserMe
-	row := p.Conn.QueryRow(`SELECT id, name, telephone, date_birth, job, education, about_me FROM users
-						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe)
-	if err != nil {
-		return u, err
-	}
-
-	u.LinkImages, err = p.SelectImages(u.ID)
-	return u, err
-}
-
-func (p *postgresUserRepository) SelectUserFeed(telephone string) (models.UserFeed, error) {
-	var u models.UserFeed
-	row := p.Conn.QueryRow(`SELECT id, name, date_birth, education, job, about_me FROM users
-						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe)
-	if err != nil {
-		return u, err
-	}
-
-	u.LinkImages, err = p.SelectImages(u.ID)
-	return u, err
-}
-
 func (p *postgresUserRepository) SelectUserByID(uid int) (models.User, error) {
 	var u models.User
 	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
@@ -221,12 +182,6 @@ func (p *postgresUserRepository) InsertSession(sid, telephone string) error {
 func (p *postgresUserRepository) DeleteSession(sid string) error {
 	_, err := p.Conn.Exec(`DELETE FROM sessions WHERE key=$1;`, sid)
 	return err
-}
-
-func (p *postgresUserRepository) CheckUserBySession(sid string) string {
-	var count string
-	p.Conn.QueryRow(`SELECT value FROM sessions WHERE key=$1;`, sid).Scan(&count)
-	return count
 }
 
 func (p *postgresUserRepository) SelectImages(uid int) ([]string, error) {

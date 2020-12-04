@@ -140,61 +140,6 @@ func TestUserUsecase_SettingsFail(t *testing.T) {
 
 }
 
-func TestUserUsecase_MeSuccess(t *testing.T) {
-	sid := "something-like-this"
-
-	user := models.UserFeed{
-		ID:         1,
-		Name:       "Andrey",
-		DateBirth:  20,
-		LinkImages: nil,
-		Job:        "",
-		Education:  "BMSTU",
-		AboutMe:    "",
-	}
-
-	telephone := "944-739-32-28"
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := mock.NewMockUserRepository(ctrl)
-	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
-	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, nil)
-
-	us := userUsecase{
-		userRepo: mock,
-	}
-
-	me, err := us.Me(sid)
-
-	require.NoError(t, err)
-	require.Equal(t, me, user)
-}
-
-func TestUserUsecase_MeFail(t *testing.T) {
-	sid := "something-like-this"
-
-	user := models.UserFeed{}
-
-	telephone := "944-739-32-28"
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := mock.NewMockUserRepository(ctrl)
-	mock.EXPECT().CheckUserBySession(sid).Times(1).Return(telephone)
-	mock.EXPECT().SelectUserFeed(telephone).Times(1).Return(user, models.ErrInternalServerError)
-
-	us := userUsecase{
-		userRepo: mock,
-	}
-
-	_, err := us.Me(sid)
-
-	require.NotEqual(t, err, nil)
-}
-
 func TestUserUsecase_Feed(t *testing.T) {
 	user := models.User{
 		ID:         1,
@@ -293,67 +238,6 @@ func TestUserUsecase_FeedSelectFail(t *testing.T) {
 	_, err := us.Feed(user)
 
 	require.NotEqual(t, err, nil)
-}
-
-func TestUserUsecase_UserSuccess(t *testing.T) {
-	user := models.User{
-		ID:         0,
-		Name:       "Misha",
-		DateBirth:  0,
-		LinkImages: nil,
-		Job:        "Fullstack",
-		Education:  "BMSTU",
-		AboutMe:    "",
-	}
-
-	telephone := "(944) 546 98 24"
-	sid := "something-like-this"
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := mock.NewMockUserRepository(ctrl)
-	mock.EXPECT().CheckUserBySession(sid).Return(telephone)
-	mock.EXPECT().SelectUser(telephone).Return(user, nil)
-
-	us := userUsecase{
-		userRepo: mock,
-	}
-
-	result, err := us.User(sid)
-
-	require.NoError(t, err)
-	require.Equal(t, result, user)
-}
-
-func TestUserUsecase_UserFail(t *testing.T) {
-	user := models.User{
-		ID:         0,
-		Name:       "Misha",
-		DateBirth:  0,
-		LinkImages: nil,
-		Job:        "Fullstack",
-		Education:  "BMSTU",
-		AboutMe:    "",
-	}
-
-	telephone := "(944) 546 98 24"
-	sid := "something-like-this"
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := mock.NewMockUserRepository(ctrl)
-	mock.EXPECT().CheckUserBySession(sid).Return(telephone)
-	mock.EXPECT().SelectUser(telephone).Return(user, models.ErrNotFound)
-
-	us := userUsecase{
-		userRepo: mock,
-	}
-
-	_, err := us.User(sid)
-
-	require.Equal(t, err, models.ErrNotFound)
 }
 
 func TestUserUsecase_UserIDSuccess(t *testing.T) {

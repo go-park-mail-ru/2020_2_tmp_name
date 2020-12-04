@@ -42,15 +42,6 @@ func (u *userUsecase) IsPremium(uid int) bool {
 	return u.userRepo.CheckPremium(uid)
 }
 
-func (u *userUsecase) Me(cookie string) (models.UserFeed, error) {
-	telephone := u.userRepo.CheckUserBySession(cookie)
-	user, err := u.userRepo.SelectUserFeed(telephone)
-	if err != nil {
-		return user, models.ErrNotFound
-	}
-	return user, nil
-}
-
 func (u *userUsecase) Feed(user models.User) ([]models.UserFeed, error) {
 	data, err := u.userRepo.SelectUsers(user)
 	if err != nil {
@@ -61,15 +52,6 @@ func (u *userUsecase) Feed(user models.User) ([]models.UserFeed, error) {
 
 func (u *userUsecase) UserID(uid int) (models.UserFeed, error) {
 	user, err := u.userRepo.SelectUserFeedByID(uid)
-	if err != nil {
-		return user, models.ErrNotFound
-	}
-	return user, nil
-}
-
-func (u *userUsecase) User(cookie string) (models.User, error) {
-	telephone := u.userRepo.CheckUserBySession(cookie)
-	user, err := u.userRepo.SelectUser(telephone)
 	if err != nil {
 		return user, models.ErrNotFound
 	}

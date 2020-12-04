@@ -26,11 +26,13 @@ type ChatRepository interface {
 	SelectUserFeed(telephone string) (models.UserFeed, error) // Tested
 	SelectUserFeedByID(uid int) (models.UserFeed, error)      // Tested
 	SelectImages(uid int) ([]string, error)                   // Tested
+	InsertChat(chat models.Chat) error                        // Tested
+	InsertMessage(text string, chatID, uid int) error         // Tested
+	SelectMessages(chid int) ([]models.Msg, error)            // Tested
+	SelectMessage(uid, chid int) (models.Msg, error)          // Tested
+	InsertLike(uid1, uid2 int) error                          // Tested
+	InsertDislike(uid1, uid2 int) error                       // Tested
 	CheckChat(chat models.Chat) bool
-	InsertChat(chat models.Chat) error                // Tested
-	InsertMessage(text string, chatID, uid int) error // Tested
-	SelectMessage(uid, chid int) (models.Msg, error)  // Tested
-	SelectMessages(chid int) ([]models.Msg, error)    // Tested
 	SelectChatsByID(uid int) ([]models.ChatData, error)
 	SelectChatByID(uid, chid int) (models.ChatData, error)
 	SelectUserByChat(uid, chid int) (models.UserFeed, error)
@@ -39,8 +41,6 @@ type ChatRepository interface {
 	CheckUserBySession(sid string) string
 	SelectChatID(uid1, uid2 int) (int, error)
 	Match(uid1, uid2 int) bool
-	InsertLike(uid1, uid2 int) error    // Tested
-	InsertDislike(uid1, uid2 int) error // Tested
 	InsertSuperlike(uid1, uid2 int) error
 	DeleteLike(uid1, uid2 int) error
 	DeleteDislike(uid1, uid2 int) error
