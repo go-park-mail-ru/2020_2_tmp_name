@@ -148,6 +148,7 @@ func TestPostgresChatRepository_SelectUserFeedByID(t *testing.T) {
 
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
+	outputUser.IsSuperlike = false
 	require.NoError(t, err)
 
 	testCases := []insertUserTestCase{

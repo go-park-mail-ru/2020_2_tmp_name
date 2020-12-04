@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	domain "park_2020/2020_2_tmp_name/microservices/authorization"
 	"park_2020/2020_2_tmp_name/models"
-	"time"
 )
 
 type postgresAuthRepository struct {
@@ -74,11 +73,4 @@ func (p *postgresAuthRepository) SelectImages(uid int) ([]string, error) {
 		images = append(images, image)
 	}
 	return images, nil
-}
-
-func (p *postgresAuthRepository) InsertPremium(uid int, dateFrom time.Time, dateTo time.Time) error {
-	_, err := p.Conn.Exec(`INSERT INTO premium_accounts(user_id, date_to, date_from) 
-								 VALUES ($1, $2, $3);`, uid, dateTo, dateFrom)
-
-	return err
 }

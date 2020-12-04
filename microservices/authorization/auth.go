@@ -15,11 +15,11 @@ type AuthUsecase interface {
 }
 
 type AuthRepository interface {
-	CheckUser(telephone string) bool
 	SelectUser(telephone string) (models.User, error) // Tested
 	InsertSession(sid, telephone string) error        // Tested
+	SelectImages(uid int) ([]string, error)           // Tested
+	CheckUser(telephone string) bool
 	DeleteSession(sid string) error
 	CheckUserBySession(sid string) string
 	SelectUserBySession(sid string) (string, error)
-	SelectImages(uid int) ([]string, error)
 }
