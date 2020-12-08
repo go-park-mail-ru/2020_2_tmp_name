@@ -55,13 +55,13 @@ func DBConnection(conf *models.Config) *sql.DB {
 }
 
 func main() {
+	dbConn := DBConnection(&conf)
 
 	router := mux.NewRouter()
 
 	metricsProm := metrics.RegisterMetrics(router)
 	middleware.NewLoggingMiddleware(metricsProm)
 
-	dbConn := DBConnection(&conf)
 	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	logrus.WithFields(logrus.Fields{
 		"logger": "LOGRUS",
@@ -77,6 +77,8 @@ func main() {
 	})
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 	AccessLogOut.LogrusLogger = contextLogger
+
+	router.Use(AccessLogOut.AccessLogMiddleware(router))
 
 	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
 	cu := _commentUcase.NewCommentUsecase(cr)

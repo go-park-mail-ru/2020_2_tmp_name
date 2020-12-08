@@ -96,6 +96,11 @@ func newApplication(conf models.Config) *application {
 func main() {
 	dbConn := DBConnection(&conf)
 
+	router := mux.NewRouter()
+
+	metricsProm := metrics.RegisterMetrics(router)
+	middleware.NewLoggingMiddleware(metricsProm)
+
 	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
 	logrus.WithFields(logrus.Fields{
 		"logger": "LOGRUS",
@@ -112,9 +117,10 @@ func main() {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 	AccessLogOut.LogrusLogger = contextLogger
 
+	router.Use(AccessLogOut.AccessLogMiddleware(router))
+
 	ar := _authRepo.NewPostgresAuthRepository(dbConn)
 	au := _authUcase.NewAuthUsecase(ar)
 
 	grpcServer.StartAuthGRPCServer(au, "localhost:8081")
-
 }
