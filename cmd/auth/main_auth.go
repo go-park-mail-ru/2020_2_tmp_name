@@ -9,7 +9,6 @@ import (
 	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 
 	_ "github.com/lib/pq"
 
@@ -64,22 +63,6 @@ func (app *application) initServer() {
 	metricsProm := metrics.RegisterMetrics(router)
 	middleware.NewLoggingMiddleware(metricsProm)
 
-	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
-	logrus.WithFields(logrus.Fields{
-		"logger": "LOGRUS",
-		"host":   "95.163.213.222",
-		"port":   ":8080",
-	}).Info("Starting server")
-
-	AccessLogOut := new(middleware.AccessLogger)
-
-	contextLogger := logrus.WithFields(logrus.Fields{
-		"mode":   "[access_log]",
-		"logger": "LOGRUS",
-	})
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-	AccessLogOut.LogrusLogger = contextLogger
-
 	ar := _authRepo.NewPostgresAuthRepository(dbConn)
 	au := _authUcase.NewAuthUsecase(ar)
 
@@ -100,24 +83,6 @@ func main() {
 
 	metricsProm := metrics.RegisterMetrics(router)
 	middleware.NewLoggingMiddleware(metricsProm)
-
-	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
-	logrus.WithFields(logrus.Fields{
-		"logger": "LOGRUS",
-		"host":   "95.163.213.222",
-		"port":   ":8081",
-	}).Info("Starting server")
-
-	AccessLogOut := new(middleware.AccessLogger)
-
-	contextLogger := logrus.WithFields(logrus.Fields{
-		"mode":   "[access_log]",
-		"logger": "LOGRUS",
-	})
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-	AccessLogOut.LogrusLogger = contextLogger
-
-	router.Use(AccessLogOut.AccessLogMiddleware(router))
 
 	ar := _authRepo.NewPostgresAuthRepository(dbConn)
 	au := _authUcase.NewAuthUsecase(ar)

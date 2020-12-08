@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/sirupsen/logrus"
 
 	_ "github.com/lib/pq"
@@ -85,6 +87,22 @@ func (app *application) initServer() {
 	dbConn := DBConnection(&conf)
 
 	router := mux.NewRouter()
+
+	// CSRF := csrf.Protect(
+	// 	[]byte("a-32-byte-long-key-goes-here"),
+	// 	// instruct the browser to never send cookies during cross site requests
+	// 	csrf.SameSite(csrf.SameSiteStrictMode),
+	// )
+	sanitizer := bluemonday.UGCPolicy()
+
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		comment := `<a onblur="alert(document.сookie)" href="https://www.mi-ami.ru">MiAmi</a>`
+		comment = sanitizer.Sanitize(comment)
+		resp, _ := json.Marshal(map[string]interface{}{
+			"comment": comment,
+		})
+		w.Write(resp)
+	})
 
 	metricsProm := metrics.RegisterMetrics(router)
 	middleware.NewLoggingMiddleware(metricsProm)
