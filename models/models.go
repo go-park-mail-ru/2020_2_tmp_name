@@ -7,6 +7,10 @@ type LoginData struct {
 	Password  string `json:"password"`
 }
 
+type HasTelephone struct {
+	Telephone bool `json:"telephone"`
+}
+
 type Photo struct {
 	ID        int    `json:"-"`
 	Path      string `json:"linkImages"`

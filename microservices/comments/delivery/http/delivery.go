@@ -7,6 +7,7 @@ import (
 	_authClientGRPC "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 	domain "park_2020/2020_2_tmp_name/microservices/comments"
 	_commentClientGRPC "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/client"
+	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
@@ -29,8 +30,8 @@ func NewCommentHandler(r *mux.Router, cs domain.CommentUsecase, cc _commentClien
 		CommentClient: cc,
 	}
 
-	r.HandleFunc("/api/v1/comment", handler.CommentHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/comments/{user_id}", handler.CommentsByIdHandler).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/comment", middleware.CheckCSRF(handler.CommentHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/comments/{user_id}", middleware.SetCSRF(handler.CommentsByIdHandler)).Methods(http.MethodGet)
 }
 
 func JSONError(message string) []byte {
