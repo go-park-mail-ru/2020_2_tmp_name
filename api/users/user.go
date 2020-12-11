@@ -29,6 +29,6 @@ type UserRepository interface {
 	CheckUser(telephone string) bool
 	Match(uid1, uid2 int) bool
 	CheckPremium(uid int) bool
-	SelectUsers(user models.User) ([]models.UserFeed, error)
-	InsertPremium(uid int, dateFrom time.Time, dateTo time.Time) error
+	SelectUsers(user models.User) ([]models.UserFeed, error)           // Tested
+	InsertPremium(uid int, dateFrom time.Time, dateTo time.Time) error // Tested
 }
