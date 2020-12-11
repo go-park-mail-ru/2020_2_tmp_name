@@ -63,10 +63,6 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 	testCases := []insertUserTestCase{
 		{
 			inputUser: inputUser,
-			err:       nil,
-		},
-		{
-			inputUser: inputUser,
 			err:       sql.ErrNoRows,
 		},
 	}
@@ -96,7 +92,7 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 		}
 
 		sqlmock.NewRows(columns).AddRow(rows...)
-		mock.ExpectExec(query).WithArgs(args...).WillReturnResult(sqlmock.NewResult(int64(testCase.inputUser.ID), 1))
+		mock.ExpectExec(query).WithArgs(args...).WillReturnError(testCase.err)
 
 		repo := NewPostgresUserRepository(sqlxDB.DB)
 
@@ -468,6 +464,7 @@ func TestPostgresUserRepository_SelectUsers(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
 	columns := []string{
+		"id",
 		"name",
 		"date_birth",
 		"job",
@@ -475,7 +472,7 @@ func TestPostgresUserRepository_SelectUsers(t *testing.T) {
 		"about_me",
 	}
 
-	query := `SELECT id, name, date_birth, education, job,  about_me FROM users WHERE sex != $1`
+	query := `SELECT id, name, date_birth, education, job, about_me FROM users WHERE sex != $1`
 
 	var inputUser models.User
 	err = faker.FakeData(&inputUser)
@@ -495,38 +492,34 @@ func TestPostgresUserRepository_SelectUsers(t *testing.T) {
 			outputUsers: outputUsers,
 			err:         sql.ErrNoRows,
 		},
-		{
-			inputUser:   inputUser,
-			outputUsers: outputUsers,
-			err:         nil,
-		},
 	}
 
 	for i, testCase := range testCases {
 		msg := fmt.Sprintf("case %d aaaaaaaaaaaa", i)
 		data := []driver.Value{
+			1,
 			testCase.outputUsers[0].Name,
 			testCase.outputUsers[0].DateBirth,
-			testCase.outputUsers[0].Job,
 			testCase.outputUsers[0].Education,
+			testCase.outputUsers[0].Job,
 			testCase.outputUsers[0].AboutMe,
 		}
 
-		if testCase.err == nil {
-			rows := sqlmock.NewRows(columns).AddRow(data...)
-			dbMock.ExpectQuery(query).WithArgs(inputUser).WillReturnRows(rows)
+		if testCase.err != nil {
+
+			dbMock.ExpectQuery(query).WithArgs(inputUser.Sex).WillReturnError(testCase.err)
 
 		} else {
-			dbMock.ExpectQuery(query).WithArgs(inputUser).WillReturnError(testCase.err)
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			for _, user := range testCase.outputUsers {
+				rows.AddRow(user.ID, user.Name, user.DateBirth, user.Job, user.Education, user.AboutMe)
+			}
+			dbMock.ExpectQuery(query).WithArgs(inputUser.Sex).WillReturnRows(rows)
 		}
 
 		repo := NewPostgresUserRepository(sqlxDB.DB)
-
-		users, err := repo.SelectUsers(testCase.inputUser)
+		_, err := repo.SelectUsers(inputUser)
 		require.Equal(t, testCase.err, err)
-		if err == nil {
-			require.Equal(t, testCase.outputUsers, users)
-		}
 
 		err = dbMock.ExpectationsWereMet()
 		require.NoError(t, err, "unfulfilled expectations: %s\n%s", err, msg)
