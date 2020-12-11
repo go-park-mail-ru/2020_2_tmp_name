@@ -18,8 +18,8 @@ type AuthRepository interface {
 	SelectUser(telephone string) (models.User, error) // Tested
 	InsertSession(sid, telephone string) error        // Tested
 	SelectImages(uid int) ([]string, error)           // Tested
+	DeleteSession(sid string) error                   // Tested
+	SelectUserBySession(sid string) (string, error)   // Tested
 	CheckUser(telephone string) bool
-	DeleteSession(sid string) error
 	CheckUserBySession(sid string) string
-	SelectUserBySession(sid string) (string, error)
 }

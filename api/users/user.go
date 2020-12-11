@@ -25,10 +25,10 @@ type UserRepository interface {
 	SelectUserByID(uid int) (models.User, error)         // Tested
 	SelectUserFeedByID(uid int) (models.UserFeed, error) // Tested
 	SelectImages(uid int) ([]string, error)              // Tested
+	DeleteSession(sid string) error                      // Tested
 	CheckUser(telephone string) bool
 	Match(uid1, uid2 int) bool
 	CheckPremium(uid int) bool
 	SelectUsers(user models.User) ([]models.UserFeed, error)
-	DeleteSession(sid string) error
 	InsertPremium(uid int, dateFrom time.Time, dateTo time.Time) error
 }

@@ -86,12 +86,6 @@ func (app *application) initServer() {
 
 	router := mux.NewRouter()
 
-	// CSRF := csrf.Protect(
-	// 	[]byte("a-32-byte-long-key-goes-here"),
-	// 	// instruct the browser to never send cookies during cross site requests
-	// 	csrf.SameSite(csrf.SameSiteStrictMode),
-	// )
-
 	metricsProm := metrics.RegisterMetrics(router)
 	middleware.NewLoggingMiddleware(metricsProm)
 

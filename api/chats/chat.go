@@ -41,9 +41,9 @@ type ChatRepository interface {
 	CheckUserBySession(sid string) string
 	SelectChatID(uid1, uid2 int) (int, error)
 	Match(uid1, uid2 int) bool
-	InsertSuperlike(uid1, uid2 int) error
-	DeleteLike(uid1, uid2 int) error
-	DeleteDislike(uid1, uid2 int) error
+	InsertSuperlike(uid1, uid2 int) error // Tested
+	DeleteLike(uid1, uid2 int) error      // Tested
+	DeleteDislike(uid1, uid2 int) error   // Tested
 	CheckLike(uid1, uid2 int) bool
 	CheckDislike(uid1, uid2 int) bool
 }

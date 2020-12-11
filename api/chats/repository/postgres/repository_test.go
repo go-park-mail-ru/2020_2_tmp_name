@@ -639,3 +639,192 @@ func TestPostgresLikeRepository_InsertDisLike(t *testing.T) {
 		require.NoError(t, err, "unfulfilled expectations: %s", err)
 	}
 }
+
+func TestPostgresLikeRepository_InsertSuperlike(t *testing.T) {
+	type insertSuperlikeTestCase struct {
+		uid1 int
+		uid2 int
+		err  error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"id",
+		"user_id1",
+		"user_id2",
+	}
+
+	query := `INSERT INTO superlikes(user_id1, user_id2) VALUES ($1, $2);`
+
+	var uid1, uid2 int
+
+	err = faker.FakeData(&uid1)
+	require.NoError(t, err)
+
+	err = faker.FakeData(&uid2)
+	require.NoError(t, err)
+
+	testCases := []insertSuperlikeTestCase{
+		{
+			uid1: uid1,
+			uid2: uid2,
+			err:  nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		args := []driver.Value{
+			testCase.uid1,
+			testCase.uid2,
+		}
+
+		rows := []driver.Value{
+			1,
+			testCase.uid1,
+			testCase.uid2,
+		}
+
+		sqlmock.NewRows(columns).AddRow(rows...)
+		mock.ExpectExec(query).WithArgs(args...).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		repo := NewPostgresChatRepository(sqlxDB.DB)
+
+		err = repo.InsertSuperlike(testCase.uid1, testCase.uid2)
+		require.Equal(t, testCase.err, err)
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresLikeRepository_DeleteLike(t *testing.T) {
+	type deleteLikeTestCase struct {
+		uid1 int
+		uid2 int
+		err  error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"id",
+		"user_id1",
+		"user_id2",
+	}
+
+	query := `DELETE FROM likes WHERE user_id1=$1 AND user_id2=$2;`
+
+	var uid1, uid2 int
+
+	err = faker.FakeData(&uid1)
+	require.NoError(t, err)
+
+	err = faker.FakeData(&uid2)
+	require.NoError(t, err)
+
+	testCases := []deleteLikeTestCase{
+		{
+			uid1: uid1,
+			uid2: uid2,
+			err:  nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		args := []driver.Value{
+			testCase.uid1,
+			testCase.uid2,
+		}
+
+		rows := []driver.Value{
+			1,
+			testCase.uid1,
+			testCase.uid2,
+		}
+
+		sqlmock.NewRows(columns).AddRow(rows...)
+		mock.ExpectExec(query).WithArgs(args...).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		repo := NewPostgresChatRepository(sqlxDB.DB)
+
+		err = repo.DeleteLike(testCase.uid1, testCase.uid2)
+		require.Equal(t, testCase.err, err)
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresLikeRepository_DeleteDislike(t *testing.T) {
+	type deleteDislikeTestCase struct {
+		uid1 int
+		uid2 int
+		err  error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"id",
+		"user_id1",
+		"user_id2",
+	}
+
+	query := `DELETE FROM dislikes WHERE user_id1=$1 AND user_id2=$2;`
+
+	var uid1, uid2 int
+
+	err = faker.FakeData(&uid1)
+	require.NoError(t, err)
+
+	err = faker.FakeData(&uid2)
+	require.NoError(t, err)
+
+	testCases := []deleteDislikeTestCase{
+		{
+			uid1: uid1,
+			uid2: uid2,
+			err:  nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		args := []driver.Value{
+			testCase.uid1,
+			testCase.uid2,
+		}
+
+		rows := []driver.Value{
+			1,
+			testCase.uid1,
+			testCase.uid2,
+		}
+
+		sqlmock.NewRows(columns).AddRow(rows...)
+		mock.ExpectExec(query).WithArgs(args...).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		repo := NewPostgresChatRepository(sqlxDB.DB)
+
+		err = repo.DeleteDislike(testCase.uid1, testCase.uid2)
+		require.Equal(t, testCase.err, err)
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}

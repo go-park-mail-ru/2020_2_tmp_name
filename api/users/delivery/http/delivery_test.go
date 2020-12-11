@@ -83,7 +83,6 @@ func TestUserHandler_SignupHandlerSuccess(t *testing.T) {
 		AboutMe:    "",
 	}
 	var byteData = []byte(`{
-		"id":         "0",
 		"name":       "Misha",
 		"telephone":  "909-277-47-21",
 		"password":   "1234",
@@ -130,7 +129,6 @@ func TestUserHandler_SignupHandlerFail(t *testing.T) {
 		AboutMe:    "",
 	}
 	var byteData = []byte(`{
-		"id":         "0",
 		"name":       "Misha",
 		"telephone":  "909-277-47-21",
 		"password":   "1234",
@@ -211,7 +209,6 @@ func TestUserHandler_SettingsHandlerSuccess(t *testing.T) {
 
 	uid := 0
 	var byteData = []byte(`{
-		"id":         "0",
 		"name":       "Misha",
 		"telephone":  "909-277-47-21",
 		"password":   "1234",
@@ -294,7 +291,6 @@ func TestUserHandler_SettingsHandlerFail(t *testing.T) {
 	}
 
 	var byteData = []byte(`{
-		"id":         "0",
 		"name":       "Misha",
 		"telephone":  "909-277-47-21",
 		"password":   "1234",
@@ -345,7 +341,6 @@ func TestUserHandler_SettingsHandlerFailUser(t *testing.T) {
 	user := models.User{}
 
 	var byteData = []byte(`{
-		"id":         "0",
 		"name":       "Misha",
 		"telephone":  "909-277-47-21",
 		"password":   "1234",
