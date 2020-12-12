@@ -215,9 +215,12 @@ func (p *postgresChatRepository) SelectUserByID(uid int) (models.User, error) {
 }
 
 func (p *postgresChatRepository) CheckUserBySession(sid string) string {
-	var count string
-	p.Conn.QueryRow(`SELECT value FROM sessions WHERE key=$1;`, sid).Scan(&count)
-	return count
+	var str string
+	err := p.Conn.QueryRow(`SELECT value FROM sessions WHERE key=$1;`, sid).Scan(&str)
+	if err != nil {
+		return ""
+	}
+	return str
 }
 
 func (p *postgresChatRepository) SelectSessions(uid int) ([]string, error) {
@@ -264,13 +267,19 @@ func (p *postgresChatRepository) InsertDislike(uid1, uid2 int) error {
 
 func (p *postgresChatRepository) CheckLike(uid1, uid2 int) bool {
 	var count int
-	p.Conn.QueryRow(`SELECT COUNT(id) FROM likes WHERE user_id=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	err := p.Conn.QueryRow(`SELECT COUNT(id) FROM likes WHERE user_id=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	if err != nil {
+		return false
+	}
 	return count > 0
 }
 
 func (p *postgresChatRepository) CheckDislike(uid1, uid2 int) bool {
 	var count int
-	p.Conn.QueryRow(`SELECT COUNT(id) FROM dislikes WHERE user_id1=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	err := p.Conn.QueryRow(`SELECT COUNT(id) FROM dislikes WHERE user_id1=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	if err != nil {
+		return false
+	}
 	return count > 0
 }
 
