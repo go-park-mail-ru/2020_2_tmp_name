@@ -304,13 +304,3 @@ func (p *postgresChatRepository) InsertSuperlike(uid1, uid2 int) error {
 	_, err := p.Conn.Exec(`INSERT INTO superlikes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
 	return err
 }
-
-func (p *postgresChatRepository) CheckSuperLikeMe(me, userId int) bool {
-	var count int
-	err := p.Conn.QueryRow(`SELECT COUNT(id) FROM superlikes WHERE user_id1=$1 AND user_id2 = $2;`, userId, me).Scan(&count)
-	if err != nil {
-		return false
-	}
-
-	return true
-}

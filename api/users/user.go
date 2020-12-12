@@ -31,4 +31,5 @@ type UserRepository interface {
 	CheckPremium(uid int) bool
 	SelectUsers(user models.User) ([]models.UserFeed, error)           // Tested
 	InsertPremium(uid int, dateFrom time.Time, dateTo time.Time) error // Tested
+	CheckSuperLikeMe(me, userId int) bool
 }
