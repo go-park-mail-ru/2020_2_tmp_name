@@ -38,7 +38,7 @@ func NewUserHandler(r *mux.Router, us domain.UserUsecase, ac authClient.AuthClie
 	r.HandleFunc("/api/v1/is_premium", middleware.SetCSRF(handler.IsPremiumHandler)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/telephone", middleware.CheckCSRF(handler.TelephoneHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/upload", middleware.CheckCSRF(handler.UploadAvatarHandler)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/get_premium", middleware.CheckCSRF(handler.GetPremiumHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/get_premium", handler.GetPremiumHandler).Methods(http.MethodPost)
 }
 
 func (u *UserHandlerType) HealthHandler(w http.ResponseWriter, r *http.Request) {
@@ -190,6 +190,7 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 func (u *UserHandlerType) IsPremiumHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := u.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
+		logrus.Error(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return

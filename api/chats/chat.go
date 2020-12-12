@@ -46,4 +46,5 @@ type ChatRepository interface {
 	Match(uid1, uid2 int) bool
 	CheckLike(uid1, uid2 int) bool
 	CheckDislike(uid1, uid2 int) bool
+	CheckSuperLikeMe(me, userId int) bool
 }

@@ -3,6 +3,7 @@ package usecase
 import (
 	domain "park_2020/2020_2_tmp_name/api/users"
 	"park_2020/2020_2_tmp_name/models"
+	chatsRepo "park_2020/2020_2_tmp_name/api/chats/repository/postgres"
 	"time"
 )
 
@@ -47,6 +48,13 @@ func (u *userUsecase) Feed(user models.User) ([]models.UserFeed, error) {
 	if err != nil {
 		return data, models.ErrNotFound
 	}
+
+	for _, userFeed := range data {
+		if ok := chatsRepo.CheckSuperLikeMe(user.ID, userFeed.ID); ok {
+			
+		}
+	}
+
 	return data, nil
 }
 
