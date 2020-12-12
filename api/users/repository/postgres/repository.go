@@ -17,12 +17,11 @@ func NewPostgresUserRepository(Conn *sql.DB) domain.UserRepository {
 
 func (p *postgresUserRepository) CheckUser(telephone string) bool {
 	var count int
-	
 	err := p.Conn.QueryRow(`SELECT COUNT(telephone) FROM users WHERE telephone=$1;`, telephone).Scan(&count)
 	if err != nil {
 		return false
 	}
-
+	
 	return count > 0
 }
 
@@ -106,12 +105,10 @@ func (p *postgresUserRepository) Match(uid1, uid2 int) bool {
 
 func (p *postgresUserRepository) CheckPremium(uid int) bool {
 	var count int
-
 	err := p.Conn.QueryRow(`SELECT COUNT(user_id) FROM premium_accounts WHERE user_id=$1;`, uid).Scan(&count)
 	if err != nil {
 		return false
 	}
-
 	return count > 0
 }
 
