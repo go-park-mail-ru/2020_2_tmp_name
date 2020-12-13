@@ -170,19 +170,6 @@ func (_mr *MockChatUsecaseMockRecorder) Superlike(arg0, arg1 interface{}) *gomoc
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "Superlike", reflect.TypeOf((*MockChatUsecase)(nil).Superlike), arg0, arg1)
 }
 
-// User mocks base method
-func (_m *MockChatUsecase) User(_param0 string) (models.User, error) {
-	ret := _m.ctrl.Call(_m, "User", _param0)
-	ret0, _ := ret[0].(models.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// User indicates an expected call of User
-func (_mr *MockChatUsecaseMockRecorder) User(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "User", reflect.TypeOf((*MockChatUsecase)(nil).User), arg0)
-}
-
 // UserFeed mocks base method
 func (_m *MockChatUsecase) UserFeed(_param0 string) (models.UserFeed, error) {
 	ret := _m.ctrl.Call(_m, "UserFeed", _param0)

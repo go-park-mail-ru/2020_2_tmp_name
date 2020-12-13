@@ -32,18 +32,6 @@ func (_m *MockCommentRepository) EXPECT() *MockCommentRepositoryMockRecorder {
 	return _m.recorder
 }
 
-// CheckUserBySession mocks base method
-func (_m *MockCommentRepository) CheckUserBySession(_param0 string) string {
-	ret := _m.ctrl.Call(_m, "CheckUserBySession", _param0)
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// CheckUserBySession indicates an expected call of CheckUserBySession
-func (_mr *MockCommentRepositoryMockRecorder) CheckUserBySession(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "CheckUserBySession", reflect.TypeOf((*MockCommentRepository)(nil).CheckUserBySession), arg0)
-}
-
 // InsertComment mocks base method
 func (_m *MockCommentRepository) InsertComment(_param0 models.Comment, _param1 int) error {
 	ret := _m.ctrl.Call(_m, "InsertComment", _param0, _param1)
@@ -80,19 +68,6 @@ func (_m *MockCommentRepository) SelectImages(_param0 int) ([]string, error) {
 // SelectImages indicates an expected call of SelectImages
 func (_mr *MockCommentRepositoryMockRecorder) SelectImages(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "SelectImages", reflect.TypeOf((*MockCommentRepository)(nil).SelectImages), arg0)
-}
-
-// SelectUser mocks base method
-func (_m *MockCommentRepository) SelectUser(_param0 string) (models.User, error) {
-	ret := _m.ctrl.Call(_m, "SelectUser", _param0)
-	ret0, _ := ret[0].(models.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SelectUser indicates an expected call of SelectUser
-func (_mr *MockCommentRepositoryMockRecorder) SelectUser(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "SelectUser", reflect.TypeOf((*MockCommentRepository)(nil).SelectUser), arg0)
 }
 
 // SelectUserFeed mocks base method

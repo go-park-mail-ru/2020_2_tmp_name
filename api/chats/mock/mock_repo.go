@@ -267,19 +267,6 @@ func (_mr *MockChatRepositoryMockRecorder) SelectSessions(arg0 interface{}) *gom
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "SelectSessions", reflect.TypeOf((*MockChatRepository)(nil).SelectSessions), arg0)
 }
 
-// SelectUser mocks base method
-func (_m *MockChatRepository) SelectUser(_param0 string) (models.User, error) {
-	ret := _m.ctrl.Call(_m, "SelectUser", _param0)
-	ret0, _ := ret[0].(models.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SelectUser indicates an expected call of SelectUser
-func (_mr *MockChatRepositoryMockRecorder) SelectUser(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "SelectUser", reflect.TypeOf((*MockChatRepository)(nil).SelectUser), arg0)
-}
-
 // SelectUserByChat mocks base method
 func (_m *MockChatRepository) SelectUserByChat(_param0 int, _param1 int) (models.UserFeed, error) {
 	ret := _m.ctrl.Call(_m, "SelectUserByChat", _param0, _param1)
