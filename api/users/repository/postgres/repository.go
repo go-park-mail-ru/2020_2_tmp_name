@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	domain "park_2020/2020_2_tmp_name/api/users"
+	"fmt"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
 )
@@ -219,7 +220,13 @@ func (p *postgresUserRepository) InsertPremium(uid int, dateFrom time.Time, date
 
 func (p *postgresUserRepository) CheckSuperLikeMe(me, userId int) bool {
 	var count int
-	err := p.Conn.QueryRow(`SELECT COUNT(id) FROM superlikes WHERE user_id1=$1 AND user_id2 = $2;`, userId, me).Scan(&count)
+	err := p.Conn.QueryRow(`SELECT COUNT(*) FROM superlikes WHERE user_id2 = $1;`, me).Scan(&count)
+	if err != nil {
+		return false
+	}
 
-	return err == nil
+	fmt.Println("--------------------------------------------------------__*******************")
+	fmt.Println(count)
+
+	return count > 0
 }
