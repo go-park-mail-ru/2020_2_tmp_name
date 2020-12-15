@@ -3,8 +3,9 @@ package models
 import "time"
 
 type LoginData struct {
-	Telephone string `json:"telephone"`
-	Password  string `json:"password"`
+	Telephone  string `json:"telephone"`
+	Password   string `json:"password"`
+	IsLoggedIn bool   `json:"is_logged_in"`
 }
 
 type HasTelephone struct {
