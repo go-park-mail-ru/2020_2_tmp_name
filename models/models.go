@@ -63,12 +63,14 @@ type Chat struct {
 	Uid1    int    `json:"user_id1"`
 	Uid2    int    `json:"user_id2"`
 	LastMsg string `json:"last_msg"`
+	Target  string `json:"filter"`
 }
 
 type ChatData struct {
 	ID       int      `json:"id"`
 	Partner  UserFeed `json:"partner"`
 	Messages []Msg    `json:"messages"`
+	Target   string   `json:"filter"`
 }
 
 type Msg struct {
@@ -110,4 +112,9 @@ type Superlike struct {
 	ID   int `json:"-"`
 	Uid1 int `json:"-"`
 	Uid2 int `json:"user_id2"`
+}
+
+type Filter struct {
+	ID     int    `json:"-"`
+	Target string `json:"filter"`
 }

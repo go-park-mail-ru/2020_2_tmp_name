@@ -57,7 +57,8 @@ func (p *postgresChatRepository) CheckChat(chat models.Chat) bool {
 }
 
 func (p *postgresChatRepository) InsertChat(chat models.Chat) error {
-	_, err := p.Conn.Exec(`INSERT INTO chat(user_id1, user_id2) VALUES ($1, $2);`, chat.Uid1, chat.Uid2)
+	_, err := p.Conn.Exec(`INSERT INTO chat(user_id1, user_id2, filter_id) VALUES ($1, $2, $3);`,
+		chat.Uid1, chat.Uid2, models.TargetToID(chat.Target))
 	return err
 }
 
@@ -99,7 +100,7 @@ func (p *postgresChatRepository) SelectMessages(chid int) ([]models.Msg, error) 
 
 func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, error) {
 	var chats []models.ChatData
-	rows, err := p.Conn.Query(`SELECT id, user_id1 FROM chat WHERE user_id2=$1;`, uid)
+	rows, err := p.Conn.Query(`SELECT id, user_id1, filter_id FROM chat WHERE user_id2=$1;`, uid)
 	if err != nil {
 		return chats, err
 	}
@@ -107,11 +108,12 @@ func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 
 	for rows.Next() {
 		var chat models.ChatData
-		var uid1 int
-		err := rows.Scan(&chat.ID, &uid1)
+		var uid1, fid int
+		err := rows.Scan(&chat.ID, &uid1, &fid)
 		if err != nil {
 			continue
 		}
+		chat.Target = models.IDToTarget(fid)
 		chat.Partner, err = p.SelectUserFeedByID(uid1)
 		if err != nil {
 			return chats, err
@@ -124,19 +126,19 @@ func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 		chats = append(chats, chat)
 	}
 
-	rows, err = p.Conn.Query(`SELECT id, user_id2 FROM chat WHERE user_id1=$1;`, uid)
+	rows, err = p.Conn.Query(`SELECT id, user_id2, filter_id FROM chat WHERE user_id1=$1;`, uid)
 	if err != nil {
 		return chats, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var chat models.ChatData
-		var uid2 int
-		err := rows.Scan(&chat.ID, &uid2)
+		var uid2, fid int
+		err := rows.Scan(&chat.ID, &uid2, &fid)
 		if err != nil {
 			continue
 		}
-
+		chat.Target = models.IDToTarget(fid)
 		chat.Partner, err = p.SelectUserFeedByID(uid2)
 		if err != nil {
 			return chats, err
@@ -163,6 +165,7 @@ func (p *postgresChatRepository) SelectChatByID(uid, chid int) (models.ChatData,
 	}
 
 	chat.Messages, err = p.SelectMessages(chid)
+	chat.Target = models.IDToTarget(uid)
 	return chat, err
 }
 
@@ -247,21 +250,21 @@ func (p *postgresChatRepository) SelectSessions(uid int) ([]string, error) {
 	return sessions, nil
 }
 
-func (p *postgresChatRepository) Match(uid1, uid2 int) bool {
+func (p *postgresChatRepository) Match(uid1, uid2, fid int) bool {
 	var id1, id2 int
 	row := p.Conn.QueryRow(`Select user_id1, user_id2 FROM likes 
-							WHERE user_id1 = $1 AND user_id2 = $2;`, uid2, uid1)
+							WHERE user_id1 = $1 AND user_id2 = $2 AND filter_id = $3;`, uid2, uid1, fid)
 	err := row.Scan(&id1, &id2)
 	return err == nil
 }
 
-func (p *postgresChatRepository) InsertLike(uid1, uid2 int) error {
-	_, err := p.Conn.Exec(`INSERT INTO likes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
+func (p *postgresChatRepository) InsertLike(uid1, uid2, fid int) error {
+	_, err := p.Conn.Exec(`INSERT INTO likes(user_id1, user_id2, filter_id) VALUES ($1, $2, $3);`, uid1, uid2, fid)
 	return err
 }
 
-func (p *postgresChatRepository) InsertDislike(uid1, uid2 int) error {
-	_, err := p.Conn.Exec(`INSERT INTO dislikes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
+func (p *postgresChatRepository) InsertDislike(uid1, uid2, fid int) error {
+	_, err := p.Conn.Exec(`INSERT INTO dislikes(user_id1, user_id2, filter_id) VALUES ($1, $2, $3);`, uid1, uid2, fid)
 	return err
 }
 
@@ -300,7 +303,7 @@ func (p *postgresChatRepository) SelectChatID(uid1, uid2 int) (int, error) {
 	return chid, err
 }
 
-func (p *postgresChatRepository) InsertSuperlike(uid1, uid2 int) error {
-	_, err := p.Conn.Exec(`INSERT INTO superlikes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
+func (p *postgresChatRepository) InsertSuperlike(uid1, uid2, fid int) error {
+	_, err := p.Conn.Exec(`INSERT INTO superlikes(user_id1, user_id2, filter_id) VALUES ($1, $2, $3);`, uid1, uid2, fid)
 	return err
 }

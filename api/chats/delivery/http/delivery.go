@@ -282,7 +282,6 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, client := range clientsPartner {
-
 			client.Send <- bodyMe
 		}
 	}
