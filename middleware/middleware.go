@@ -9,6 +9,8 @@ import (
 
 	metrics "park_2020/2020_2_tmp_name/prometheus"
 
+	uuid "github.com/nu7hatch/gouuid"
+
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -58,11 +60,47 @@ func NewLoggingMiddleware(metrics *metrics.PromMetrics) mux.MiddlewareFunc {
 			next.ServeHTTP(w, r)
 			respTime := time.Since(reqTime)
 			if r.URL.Path != "/metrics" {
-				//If status is 500 => response will be in panic middleware
 				metrics.Hits.WithLabelValues(strconv.Itoa(http.StatusOK), r.URL.String(), r.Method).Inc()
 				metrics.Timings.WithLabelValues(
 					strconv.Itoa(http.StatusOK), r.URL.String(), r.Method).Observe(respTime.Seconds())
 			}
 		})
 	}
+}
+
+func generateCsrfLogic(w http.ResponseWriter) {
+	csrf, err := uuid.NewV4()
+	if err != nil {
+
+		return
+	}
+	timeDelta := time.Now().Add(time.Hour * 24 * 30)
+	cookie := &http.Cookie{Name: "csrf", Value: csrf.String(), Path: "/", HttpOnly: true, Expires: timeDelta}
+
+	http.SetCookie(w, cookie)
+	w.Header().Set("csrf", csrf.String())
+
+}
+
+func SetCSRF(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			generateCsrfLogic(w)
+			next.ServeHTTP(w, r)
+		})
+}
+
+func CheckCSRF(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			csrf := r.Header.Get("X-Csrf-Token")
+			csrfCookie, err := r.Cookie("csrf")
+
+			if err != nil || csrf == "" || csrfCookie.Value == "" || csrfCookie.Value != csrf {
+				return
+			}
+			generateCsrfLogic(w)
+			next.ServeHTTP(w, r)
+		})
+
 }

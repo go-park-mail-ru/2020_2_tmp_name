@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"fmt"
 	domain "park_2020/2020_2_tmp_name/api/users"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
@@ -17,7 +18,11 @@ func NewPostgresUserRepository(Conn *sql.DB) domain.UserRepository {
 
 func (p *postgresUserRepository) CheckUser(telephone string) bool {
 	var count int
-	p.Conn.QueryRow(`SELECT COUNT(telephone) FROM users WHERE telephone=$1;`, telephone).Scan(&count)
+	err := p.Conn.QueryRow(`SELECT COUNT(telephone) FROM users WHERE telephone=$1;`, telephone).Scan(&count)
+	if err != nil {
+		return false
+	}
+
 	return count > 0
 }
 
@@ -101,13 +106,25 @@ func (p *postgresUserRepository) Match(uid1, uid2 int) bool {
 
 func (p *postgresUserRepository) CheckPremium(uid int) bool {
 	var count int
-	p.Conn.QueryRow(`SELECT COUNT(user_id) FROM premium_accounts WHERE user_id=$1;`, uid).Scan(&count)
+	err := p.Conn.QueryRow(`SELECT COUNT(user_id) FROM premium_accounts WHERE user_id=$1;`, uid).Scan(&count)
+	if err != nil {
+		return false
+	}
 	return count > 0
 }
 
 func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFeed, error) {
 	var users []models.UserFeed
-	rows, err := p.Conn.Query(`SELECT id, name, date_birth, education, job,  about_me FROM users WHERE sex != $1`, user.Sex)
+	// rows, err := p.Conn.Query(`SELECT id, name, date_birth, education, job,  about_me FROM users WHERE sex != $1`, user.Sex)
+	rows, err := p.Conn.Query(`SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users as u
+								where u.sex != $1
+								except (
+								SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users as u
+								join likes as l on u.id=l.user_id2 where u.sex != $1 and l.user_id1=$2
+								union
+								SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users as u
+								join dislikes as d on u.id=d.user_id2 where u.sex != $1 and d.user_id1=$2
+								);`, user.Sex, user.ID)
 	if err != nil {
 		return users, err
 	}
@@ -208,4 +225,17 @@ func (p *postgresUserRepository) InsertPremium(uid int, dateFrom time.Time, date
 								 VALUES ($1, $2, $3);`, uid, dateTo, dateFrom)
 
 	return err
+}
+
+func (p *postgresUserRepository) CheckSuperLikeMe(me, userId int) bool {
+	var count int
+	err := p.Conn.QueryRow(`SELECT COUNT(*) FROM superlikes WHERE user_id2 = $1;`, me).Scan(&count)
+	if err != nil {
+		return false
+	}
+
+	fmt.Println("--------------------------------------------------------__*******************")
+	fmt.Println(count)
+
+	return count > 0
 }

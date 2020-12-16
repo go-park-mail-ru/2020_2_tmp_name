@@ -8,6 +8,7 @@ import (
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/photos"
 	_authClientGRPC "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
+	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/google/uuid"
@@ -30,8 +31,8 @@ func NewPhotoHandler(r *mux.Router, ps domain.PhotoUsecase, ac _authClientGRPC.A
 	http.Handle("/", r)
 	r.PathPrefix(path).Handler(http.StripPrefix(path, http.FileServer(http.Dir("."+path))))
 
-	r.HandleFunc("/api/v1/add_photo", handler.AddPhotoHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/remove_photo", handler.RemovePhotoHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/add_photo", middleware.CheckCSRF(handler.AddPhotoHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/remove_photo", middleware.CheckCSRF(handler.RemovePhotoHandler)).Methods(http.MethodPost)
 }
 
 func JSONError(message string) []byte {

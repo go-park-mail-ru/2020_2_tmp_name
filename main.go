@@ -105,7 +105,7 @@ func (app *application) initServer() {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 	AccessLogOut.LogrusLogger = contextLogger
 
-	// router.Use(AccessLogOut.AccessLogMiddleware(router))
+	router.Use(AccessLogOut.AccessLogMiddleware(router))
 
 	ar := _authRepo.NewPostgresAuthRepository(dbConn)
 	grpcConnAuth, err := grpc.Dial("0.0.0.0:8081", grpc.WithInsecure())

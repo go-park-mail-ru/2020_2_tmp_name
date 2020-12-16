@@ -16,7 +16,10 @@ func NewPostgresAuthRepository(Conn *sql.DB) domain.AuthRepository {
 
 func (p *postgresAuthRepository) CheckUser(telephone string) bool {
 	var count int
-	p.Conn.QueryRow(`SELECT COUNT(telephone) FROM users WHERE telephone=$1;`, telephone).Scan(&count)
+	err := p.Conn.QueryRow(`SELECT COUNT(telephone) FROM users WHERE telephone=$1;`, telephone).Scan(&count)
+	if err != nil {
+		return false
+	}
 	return count > 0
 }
 
@@ -44,9 +47,12 @@ func (p *postgresAuthRepository) DeleteSession(sid string) error {
 }
 
 func (p *postgresAuthRepository) CheckUserBySession(sid string) string {
-	var count string
-	p.Conn.QueryRow(`SELECT value FROM sessions WHERE key=$1;`, sid).Scan(&count)
-	return count
+	var str string
+	err := p.Conn.QueryRow(`SELECT value FROM sessions WHERE key=$1;`, sid).Scan(&str)
+	if err != nil {
+		return ""
+	}
+	return str
 }
 
 func (p *postgresAuthRepository) SelectUserBySession(sid string) (string, error) {

@@ -8,7 +8,6 @@ import (
 	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 
 	_ "github.com/lib/pq"
 
@@ -55,28 +54,12 @@ func DBConnection(conf *models.Config) *sql.DB {
 }
 
 func main() {
+	dbConn := DBConnection(&conf)
 
 	router := mux.NewRouter()
 
 	metricsProm := metrics.RegisterMetrics(router)
 	middleware.NewLoggingMiddleware(metricsProm)
-
-	dbConn := DBConnection(&conf)
-	logrus.SetFormatter(&logrus.TextFormatter{DisableColors: true})
-	logrus.WithFields(logrus.Fields{
-		"logger": "LOGRUS",
-		"host":   "95.163.213.222",
-		"port":   ":8082",
-	}).Info("Starting server")
-
-	AccessLogOut := new(middleware.AccessLogger)
-
-	contextLogger := logrus.WithFields(logrus.Fields{
-		"mode":   "[access_log]",
-		"logger": "LOGRUS",
-	})
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-	AccessLogOut.LogrusLogger = contextLogger
 
 	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
 	cu := _commentUcase.NewCommentUsecase(cr)

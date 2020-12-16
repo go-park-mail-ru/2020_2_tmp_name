@@ -47,6 +47,11 @@ func (u *userUsecase) Feed(user models.User) ([]models.UserFeed, error) {
 	if err != nil {
 		return data, models.ErrNotFound
 	}
+
+	for idxUserFeed, userFeed := range data {
+		data[idxUserFeed].IsSuperlike = u.userRepo.CheckSuperLikeMe(user.ID, userFeed.ID)
+	}
+
 	return data, nil
 }
 

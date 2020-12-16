@@ -46,6 +46,12 @@ func (a *AuthHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !loginData.IsLoggedIn {
+		logrus.Error("have not firebase cookie")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	sidString, err := a.AuthClient.Login(context.Background(), &loginData)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))

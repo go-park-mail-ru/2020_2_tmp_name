@@ -8,6 +8,7 @@ import (
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/users"
 	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
+	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
@@ -29,14 +30,14 @@ func NewUserHandler(r *mux.Router, us domain.UserUsecase, ac authClient.AuthClie
 	}
 
 	r.HandleFunc("/health", handler.HealthHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/signup", handler.SignupHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/settings", handler.SettingsHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/me", handler.MeHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/feed", handler.FeedHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/user/{user_id}", handler.UserIDHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/is_premium", handler.IsPremiumHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/telephone", handler.TelephoneHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/upload", handler.UploadAvatarHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/signup", middleware.CheckCSRF(handler.SignupHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/settings", middleware.CheckCSRF(handler.SettingsHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/me", middleware.SetCSRF(handler.MeHandler)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/feed", middleware.SetCSRF(handler.FeedHandler)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/user/{user_id}", middleware.SetCSRF(handler.UserIDHandler)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/is_premium", middleware.SetCSRF(handler.IsPremiumHandler)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/telephone", middleware.CheckCSRF(handler.TelephoneHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/upload", middleware.CheckCSRF(handler.UploadAvatarHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/get_premium", handler.GetPremiumHandler).Methods(http.MethodPost)
 }
 
@@ -189,6 +190,7 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 func (u *UserHandlerType) IsPremiumHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := u.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
+		logrus.Error(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -297,13 +299,20 @@ func (u *UserHandlerType) TelephoneHandler(w http.ResponseWriter, r *http.Reques
 
 	hasUser := u.UUsecase.Telephone(phoneData.Telephone)
 
-	body, err := json.Marshal(hasUser)
+
+	result := models.HasTelephone{
+		Telephone: hasUser,
+	}
+
+	body, err := json.Marshal(result)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
 	}
+
+	logrus.Println(body)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
