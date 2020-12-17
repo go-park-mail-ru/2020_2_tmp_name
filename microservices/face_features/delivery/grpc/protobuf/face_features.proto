@@ -1,0 +1,17 @@
+syntax = "proto3";
+option go_package = ".;face_features";
+
+package face_features;
+
+message Photo{
+  string path = 1;
+}
+
+message Face{
+  bool have = 1;
+}
+
+service FaceGRPCHandler{
+  rpc HaveFace(Photo) returns (Face);
+  rpc AddMask(Photo) returns (Photo);
+}
