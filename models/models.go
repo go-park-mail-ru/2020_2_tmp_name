@@ -16,6 +16,7 @@ type Photo struct {
 	ID        int    `json:"-"`
 	Path      string `json:"linkImages"`
 	Telephone string `json:"telephone"`
+	Mask      string `json:"mask"`
 }
 
 type Comment struct {
