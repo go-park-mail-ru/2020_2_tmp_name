@@ -35,6 +35,7 @@ func transformIntoUserComment(user models.User, comment models.Comment) *proto.U
 		Job:        user.Job,
 		Education:  user.Education,
 		AboutMe:    user.AboutMe,
+		Target:     user.Target,
 	}
 
 	commentProto := &proto.Comment{
@@ -69,6 +70,7 @@ func transformFromCommentsData(data *proto.CommentsData) models.CommentsData {
 			Education:   comment.User.Education,
 			AboutMe:     comment.User.AboutMe,
 			IsSuperlike: comment.User.IsSuperLike,
+			Target:      comment.User.Target,
 		}
 
 		commentId := models.CommentById{
