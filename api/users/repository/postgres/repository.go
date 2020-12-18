@@ -110,7 +110,10 @@ func (p *postgresUserRepository) CheckPremium(uid int) bool {
 
 func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFeed, error) {
 	var users []models.UserFeed
-	rows, err := p.Conn.Query(`SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users AS u
+	var rows *sql.Rows
+	var err error
+	if user.Target == "love" {
+		rows, err = p.Conn.Query(`SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users AS u
 								WHERE u.sex != $1 AND u.filter_id=$3
 								EXCEPT (
 								SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users AS u
@@ -119,6 +122,17 @@ func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFee
 								SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users AS u
 								JOIN dislikes AS d ON u.id=d.user_id2 WHERE u.sex != $1 AND d.user_id1=$2 AND u.filter_id=$3
 								);`, user.Sex, user.ID, models.TargetToID(user.Target))
+	} else {
+		rows, err = p.Conn.Query(`SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users AS u
+								WHERE u.filter_id=$2
+								EXCEPT (
+								SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users AS u
+								JOIN likes AS l ON u.id=l.user_id2 WHERE l.user_id1=$1 AND u.filter_id=$2
+								UNION
+								SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users AS u
+								JOIN dislikes AS d ON u.id=d.user_id2 WHERE d.user_id1=$1 AND u.filter_id=$2
+								);`, user.ID, models.TargetToID(user.Target))
+	}
 	if err != nil {
 		return users, err
 	}
