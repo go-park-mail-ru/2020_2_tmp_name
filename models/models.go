@@ -47,15 +47,17 @@ type CommentById struct {
 }
 
 type Like struct {
-	ID   int `json:"-"`
-	Uid1 int `json:"-"`
-	Uid2 int `json:"user_id2"`
+	ID     int    `json:"-"`
+	Uid1   int    `json:"-"`
+	Uid2   int    `json:"user_id2"`
+	Target string `json:"filter"`
 }
 
 type Dislike struct {
-	ID   int `json:"-"`
-	Uid1 int `json:"-"`
-	Uid2 int `json:"user_id2"`
+	ID     int    `json:"-"`
+	Uid1   int    `json:"-"`
+	Uid2   int    `json:"user_id2"`
+	Target string `json:"filter"`
 }
 
 type Chat struct {
@@ -109,9 +111,10 @@ type Error struct {
 }
 
 type Superlike struct {
-	ID   int `json:"-"`
-	Uid1 int `json:"-"`
-	Uid2 int `json:"user_id2"`
+	ID     int    `json:"-"`
+	Uid1   int    `json:"-"`
+	Uid2   int    `json:"user_id2"`
+	Target string `json:"filter"`
 }
 
 type Filter struct {
