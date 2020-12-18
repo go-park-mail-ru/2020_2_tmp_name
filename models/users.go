@@ -14,7 +14,7 @@ type User struct {
 	Job        string   `json:"job"`
 	Education  string   `json:"education"`
 	AboutMe    string   `json:"aboutMe"`
-	FilterID   int      `json:"-"`
+	Target     string   `json:"filter"`
 }
 
 type UserFeed struct {
@@ -26,7 +26,7 @@ type UserFeed struct {
 	Education   string   `json:"education"`
 	AboutMe     string   `json:"aboutMe"`
 	IsSuperlike bool     `json:"is_superlike"`
-	FilterID    int      `json:"-"`
+	Target      string   `json:"filter"`
 }
 
 type Feed struct {

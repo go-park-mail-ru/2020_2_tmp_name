@@ -25,14 +25,16 @@ func (p *postgresAuthRepository) CheckUser(telephone string) bool {
 
 func (p *postgresAuthRepository) SelectUser(telephone string) (models.User, error) {
 	var u models.User
-	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
+	var tid int
+	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me, filter_id FROM users
 						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe)
+	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe, &tid)
 	if err != nil {
 		return u, err
 	}
 
 	u.LinkImages, err = p.SelectImages(u.ID)
+	u.Target = models.IDToTarget(tid)
 	return u, err
 }
 

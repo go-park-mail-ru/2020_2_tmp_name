@@ -99,7 +99,7 @@ func (ch *chatUsecase) Like(user models.User, like models.Like) error {
 		}
 	}
 
-	err := ch.chatRepo.InsertLike(user.ID, like.Uid2, user.FilterID)
+	err := ch.chatRepo.InsertLike(user.ID, like.Uid2, models.TargetToID(user.Target))
 	if err != nil {
 		return models.ErrInternalServerError
 	}
@@ -108,7 +108,7 @@ func (ch *chatUsecase) Like(user models.User, like models.Like) error {
 
 func (ch *chatUsecase) MatchUser(user models.User, like models.Like) (models.Chat, bool, error) {
 	var chat models.Chat
-	if ch.chatRepo.Match(user.ID, like.Uid2, user.FilterID) {
+	if ch.chatRepo.Match(user.ID, like.Uid2, models.TargetToID(user.Target)) {
 		chat.Uid1 = user.ID
 		chat.Uid2 = like.Uid2
 		if !ch.chatRepo.CheckChat(chat) {
@@ -139,7 +139,7 @@ func (ch *chatUsecase) Dislike(user models.User, dislike models.Dislike) error {
 		}
 	}
 
-	err := ch.chatRepo.InsertDislike(user.ID, dislike.Uid2, user.FilterID)
+	err := ch.chatRepo.InsertDislike(user.ID, dislike.Uid2, models.TargetToID(user.Target))
 	if err != nil {
 		return models.ErrInternalServerError
 	}
@@ -154,13 +154,13 @@ func (ch *chatUsecase) Superlike(user models.User, superlike models.Superlike) e
 		}
 	}
 
-	err := ch.chatRepo.InsertSuperlike(user.ID, superlike.Uid2, user.FilterID)
+	err := ch.chatRepo.InsertSuperlike(user.ID, superlike.Uid2, models.TargetToID(user.Target))
 	if err != nil {
 		return models.ErrInternalServerError
 	}
 
 	if !ch.chatRepo.CheckLike(user.ID, superlike.Uid2) {
-		err := ch.chatRepo.InsertLike(user.ID, superlike.Uid2, user.FilterID)
+		err := ch.chatRepo.InsertLike(user.ID, superlike.Uid2, models.TargetToID(user.Target))
 		if err != nil {
 			return models.ErrInternalServerError
 		}

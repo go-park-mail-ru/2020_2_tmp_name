@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"database/sql"
-	"fmt"
 	domain "park_2020/2020_2_tmp_name/api/users"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
@@ -37,8 +36,8 @@ func (p *postgresUserRepository) InsertUser(user models.User) error {
 		return err
 	}
 
-	_, err = p.Conn.Exec(`INSERT INTO users(name, telephone, password, date_birth, sex, job, education, about_me)
-						VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`,
+	_, err = p.Conn.Exec(`INSERT INTO users(name, telephone, password, date_birth, sex, job, education, about_me, filter_id)
+						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
 		user.Name,
 		user.Telephone,
 		password,
@@ -47,6 +46,7 @@ func (p *postgresUserRepository) InsertUser(user models.User) error {
 		user.Job,
 		user.Education,
 		user.AboutMe,
+		models.TargetToID(user.Target),
 	)
 	if err != nil {
 		return err
@@ -71,37 +71,32 @@ func (p *postgresUserRepository) InsertUser(user models.User) error {
 
 func (p *postgresUserRepository) SelectUserByID(uid int) (models.User, error) {
 	var u models.User
-	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
+	var tid int
+	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me, target_id FROM users
 						WHERE  id=$1;`, uid)
-	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe)
+	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe, &tid)
 	if err != nil {
 		return u, err
 	}
 
 	u.LinkImages, err = p.SelectImages(u.ID)
+	u.Target = models.IDToTarget(tid)
 	return u, err
 }
 
 func (p *postgresUserRepository) SelectUserFeedByID(uid int) (models.UserFeed, error) {
 	var u models.UserFeed
-	row := p.Conn.QueryRow(`SELECT name, date_birth, job, education, about_me FROM users
+	var tid int
+	row := p.Conn.QueryRow(`SELECT name, date_birth, job, education, about_me, target_id FROM users
 						WHERE  id=$1;`, uid)
-	err := row.Scan(&u.Name, &u.DateBirth, &u.Job, &u.Education, &u.AboutMe)
+	err := row.Scan(&u.Name, &u.DateBirth, &u.Job, &u.Education, &u.AboutMe, &tid)
 	if err != nil {
 		return u, err
 	}
 	u.ID = uid
-
+	u.Target = models.IDToTarget(tid)
 	u.LinkImages, err = p.SelectImages(u.ID)
 	return u, err
-}
-
-func (p *postgresUserRepository) Match(uid1, uid2 int) bool {
-	var id1, id2 int
-	row := p.Conn.QueryRow(`Select user_id1, user_id2 FROM likes 
-							WHERE user_id1 = $1 AND user_id2 = $2;`, uid2, uid1)
-	err := row.Scan(&id1, &id2)
-	return err == nil
 }
 
 func (p *postgresUserRepository) CheckPremium(uid int) bool {
@@ -115,16 +110,15 @@ func (p *postgresUserRepository) CheckPremium(uid int) bool {
 
 func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFeed, error) {
 	var users []models.UserFeed
-	// rows, err := p.Conn.Query(`SELECT id, name, date_birth, education, job,  about_me FROM users WHERE sex != $1`, user.Sex)
-	rows, err := p.Conn.Query(`SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users as u
-								where u.sex != $1
-								except (
-								SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users as u
-								join likes as l on u.id=l.user_id2 where u.sex != $1 and l.user_id1=$2
-								union
-								SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users as u
-								join dislikes as d on u.id=d.user_id2 where u.sex != $1 and d.user_id1=$2
-								);`, user.Sex, user.ID)
+	rows, err := p.Conn.Query(`SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users AS u
+								WHERE u.sex != $1 AND u.filter_id=$3
+								EXCEPT (
+								SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users AS u
+								JOIN likes AS l ON u.id=l.user_id2 WHERE u.sex != $1 AND l.user_id1=$2 AND u.filter_id=$3
+								UNION
+								SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me FROM users AS u
+								JOIN dislikes AS d ON u.id=d.user_id2 WHERE u.sex != $1 AND d.user_id1=$2 AND u.filter_id=$3
+								);`, user.Sex, user.ID, models.TargetToID(user.Target))
 	if err != nil {
 		return users, err
 	}
@@ -132,12 +126,14 @@ func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFee
 
 	for rows.Next() {
 		var u models.UserFeed
-		err := rows.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe)
+		var tid int
+		err := rows.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe, &tid)
 		if err != nil {
 			continue
 		}
 
 		u.LinkImages, err = p.SelectImages(u.ID)
+		u.Target = models.IDToTarget(tid)
 		if err != nil {
 			return users, err
 		}
@@ -233,9 +229,6 @@ func (p *postgresUserRepository) CheckSuperLikeMe(me, userId int) bool {
 	if err != nil {
 		return false
 	}
-
-	fmt.Println("--------------------------------------------------------__*******************")
-	fmt.Println(count)
 
 	return count > 0
 }
