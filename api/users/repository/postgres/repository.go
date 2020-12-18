@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"fmt"
 	domain "park_2020/2020_2_tmp_name/api/users"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
@@ -112,9 +113,10 @@ func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFee
 	var users []models.UserFeed
 	var rows *sql.Rows
 	var err error
+	fmt.Println(user.Sex, user.ID, models.TargetToID(user.Target))
 	if user.Target == "love" {
 		rows, err = p.Conn.Query(`SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me, u.filter_id FROM users AS u
-								WHERE u.sex != $1 AND u.filter_id=$3
+								WHERE u.sex != $1 AND u.filter_id=$3 AND u.id != $2
 								EXCEPT (
 								SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me, u.filter_id FROM users AS u
 								JOIN likes AS l ON u.id=l.user_id2 WHERE u.sex != $1 AND l.user_id1=$2 AND u.filter_id=$3
@@ -124,7 +126,7 @@ func (p *postgresUserRepository) SelectUsers(user models.User) ([]models.UserFee
 								);`, user.Sex, user.ID, models.TargetToID(user.Target))
 	} else {
 		rows, err = p.Conn.Query(`SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me, u.filter_id FROM users AS u
-								WHERE u.filter_id=$2
+								WHERE u.filter_id=$2 AND u.id != $1
 								EXCEPT (
 								SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me, u.filter_id FROM users AS u
 								JOIN likes AS l ON u.id=l.user_id2 WHERE l.user_id1=$1 AND u.filter_id=$2
