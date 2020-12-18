@@ -184,6 +184,12 @@ func (p *postgresUserRepository) UpdateUser(user models.User, uid int) error {
 			return err
 		}
 	}
+	if user.Target != "" {
+		_, err := p.Conn.Exec(`UPDATE users SET target_id=$1 WHERE id = $2;`, models.TargetToID(user.Target), uid)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
