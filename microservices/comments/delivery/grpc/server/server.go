@@ -85,6 +85,7 @@ func transformIntoUserComment(userComment *proto.UserComment) (models.User, mode
 		Job:        userComment.User.Job,
 		Education:  userComment.User.Education,
 		AboutMe:    userComment.User.AboutMe,
+		Target:     userComment.User.Target,
 	}
 
 	comment := models.Comment{
@@ -110,6 +111,7 @@ func transformIntoGRPCCommentsData(commentsData models.CommentsData) *proto.Comm
 			Education:   item.User.Education,
 			AboutMe:     item.User.AboutMe,
 			IsSuperLike: item.User.IsSuperlike,
+			Target:      item.User.Target,
 		}
 		commentId := &proto.CommentId{
 			User:         user,

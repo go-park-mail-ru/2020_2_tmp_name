@@ -8,7 +8,9 @@ CREATE TABLE "users" (
   "education" varchar,
   "job" varchar,
   "about_me" varchar,
-  "group_id" int4
+  "filter_id" int4,
+
+  FOREIGN KEY (filter_id) REFERENCES filters(id)
 );
 
 CREATE TABLE "premium_accounts" (
@@ -20,43 +22,49 @@ CREATE TABLE "premium_accounts" (
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE "groups" (
+CREATE TABLE "filter" (
   "id" SERIAL PRIMARY KEY,
-  "for_love" boolean,
-  "for_friends" boolean,
-  "for_sex" boolean
+  "target" varchar
 );
 
 CREATE TABLE "likes" (
   "id" SERIAL PRIMARY KEY,
   "user_id1" int4,
   "user_id2" int4,
+  "filter_id" int4,
 
-  FOREIGN KEY (user_id1) REFERENCES users(id)
+  FOREIGN KEY (user_id1) REFERENCES users(id),
+  FOREIGN KEY (filter_id) REFERENCES filters(id)
 );
 
 CREATE TABLE "superlikes" (
   "id" SERIAL PRIMARY KEY,
   "user_id1" int4,
   "user_id2" int4,
+  "filter_id" int4,
 
-  FOREIGN KEY (user_id1) REFERENCES users(id)
+  FOREIGN KEY (user_id1) REFERENCES users(id),
+  FOREIGN KEY (filter_id) REFERENCES filters(id)
 );
 
 CREATE TABLE "dislikes" (
   "id" SERIAL PRIMARY KEY,
   "user_id1" int4,
   "user_id2" int4,
+  "filter_id" int4,
 
-  FOREIGN KEY (user_id1) REFERENCES users(id)
+  FOREIGN KEY (user_id1) REFERENCES users(id),
+  FOREIGN KEY (filter_id) REFERENCES filters(id)
 );
 
 CREATE TABLE "chat" (
   "id" SERIAL PRIMARY KEY,
   "user_id1" int4,
   "user_id2" int4,
+  "filter_id" int4,
 
-  FOREIGN KEY (user_id1) REFERENCES users(id)
+  FOREIGN KEY (user_id1) REFERENCES users(id),
+  FOREIGN KEY (filter_id) REFERENCES filters(id)
 );
 
 CREATE TABLE "message" (

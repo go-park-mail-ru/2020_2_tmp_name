@@ -79,6 +79,7 @@ func (s *server) CheckSession(ctx context.Context, session *proto.Session) (*pro
 		Job:        user.Job,
 		Education:  user.Education,
 		AboutMe:    user.AboutMe,
+		Target: 	user.Target,
 	}
 	return userProto, nil
 }

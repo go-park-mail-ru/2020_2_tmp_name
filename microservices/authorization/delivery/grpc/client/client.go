@@ -96,6 +96,7 @@ func transformIntoUserModel(user *proto.User) models.User {
 		Job:        user.Job,
 		Education:  user.Education,
 		AboutMe:    user.AboutMe,
+		Target: 	user.Target,
 	}
 
 	return userModel

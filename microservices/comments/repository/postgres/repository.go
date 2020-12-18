@@ -17,28 +17,32 @@ func NewPostgresCommentRepository(Conn *sql.DB) domain.CommentRepository {
 
 func (p *postgresCommentRepository) SelectUserFeed(telephone string) (models.UserFeed, error) {
 	var u models.UserFeed
-	row := p.Conn.QueryRow(`SELECT id, name, date_birth, education, job, about_me FROM users
+	var tid int
+	row := p.Conn.QueryRow(`SELECT id, name, date_birth, education, job, about_me, filter_id FROM users
 						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe)
+	err := row.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe, &tid)
 	if err != nil {
 		return u, err
 	}
 
 	u.LinkImages, err = p.SelectImages(u.ID)
+	u.Target = models.IDToTarget(tid)
 	return u, err
 }
 
 func (p *postgresCommentRepository) SelectUserFeedByID(uid int) (models.UserFeed, error) {
 	var u models.UserFeed
-	row := p.Conn.QueryRow(`SELECT name, date_birth, job, education, about_me FROM users
+	var tid int
+	row := p.Conn.QueryRow(`SELECT name, date_birth, job, education, about_me, filter_id FROM users
 						WHERE  id=$1;`, uid)
-	err := row.Scan(&u.Name, &u.DateBirth, &u.Job, &u.Education, &u.AboutMe)
+	err := row.Scan(&u.Name, &u.DateBirth, &u.Job, &u.Education, &u.AboutMe, &tid)
 	if err != nil {
 		return u, err
 	}
 	u.ID = uid
 
 	u.LinkImages, err = p.SelectImages(u.ID)
+	u.Target = models.IDToTarget(tid)
 	return u, err
 }
 

@@ -30,9 +30,9 @@ type ChatRepository interface {
 	InsertMessage(text string, chatID, uid int) error         // Tested
 	SelectMessages(chid int) ([]models.Msg, error)            // Tested
 	SelectMessage(uid, chid int) (models.Msg, error)          // Tested
-	InsertLike(uid1, uid2 int) error                          // Tested
-	InsertDislike(uid1, uid2 int) error                       // Tested
-	InsertSuperlike(uid1, uid2 int) error                     // Tested
+	InsertLike(uid1, uid2, fid int) error                     // Tested
+	InsertDislike(uid1, uid2, fid int) error                  // Tested
+	InsertSuperlike(uid1, uid2, fid int) error                // Tested
 	DeleteLike(uid1, uid2 int) error                          // Tested
 	DeleteDislike(uid1, uid2 int) error                       // Tested
 	SelectUserByID(uid int) (models.User, error)              // Tested
@@ -43,7 +43,7 @@ type ChatRepository interface {
 	SelectSessions(uid int) ([]string, error)
 	CheckUserBySession(sid string) string
 	CheckChat(chat models.Chat) bool
-	Match(uid1, uid2 int) bool
+	Match(uid1, uid2, fid int) bool
 	CheckLike(uid1, uid2 int) bool
 	CheckDislike(uid1, uid2 int) bool
 }
