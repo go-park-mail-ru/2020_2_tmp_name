@@ -6,8 +6,8 @@ import server.api.api as api
 class Server(grpc_face.FaceGRPCHandlerServicer):
     def HaveFace(self, request, context):
         faces = api.find_faces(request.path)
-
-        return face.Face(have=faces != [])
+        print(faces)
+        return face.Face(have=faces != ())
 
     def AddMask(self, request, context):
         photo, mask = api.overlay_mask(request.path, request.mask)

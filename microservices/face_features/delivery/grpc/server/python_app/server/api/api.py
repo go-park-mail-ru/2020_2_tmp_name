@@ -11,7 +11,8 @@ def get_photo_mask_name(path, mask):
 
 
 def find_faces(path):
-    face_cascade = cv2.CascadeClassifier('cascade/frontalface_default.xml')
+    cascade_path = '/home/ubuntu/go/src/park_2020/2020_2_tmp_name/microservices/face_features/delivery/grpc/server/python_app/server/api/cascade/frontalface_default.xml'
+    face_cascade = cv2.CascadeClassifier(cascade_path)
     img = cv2.imread(path)
     faces = face_cascade.detectMultiScale(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 1.1, 4)
 

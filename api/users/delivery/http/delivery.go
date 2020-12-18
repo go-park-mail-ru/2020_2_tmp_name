@@ -95,7 +95,7 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	f, err := os.OpenFile(photoID.String(), os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(photoID.String() + ".jpg", os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -106,7 +106,7 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 
 	os.Chdir(str)
 
-	body, err := json.Marshal("https://mi-ami.ru/static/avatars/" + photoID.String())
+	body, err := json.Marshal("https://mi-ami.ru/static/avatars/" + photoID.String() + ".jpg")
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -123,7 +123,7 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	photoModel := &models.Photo{
-		Path: photoPath + "/" + photoID.String(),
+		Path: photoPath + "/" + photoID.String() + ".jpg",
 		Mask: "",
 	}
 

@@ -92,7 +92,7 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	f, err := os.OpenFile(photoID.String(), os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(photoID.String() + ".jpg", os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -112,7 +112,7 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	photoModel := &models.Photo{
-		Path: photoPath + "/" + photoID.String(),
+		Path: photoPath + "/" + photoID.String() + ".jpg",
 		Mask: "",
 	}
 
@@ -134,7 +134,7 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 
 	var photo models.Photo
 	photo.Telephone = user.Telephone
-	photo.Path = "https://mi-ami.ru/static/avatars/" + photoID.String()
+	photo.Path = "https://mi-ami.ru/static/avatars/" + photoID.String() + ".jpg"
 
 	err = p.PUsecase.AddPhoto(photo)
 	if err != nil {
