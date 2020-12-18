@@ -3,11 +3,13 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/photos"
 	_authClientGRPC "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
+	faceClient "park_2020/2020_2_tmp_name/microservices/face_features/delivery/grpc/client"
 	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 
@@ -19,12 +21,14 @@ import (
 type PhotoHandlerType struct {
 	PUsecase   domain.PhotoUsecase
 	AuthClient _authClientGRPC.AuthClientInterface
+	FaceClient *faceClient.FaceClient
 }
 
-func NewPhotoHandler(r *mux.Router, ps domain.PhotoUsecase, ac _authClientGRPC.AuthClientInterface) {
+func NewPhotoHandler(r *mux.Router, ps domain.PhotoUsecase, ac _authClientGRPC.AuthClientInterface, fc *faceClient.FaceClient) {
 	handler := &PhotoHandlerType{
 		PUsecase:   ps,
 		AuthClient: ac,
+		FaceClient: fc,
 	}
 
 	path := "/static/avatars/"
@@ -103,6 +107,27 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	photoModel := &models.Photo{
+		Path: photoPath + "/" + photoID.String(),
+		Mask: "",
+	}
+
+	haveFace, err := p.FaceClient.HaveFace(context.Background(), photoModel)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	if !haveFace {
+		err = errors.New("no face on photo")
+		logrus.Error(err.Error())
+		w.WriteHeader(http.StatusForbidden)
 		w.Write(JSONError(err.Error()))
 		return
 	}

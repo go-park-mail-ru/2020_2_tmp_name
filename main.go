@@ -41,6 +41,8 @@ import (
 	_authDelivery "park_2020/2020_2_tmp_name/microservices/authorization/delivery/http"
 	_authRepo "park_2020/2020_2_tmp_name/microservices/authorization/repository/postgres"
 	_authUcase "park_2020/2020_2_tmp_name/microservices/authorization/usecase"
+
+	_faceClient "park_2020/2020_2_tmp_name/microservices/face_features/delivery/grpc/client"
 )
 
 type application struct {
@@ -133,9 +135,16 @@ func (app *application) initServer() {
 	cu := _commentUcase.NewCommentUsecase(cr)
 	_commentDelivery.NewCommentHandler(router, cu, grpcCommentClient, grpcAuthClient)
 
+	grpcConnFace, err := grpc.Dial("localhost:8083", grpc.WithInsecure())
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+	grpcFaceClient := _faceClient.NewFaceClient(grpcConnFace)
+
 	pr := _photoRepo.NewPostgresPhotoRepository(dbConn)
 	pu := _photoUcase.NewPhotoUsecase(pr)
-	_photoDelivery.NewPhotoHandler(router, pu, grpcAuthClient)
+	_photoDelivery.NewPhotoHandler(router, pu, grpcAuthClient, grpcFaceClient)
 
 	middleware.MyCORSMethodMiddleware(router)
 
@@ -148,7 +157,7 @@ func (app *application) initServer() {
 
 	ur := _userRepo.NewPostgresUserRepository(dbConn)
 	uu := _userUcase.NewUserUsecase(ur)
-	_userDelivery.NewUserHandler(router, uu, grpcAuthClient)
+	_userDelivery.NewUserHandler(router, uu, grpcAuthClient, grpcFaceClient)
 
 	fmt.Println("Starting server at: 8080")
 	err = serv.ListenAndServe()
