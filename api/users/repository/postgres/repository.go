@@ -72,7 +72,7 @@ func (p *postgresUserRepository) InsertUser(user models.User) error {
 func (p *postgresUserRepository) SelectUserByID(uid int) (models.User, error) {
 	var u models.User
 	var tid int
-	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me, target_id FROM users
+	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me, filter_id FROM users
 						WHERE  id=$1;`, uid)
 	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe, &tid)
 	if err != nil {
@@ -87,7 +87,7 @@ func (p *postgresUserRepository) SelectUserByID(uid int) (models.User, error) {
 func (p *postgresUserRepository) SelectUserFeedByID(uid int) (models.UserFeed, error) {
 	var u models.UserFeed
 	var tid int
-	row := p.Conn.QueryRow(`SELECT name, date_birth, job, education, about_me, target_id FROM users
+	row := p.Conn.QueryRow(`SELECT name, date_birth, job, education, about_me, filter_id FROM users
 						WHERE  id=$1;`, uid)
 	err := row.Scan(&u.Name, &u.DateBirth, &u.Job, &u.Education, &u.AboutMe, &tid)
 	if err != nil {
@@ -199,7 +199,7 @@ func (p *postgresUserRepository) UpdateUser(user models.User, uid int) error {
 		}
 	}
 	if user.Target != "" {
-		_, err := p.Conn.Exec(`UPDATE users SET target_id=$1 WHERE id = $2;`, models.TargetToID(user.Target), uid)
+		_, err := p.Conn.Exec(`UPDATE users SET filter_id=$1 WHERE id = $2;`, models.TargetToID(user.Target), uid)
 		if err != nil {
 			return err
 		}
