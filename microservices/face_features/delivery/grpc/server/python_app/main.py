@@ -2,6 +2,7 @@ from concurrent import futures
 import server.protobuf.face_features_pb2_grpc as grpc_face
 from server.server import Server
 import grpc
+import daemon
 
 
 def serve():
@@ -12,5 +13,5 @@ def serve():
     s.wait_for_termination()
 
 
-if __name__ == '__main__':
+with daemon.DaemonContext():
     serve()
