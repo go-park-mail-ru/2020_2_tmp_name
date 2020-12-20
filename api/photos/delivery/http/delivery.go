@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
@@ -230,6 +231,8 @@ func (p *PhotoHandlerType) MaskHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(JSONError(err.Error()))
 		return
 	}
+
+	fmt.Println(photo)
 
 	newPhoto, err := p.FaceClient.AddMask(context.Background(), &photo)
 	if err != nil {

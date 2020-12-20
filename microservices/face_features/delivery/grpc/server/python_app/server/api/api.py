@@ -3,7 +3,7 @@ from PIL import Image
 
 
 def get_mask_path(mask_name):
-    return 'masks/' + mask_name + '.png'
+    return '/home/ubuntu/go/src/park_2020/2020_2_tmp_name/microservices/face_features/delivery/grpc/server/python_app/server/api/masks/' + mask_name + '.png'
 
 
 def get_photo_mask_name(path, mask):
