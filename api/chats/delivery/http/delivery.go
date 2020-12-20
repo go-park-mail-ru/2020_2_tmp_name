@@ -48,11 +48,11 @@ func NewChatHandler(r *mux.Router, chs domain.ChatUsecase, ac authClient.AuthCli
 
 	go handler.Hub.run()
 
-	r.HandleFunc("/api/v1/chat", middleware.CheckCSRF(handler.ChatHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/chat", (handler.ChatHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/message", middleware.CheckCSRF(handler.MessageHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/chats", middleware.SetCSRF(handler.ChatsHandler)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/chats/{chat_id}", middleware.SetCSRF(handler.ChatIDHandler)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/like", middleware.CheckCSRF(handler.LikeHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/like", (handler.LikeHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/dislike", middleware.CheckCSRF(handler.DislikeHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/superlike", middleware.CheckCSRF(handler.SuperlikeHandler)).Methods(http.MethodPost)
 

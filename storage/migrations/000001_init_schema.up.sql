@@ -81,7 +81,8 @@ CREATE TABLE "message" (
 CREATE TABLE "photo" (
   "id" SERIAL PRIMARY KEY,
   "path" varchar NOT NULL,
-  "user_id" int4, 
+  "user_id" int4,
+  "mask" varchar  DEFAULT '',
 
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
