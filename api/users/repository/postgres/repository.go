@@ -47,7 +47,7 @@ func (p *postgresUserRepository) InsertUser(user models.User) error {
 		user.Job,
 		user.Education,
 		user.AboutMe,
-		models.TargetToID(user.Target),
+		models.TargetToID("love"),
 	)
 	if err != nil {
 		return err
