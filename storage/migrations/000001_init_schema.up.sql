@@ -1,25 +1,31 @@
-CREATE TABLE "users" (
+CREATE TABLE "chat" (
   "id" SERIAL PRIMARY KEY,
-  "name" varchar NOT NULL,
-  "telephone" varchar NOT NULL,
-  "password" varchar NOT NULL,
-  "date_birth" int4,
-  "sex" varchar NOT NULL,
-  "education" varchar,
-  "job" varchar,
-  "about_me" varchar,
+  "user_id1" int4,
+  "user_id2" int4,
   "filter_id" int4,
 
-  FOREIGN KEY (filter_id) REFERENCES filters(id)
+  FOREIGN KEY (user_id1) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (filter_id) REFERENCES filters(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE "premium_accounts" (
+CREATE TABLE "comments" (
   "id" SERIAL PRIMARY KEY,
-  "user_id" int4,
-  "date_from" date,
-  "date_to" date,
+  "user_id1" int4,
+  "user_id2" int4,
+  "time_delivery" text,
+  "text" text,
 
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  FOREIGN KEY (user_id1) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE "dislikes" (
+  "id" SERIAL PRIMARY KEY,
+  "user_id1" int4,
+  "user_id2" int4,
+  "filter_id" int4,
+
+  FOREIGN KEY (user_id1) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (filter_id) REFERENCES filters(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE "filter" (
@@ -33,38 +39,8 @@ CREATE TABLE "likes" (
   "user_id2" int4,
   "filter_id" int4,
 
-  FOREIGN KEY (user_id1) REFERENCES users(id),
-  FOREIGN KEY (filter_id) REFERENCES filters(id)
-);
-
-CREATE TABLE "superlikes" (
-  "id" SERIAL PRIMARY KEY,
-  "user_id1" int4,
-  "user_id2" int4,
-  "filter_id" int4,
-
-  FOREIGN KEY (user_id1) REFERENCES users(id),
-  FOREIGN KEY (filter_id) REFERENCES filters(id)
-);
-
-CREATE TABLE "dislikes" (
-  "id" SERIAL PRIMARY KEY,
-  "user_id1" int4,
-  "user_id2" int4,
-  "filter_id" int4,
-
-  FOREIGN KEY (user_id1) REFERENCES users(id),
-  FOREIGN KEY (filter_id) REFERENCES filters(id)
-);
-
-CREATE TABLE "chat" (
-  "id" SERIAL PRIMARY KEY,
-  "user_id1" int4,
-  "user_id2" int4,
-  "filter_id" int4,
-
-  FOREIGN KEY (user_id1) REFERENCES users(id),
-  FOREIGN KEY (filter_id) REFERENCES filters(id)
+  FOREIGN KEY (user_id1) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (filter_id) REFERENCES filters(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE "message" (
@@ -74,8 +50,8 @@ CREATE TABLE "message" (
   "chat_id" int4,
   "user_id" int4,
 
-  FOREIGN KEY (chat_id) REFERENCES chat(id),
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  FOREIGN KEY (chat_id) REFERENCES chat(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE "photo" (
@@ -84,21 +60,45 @@ CREATE TABLE "photo" (
   "user_id" int4,
   "mask" varchar  DEFAULT '',
 
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE "comments" (
+CREATE TABLE "premium_accounts" (
   "id" SERIAL PRIMARY KEY,
-  "user_id1" int4,
-  "user_id2" int4,
-  "time_delivery" text,
-  "text" text,
+  "user_id" int4,
+  "date_from" date,
+  "date_to" date,
 
-  FOREIGN KEY (user_id1) REFERENCES users(id)
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE "sessions" (
   "id" SERIAL PRIMARY KEY,
   "key" varchar NOT NULL,
   "value" varchar
+);
+
+CREATE TABLE "superlikes" (
+  "id" SERIAL PRIMARY KEY,
+  "user_id1" int4,
+  "user_id2" int4,
+  "filter_id" int4,
+
+  FOREIGN KEY (user_id1) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (filter_id) REFERENCES filters(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE "users" (
+  "id" SERIAL PRIMARY KEY,
+  "name" varchar NOT NULL,
+  "telephone" varchar NOT NULL,
+  "password" varchar NOT NULL,
+  "date_birth" int4,
+  "sex" varchar NOT NULL,
+  "education" varchar,
+  "job" varchar,
+  "about_me" varchar,
+  "filter_id" int4,
+
+  FOREIGN KEY (filter_id) REFERENCES filters(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
