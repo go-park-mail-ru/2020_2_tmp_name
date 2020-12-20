@@ -37,6 +37,7 @@ func NewPhotoHandler(r *mux.Router, ps domain.PhotoUsecase, ac _authClientGRPC.A
 
 	r.HandleFunc("/api/v1/add_photo", middleware.CheckCSRF(handler.AddPhotoHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/remove_photo", middleware.CheckCSRF(handler.RemovePhotoHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/mask", middleware.CheckCSRF(handler.MaskHandler)).Methods(http.MethodPost)
 }
 
 func JSONError(message string) []byte {
@@ -180,6 +181,83 @@ func (p *PhotoHandlerType) RemovePhotoHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	body, err := json.Marshal(linkImage)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (p *PhotoHandlerType) MaskHandler(w http.ResponseWriter, r *http.Request) {
+	photo := models.Photo{}
+	err := json.NewDecoder(r.Body).Decode(&photo)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	_, err = p.AuthClient.CheckSession(context.Background(), r.Cookies())
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	photos, err := p.PUsecase.FindPhotoWithMask(photo.Path)
+	if photos != nil {
+		for _, img := range photos {
+			err = os.Remove(img)
+			if err != nil {
+				logrus.Error(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write(JSONError(err.Error()))
+				return
+			}
+		}
+	}
+
+	photo.Path, err = p.PUsecase.FindPhotoWithoutMask(photo.Path)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	newPhoto, err := p.FaceClient.AddMask(context.Background(), &photo)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	user, err := p.AuthClient.CheckSession(context.Background(), r.Cookies())
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	newPhoto.Telephone = user.Telephone
+
+	err = p.PUsecase.AddPhoto(newPhoto)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	body, err := json.Marshal(newPhoto)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)

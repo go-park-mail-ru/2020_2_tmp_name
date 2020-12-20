@@ -1,8 +1,11 @@
 package usecase
 
 import (
+	"os"
 	domain "park_2020/2020_2_tmp_name/api/photos"
 	"park_2020/2020_2_tmp_name/models"
+	"path/filepath"
+	"strings"
 )
 
 type photoUsecase struct {
@@ -30,9 +33,70 @@ func (p *photoUsecase) AddPhoto(photo models.Photo) error {
 }
 
 func (p *photoUsecase) RemovePhoto(path string, uid int) error {
-	err := p.photoRepo.DeletePhoto(path, uid)
+	err := p.ClearPhotos(path)
+	if err != nil {
+		return err
+	}
+
+	err = p.photoRepo.DeletePhoto(path, uid)
 	if err != nil {
 		return models.ErrInternalServerError
 	}
+
 	return nil
+}
+
+func (p *photoUsecase) ClearPhotos(path string) error {
+	localPath := strings.Replace(path, "https://mi-ami.ru/static/avatars/", "", -1)
+	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars"
+
+	err := os.Remove(photoPath + localPath)
+	if err != nil {
+		return models.ErrNotFound
+	}
+
+	return nil
+}
+
+func (p *photoUsecase) FindPhotoWithMask(path string) ([]string, error) {
+	photoName := strings.Replace(path, "https://mi-ami.ru/static/avatars/", "", -1)
+	under := strings.LastIndex(photoName, "_")
+	if under != -1 {
+		photoName = photoName[:under]
+	} else {
+		dot := strings.LastIndex(photoName, ".")
+		if dot != -1 {
+			photoName = photoName[:dot]
+		}
+	}
+
+	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars/"
+
+	files, err := filepath.Glob(photoPath + photoName + "_*")
+
+	return files, err
+}
+
+func (p *photoUsecase) FindPhotoWithoutMask(path string) (string, error) {
+	photoName := strings.Replace(path, "https://mi-ami.ru/static/avatars/", "", -1)
+	under := strings.LastIndex(photoName, "_")
+	if under != -1 {
+		photoName = photoName[:under]
+	} else {
+		dot := strings.LastIndex(photoName, ".")
+		if dot != -1 {
+			photoName = photoName[:dot]
+		}
+	}
+
+	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars/"
+
+	files, _ := filepath.Glob(photoPath + photoName + "*")
+
+	for _, file := range files {
+		if !strings.Contains(file, "_") {
+			return file, nil
+		}
+	}
+	return "", models.ErrNotFound
 }
