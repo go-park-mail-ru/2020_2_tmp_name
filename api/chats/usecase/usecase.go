@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	domain "park_2020/2020_2_tmp_name/api/chats"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
@@ -111,6 +112,8 @@ func (ch *chatUsecase) MatchUser(user models.User, like models.Like) (models.Cha
 	if ch.chatRepo.Match(user.ID, like.Uid2, models.TargetToID(user.Target)) {
 		chat.Uid1 = user.ID
 		chat.Uid2 = like.Uid2
+		chat.Target = user.Target
+		fmt.Println(chat)
 		if !ch.chatRepo.CheckChat(chat) {
 			err := ch.chatRepo.InsertChat(chat)
 			if err != nil {
