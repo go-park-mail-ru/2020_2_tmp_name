@@ -7,7 +7,7 @@ def get_mask_path(mask_name):
 
 
 def get_photo_mask_name(path, mask):
-    return path + '_' + mask + '.png'
+    return path.replace('.jpg', '_' + mask + '.jpg')
 
 
 def find_faces(path):
@@ -35,4 +35,4 @@ def overlay_mask(path, mask):
     photo_path = get_photo_mask_name(path, mask)
     photo.save(photo_path)
 
-    return photo, photo_path
+    return photo_path, mask

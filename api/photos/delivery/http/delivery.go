@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	faceClient "park_2020/2020_2_tmp_name/microservices/face_features/delivery/grpc/client"
 	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -203,7 +203,7 @@ func (p *PhotoHandlerType) MaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = p.AuthClient.CheckSession(context.Background(), r.Cookies())
+	user, err := p.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(models.GetStatusCode(err))
@@ -211,28 +211,10 @@ func (p *PhotoHandlerType) MaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	photos, err := p.PUsecase.FindPhotoWithMask(photo.Path)
-	if photos != nil {
-		for _, img := range photos {
-			err = os.Remove(img)
-			if err != nil {
-				logrus.Error(err)
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write(JSONError(err.Error()))
-				return
-			}
-		}
-	}
+	localPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars/"
+	urlPath := "https://mi-ami.ru/static/avatars/"
 
-	photo.Path, err = p.PUsecase.FindPhotoWithoutMask(photo.Path)
-	if err != nil {
-		logrus.Error(err)
-		w.WriteHeader(models.GetStatusCode(err))
-		w.Write(JSONError(err.Error()))
-		return
-	}
-
-	fmt.Println(photo)
+	photo.Path = strings.Replace(photo.Path, urlPath, localPath, -1)
 
 	newPhoto, err := p.FaceClient.AddMask(context.Background(), &photo)
 	if err != nil {
@@ -242,13 +224,7 @@ func (p *PhotoHandlerType) MaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := p.AuthClient.CheckSession(context.Background(), r.Cookies())
-	if err != nil {
-		logrus.Error(err)
-		w.WriteHeader(models.GetStatusCode(err))
-		w.Write(JSONError(err.Error()))
-		return
-	}
+	newPhoto.Path = strings.Replace(newPhoto.Path, localPath, urlPath, -1)
 
 	newPhoto.Telephone = user.Telephone
 

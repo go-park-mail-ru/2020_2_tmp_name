@@ -49,9 +49,9 @@ func (p *photoUsecase) RemovePhoto(path string, uid int) error {
 
 func (p *photoUsecase) ClearPhotos(path string) error {
 	localPath := strings.Replace(path, "https://mi-ami.ru/static/avatars/", "", -1)
-	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars"
+	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars/"
 
-	err := os.Remove(photoPath + localPath)
+	err := os.RemoveAll(photoPath + localPath)
 	if err != nil {
 		return models.ErrNotFound
 	}
@@ -60,22 +60,21 @@ func (p *photoUsecase) ClearPhotos(path string) error {
 }
 
 func (p *photoUsecase) FindPhotoWithMask(path string) ([]string, error) {
-	photoName := strings.Replace(path, "https://mi-ami.ru/static/avatars/", "", -1)
-	under := strings.LastIndex(photoName, "_")
+	under := strings.LastIndex(path, "_")
 	if under != -1 {
-		photoName = photoName[:under]
+		path = strings.Replace(path, path[under:], "", -1)
 	} else {
-		dot := strings.LastIndex(photoName, ".")
+		dot := strings.LastIndex(path, ".")
 		if dot != -1 {
-			photoName = photoName[:dot]
+			path = strings.Replace(path, path[dot:], "", -1)
 		}
 	}
 
-	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars/"
-
-	files, err := filepath.Glob(photoPath + photoName + "_*")
-
-	return files, err
+	fmt.Println(path)
+	photos, err := p.photoRepo.SelectPhotoWithMask(path)
+	fmt.Println(photos)
+	
+	return photos, err
 }
 
 func (p *photoUsecase) FindPhotoWithoutMask(path string) (string, error) {

@@ -57,3 +57,23 @@ func (p *postgresPhotoRepository) DeletePhoto(path string, uid int) error {
 	_, err := p.Conn.Exec(`DELETE FROM photo WHERE path=$1 AND user_id=$2;`, path, uid)
 	return err
 }
+
+func (p *postgresPhotoRepository) SelectPhotoWithMask(path string) ([]string, error) {
+	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE path LIKE '$1_%';`, path)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var images []string
+	for rows.Next() {
+		var image string
+		err := rows.Scan(&image)
+		if err != nil {
+			continue
+		}
+		images = append(images, image)
+	}
+
+	return images, nil
+}
