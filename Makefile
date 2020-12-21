@@ -8,14 +8,14 @@ DOCKER_DIR := ${CURDIR}/docker
 
 ## build: Build compiles project
 build:
+	go build -o ${MAIN_BINARY} cmd/main/main.go
 	go build -o ${AUTH_BINARY} cmd/auth/main_auth.go
 	go build -o ${COMMENT_BINARY} cmd/comment/main_comment.go
-	go build -o ${MAIN_BINARY} cmd/main/main.go
-
+	
 ## build-docker: Builds all docker containers
 build-docker:
 	docker build -t dependencies -f ${DOCKER_DIR}/builder.Dockerfile .
-	docker build -t main_service -f ${DOCKER_DIR}/main_service.Dockerfile .
+	docker build -t main_service -f ${DOCKER_DIR}/main.Dockerfile .
 	docker build -t auth_service -f ${DOCKER_DIR}/auth.Dockerfile .
 	docker build -t comment_service -f ${DOCKER_DIR}/comment.Dockerfile .
 
@@ -27,9 +27,10 @@ build-and-run: build-docker
 run:
 	docker rm -vf $$(docker ps -a -q) || true
 	docker build -t dependencies -f ${DOCKER_DIR}/builder.Dockerfile .
+	docker build -t main_service -f ${DOCKER_DIR}/main.Dockerfile .
 	docker build -t auth_service -f ${DOCKER_DIR}/auth.Dockerfile .
 	docker build -t comment_service -f ${DOCKER_DIR}/comment.Dockerfile .
-	docker build -t main_service -f ${DOCKER_DIR}/main.Dockerfile .
+	
 	docker-compose up --build --no-deps
 
 ## test-coverage: get final code coverage

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"google.golang.org/grpc"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 
 	_ "github.com/lib/pq"
@@ -53,15 +55,18 @@ type application struct {
 var conf models.Config
 
 func init() {
-	models.LoadConfig(&conf)
+	err := godotenv.Load("envs/postgres.env")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func DBConnection(conf *models.Config) *sql.DB {
 	connString := fmt.Sprintf("host=%v user=%v password=%v dbname=%v sslmode=disable",
-		conf.SQLDataBase.Server,
-		conf.SQLDataBase.UserID,
-		conf.SQLDataBase.Password,
-		conf.SQLDataBase.Database,
+		os.Getenv("PostgresHost"),
+		os.Getenv("PostgresUser"),
+		os.Getenv("PostgresPassword"),
+		os.Getenv("PostgresDBName"),
 	)
 
 	db, err := sql.Open("postgres", connString)
