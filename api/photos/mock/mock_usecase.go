@@ -44,6 +44,44 @@ func (_mr *MockPhotoUsecaseMockRecorder) AddPhoto(arg0 interface{}) *gomock.Call
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "AddPhoto", reflect.TypeOf((*MockPhotoUsecase)(nil).AddPhoto), arg0)
 }
 
+// ClearPhotos mocks base method
+func (_m *MockPhotoUsecase) ClearPhotos(_param0 string) error {
+	ret := _m.ctrl.Call(_m, "ClearPhotos", _param0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ClearPhotos indicates an expected call of ClearPhotos
+func (_mr *MockPhotoUsecaseMockRecorder) ClearPhotos(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "ClearPhotos", reflect.TypeOf((*MockPhotoUsecase)(nil).ClearPhotos), arg0)
+}
+
+// FindPhotoWithMask mocks base method
+func (_m *MockPhotoUsecase) FindPhotoWithMask(_param0 string) ([]string, error) {
+	ret := _m.ctrl.Call(_m, "FindPhotoWithMask", _param0)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindPhotoWithMask indicates an expected call of FindPhotoWithMask
+func (_mr *MockPhotoUsecaseMockRecorder) FindPhotoWithMask(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "FindPhotoWithMask", reflect.TypeOf((*MockPhotoUsecase)(nil).FindPhotoWithMask), arg0)
+}
+
+// FindPhotoWithoutMask mocks base method
+func (_m *MockPhotoUsecase) FindPhotoWithoutMask(_param0 string) (string, error) {
+	ret := _m.ctrl.Call(_m, "FindPhotoWithoutMask", _param0)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindPhotoWithoutMask indicates an expected call of FindPhotoWithoutMask
+func (_mr *MockPhotoUsecaseMockRecorder) FindPhotoWithoutMask(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "FindPhotoWithoutMask", reflect.TypeOf((*MockPhotoUsecase)(nil).FindPhotoWithoutMask), arg0)
+}
+
 // RemovePhoto mocks base method
 func (_m *MockPhotoUsecase) RemovePhoto(_param0 string, _param1 int) error {
 	ret := _m.ctrl.Call(_m, "RemovePhoto", _param0, _param1)

@@ -646,7 +646,7 @@ func TestChatUsecase_LikeSuccess(t *testing.T) {
 	mock.EXPECT().CheckLike(user.ID, like.Uid2).Return(false)
 	mock.EXPECT().CheckDislike(user.ID, like.Uid2).Return(true)
 	mock.EXPECT().DeleteDislike(user.ID, like.Uid2).Return(nil)
-	mock.EXPECT().InsertLike(user.ID, like.Uid2).Return(nil)
+	mock.EXPECT().InsertLike(user.ID, like.Uid2, models.TargetToID(user.Target)).Return(nil)
 
 	chs := chatUsecase{
 		chatRepo: mock,
@@ -683,7 +683,7 @@ func TestChatUsecase_LikeFailInsert(t *testing.T) {
 	mock.EXPECT().CheckLike(user.ID, like.Uid2).Return(false)
 	mock.EXPECT().CheckDislike(user.ID, like.Uid2).Return(true)
 	mock.EXPECT().DeleteDislike(user.ID, like.Uid2).Return(nil)
-	mock.EXPECT().InsertLike(user.ID, like.Uid2).Return(models.ErrInternalServerError)
+	mock.EXPECT().InsertLike(user.ID, like.Uid2, models.TargetToID(user.Target)).Return(models.ErrInternalServerError)
 
 	chs := chatUsecase{
 		chatRepo: mock,
@@ -786,7 +786,7 @@ func TestChatUsecase_MatchSuccess(t *testing.T) {
 	chid := 1
 
 	mock := mock.NewMockChatRepository(ctrl)
-	mock.EXPECT().Match(user.ID, like.Uid2).Return(true)
+	mock.EXPECT().Match(user.ID, like.Uid2, models.TargetToID(user.Target)).Return(true)
 	mock.EXPECT().CheckChat(chat).Return(false)
 	mock.EXPECT().InsertChat(chat).Return(nil)
 	mock.EXPECT().SelectChatID(user.ID, like.Uid2).Return(chid, nil)
@@ -829,7 +829,7 @@ func TestChatUsecase_MatchFailSelect(t *testing.T) {
 	chid := 1
 
 	mock := mock.NewMockChatRepository(ctrl)
-	mock.EXPECT().Match(user.ID, like.Uid2).Return(true)
+	mock.EXPECT().Match(user.ID, like.Uid2, models.TargetToID(user.Target)).Return(true)
 	mock.EXPECT().CheckChat(chat).Return(false)
 	mock.EXPECT().InsertChat(chat).Return(nil)
 	mock.EXPECT().SelectChatID(user.ID, like.Uid2).Return(chid, models.ErrNotFound)
@@ -870,7 +870,7 @@ func TestChatUsecase_MatchFailInsert(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatRepository(ctrl)
-	mock.EXPECT().Match(user.ID, like.Uid2).Return(true)
+	mock.EXPECT().Match(user.ID, like.Uid2, models.TargetToID(user.Target)).Return(true)
 	mock.EXPECT().CheckChat(chat).Return(false)
 	mock.EXPECT().InsertChat(chat).Return(models.ErrInternalServerError)
 
@@ -910,7 +910,7 @@ func TestChatUsecase_MatchSuccessCheck(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatRepository(ctrl)
-	mock.EXPECT().Match(user.ID, like.Uid2).Return(true)
+	mock.EXPECT().Match(user.ID, like.Uid2, models.TargetToID(user.Target)).Return(true)
 	mock.EXPECT().CheckChat(chat).Return(true)
 
 	chs := chatUsecase{
@@ -943,7 +943,7 @@ func TestChatUsecase_MatchSuccessMatch(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockChatRepository(ctrl)
-	mock.EXPECT().Match(user.ID, like.Uid2).Return(false)
+	mock.EXPECT().Match(user.ID, like.Uid2, models.TargetToID(user.Target)).Return(false)
 
 	chs := chatUsecase{
 		chatRepo: mock,
@@ -978,7 +978,7 @@ func TestChatUsecase_DislikeSuccess(t *testing.T) {
 	mock.EXPECT().CheckDislike(user.ID, dislike.Uid2).Return(false)
 	mock.EXPECT().CheckLike(user.ID, dislike.Uid2).Return(true)
 	mock.EXPECT().DeleteLike(user.ID, dislike.Uid2).Return(nil)
-	mock.EXPECT().InsertDislike(user.ID, dislike.Uid2).Return(nil)
+	mock.EXPECT().InsertDislike(user.ID, dislike.Uid2, models.TargetToID(user.Target)).Return(nil)
 
 	chs := chatUsecase{
 		chatRepo: mock,
@@ -1014,7 +1014,7 @@ func TestChatUsecase_DislikeFail(t *testing.T) {
 	mock.EXPECT().CheckDislike(user.ID, dislike.Uid2).Return(false)
 	mock.EXPECT().CheckLike(user.ID, dislike.Uid2).Return(true)
 	mock.EXPECT().DeleteLike(user.ID, dislike.Uid2).Return(nil)
-	mock.EXPECT().InsertDislike(user.ID, dislike.Uid2).Return(models.ErrInternalServerError)
+	mock.EXPECT().InsertDislike(user.ID, dislike.Uid2, models.TargetToID(user.Target)).Return(models.ErrInternalServerError)
 
 	chs := chatUsecase{
 		chatRepo: mock,
@@ -1113,9 +1113,9 @@ func TestChatUsecase_SuperlikeSuccess(t *testing.T) {
 	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().CheckDislike(user.ID, superlike.Uid2).Return(true)
 	mock.EXPECT().DeleteDislike(user.ID, superlike.Uid2).Return(nil)
-	mock.EXPECT().InsertSuperlike(user.ID, superlike.Uid2).Return(nil)
+	mock.EXPECT().InsertSuperlike(user.ID, superlike.Uid2, models.TargetToID(user.Target)).Return(nil)
 	mock.EXPECT().CheckLike(user.ID, superlike.Uid2).Return(false)
-	mock.EXPECT().InsertLike(user.ID, superlike.Uid2).Return(nil)
+	mock.EXPECT().InsertLike(user.ID, superlike.Uid2, models.TargetToID(user.Target)).Return(nil)
 
 	chs := chatUsecase{
 		chatRepo: mock,
@@ -1150,7 +1150,7 @@ func TestChatUsecase_SuperlikeSuccessCL(t *testing.T) {
 	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().CheckDislike(user.ID, superlike.Uid2).Return(true)
 	mock.EXPECT().DeleteDislike(user.ID, superlike.Uid2).Return(nil)
-	mock.EXPECT().InsertSuperlike(user.ID, superlike.Uid2).Return(nil)
+	mock.EXPECT().InsertSuperlike(user.ID, superlike.Uid2, models.TargetToID(user.Target)).Return(nil)
 	mock.EXPECT().CheckLike(user.ID, superlike.Uid2).Return(true)
 
 	chs := chatUsecase{
@@ -1186,9 +1186,9 @@ func TestChatUsecase_SuperlikeFailInsert(t *testing.T) {
 	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().CheckDislike(user.ID, superlike.Uid2).Return(true)
 	mock.EXPECT().DeleteDislike(user.ID, superlike.Uid2).Return(nil)
-	mock.EXPECT().InsertSuperlike(user.ID, superlike.Uid2).Return(nil)
+	mock.EXPECT().InsertSuperlike(user.ID, superlike.Uid2, models.TargetToID(user.Target)).Return(nil)
 	mock.EXPECT().CheckLike(user.ID, superlike.Uid2).Return(false)
-	mock.EXPECT().InsertLike(user.ID, superlike.Uid2).Return(models.ErrInternalServerError)
+	mock.EXPECT().InsertLike(user.ID, superlike.Uid2, models.TargetToID(user.Target)).Return(models.ErrInternalServerError)
 
 	chs := chatUsecase{
 		chatRepo: mock,
@@ -1222,7 +1222,7 @@ func TestChatUsecase_SuperlikeFailInsertSuper(t *testing.T) {
 	mock := mock.NewMockChatRepository(ctrl)
 	mock.EXPECT().CheckDislike(user.ID, superlike.Uid2).Return(true)
 	mock.EXPECT().DeleteDislike(user.ID, superlike.Uid2).Return(nil)
-	mock.EXPECT().InsertSuperlike(user.ID, superlike.Uid2).Return(models.ErrInternalServerError)
+	mock.EXPECT().InsertSuperlike(user.ID, superlike.Uid2, models.TargetToID(user.Target)).Return(models.ErrInternalServerError)
 
 	chs := chatUsecase{
 		chatRepo: mock,

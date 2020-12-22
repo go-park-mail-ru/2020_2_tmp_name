@@ -16,6 +16,7 @@ import (
 
 	photoHttp "park_2020/2020_2_tmp_name/api/photos/delivery/http"
 	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
+	faceClient "park_2020/2020_2_tmp_name/microservices/face_features/delivery/grpc/client"
 
 	mockClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client/mock"
 )
@@ -27,7 +28,8 @@ func TestNewUserHandler(t *testing.T) {
 
 	mock := mock.NewMockPhotoUsecase(ctrl)
 	authClient := &authClient.AuthClient{}
-	photoHttp.NewPhotoHandler(router, mock, authClient)
+	faceClient := &faceClient.FaceClient{}
+	photoHttp.NewPhotoHandler(router, mock, authClient, faceClient)
 }
 
 func TestPhotoHandler_AddPhotoHandlerSuccess(t *testing.T) {

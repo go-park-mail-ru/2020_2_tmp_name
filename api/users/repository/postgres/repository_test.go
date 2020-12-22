@@ -45,10 +45,11 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `INSERT INTO users(name, telephone, password, date_birth, sex, job, education, about_me) 
-			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`
+	query := `INSERT INTO users(name, telephone, password, date_birth, sex, job, education, about_me, filter_id) 
+			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`
 
 	var inputUser models.User
 
@@ -59,6 +60,7 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 	inputUser.Month = "Май"
 	inputUser.Year = "2001"
 	inputUser.DateBirth = 19
+	inputUser.Target = "love"
 
 	testCases := []insertUserTestCase{
 		{
@@ -77,6 +79,7 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 			testCase.inputUser.Job,
 			testCase.inputUser.Education,
 			testCase.inputUser.AboutMe,
+			1,
 		}
 
 		rows := []driver.Value{
@@ -89,6 +92,7 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 			testCase.inputUser.Education,
 			testCase.inputUser.Job,
 			testCase.inputUser.AboutMe,
+			1,
 		}
 
 		sqlmock.NewRows(columns).AddRow(rows...)
@@ -195,6 +199,7 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
 	var user models.User
@@ -238,6 +243,10 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 			q:    `UPDATE users SET about_me=$1 WHERE id = $2;`,
 			data: user.AboutMe,
 		},
+		{
+			q:    `UPDATE users SET filter_id=$1 WHERE id = $2;`,
+			data: 0,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -251,6 +260,7 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 			testCase.user.Education,
 			testCase.user.Job,
 			testCase.user.AboutMe,
+			1,
 		}
 
 		sqlmock.NewRows(columns).AddRow(rows...)
@@ -292,9 +302,10 @@ func TestPostgresUserRepository_SelectUserByID(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users WHERE  id=$1;`
+	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me, filter_id FROM users WHERE  id=$1;`
 
 	var telephone string
 	err = faker.FakeData(&telephone)
@@ -309,6 +320,7 @@ func TestPostgresUserRepository_SelectUserByID(t *testing.T) {
 	outputUser.Year = ""
 	outputUser.DateBirth = 19
 	outputUser.Telephone = telephone
+	outputUser.Target = "love"
 
 	testCases := []insertUserTestCase{
 		{
@@ -335,6 +347,7 @@ func TestPostgresUserRepository_SelectUserByID(t *testing.T) {
 			testCase.outputUser.Education,
 			testCase.outputUser.Job,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {
@@ -387,14 +400,20 @@ func TestPostgresUserRepository_SelectUserFeedByID(t *testing.T) {
 		"job",
 		"education",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT name, date_birth, job, education, about_me FROM users WHERE id=$1;`
+	query := `SELECT name, date_birth, job, education, about_me, filter_id FROM users WHERE id=$1;`
+
+	var telephone string
+	err = faker.FakeData(&telephone)
+	require.NoError(t, err)
 
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
-	require.NoError(t, err)
 	outputUser.IsSuperlike = false
+	outputUser.Target = "love"
+	require.NoError(t, err)
 
 	testCases := []insertUserTestCase{
 		{
@@ -417,6 +436,7 @@ func TestPostgresUserRepository_SelectUserFeedByID(t *testing.T) {
 			testCase.outputUser.Job,
 			testCase.outputUser.Education,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {
@@ -463,16 +483,15 @@ func TestPostgresUserRepository_SelectUsers(t *testing.T) {
 	defer db.Close()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
-	columns := []string{
-		"id",
-		"name",
-		"date_birth",
-		"job",
-		"education",
-		"about_me",
-	}
-
-	query := `SELECT id, name, date_birth, education, job, about_me FROM users WHERE sex != $1`
+	query := `SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me, u.filter_id FROM users AS u
+	WHERE u.sex != $1 AND u.filter_id=$3 AND u.id != $2
+	EXCEPT (
+	SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me, u.filter_id FROM users AS u
+	JOIN likes AS l ON u.id=l.user_id2 WHERE u.sex != $1 AND l.user_id1=$2 AND u.filter_id=$3
+	UNION
+	SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me, u.filter_id FROM users AS u
+	JOIN dislikes AS d ON u.id=d.user_id2 WHERE u.sex != $1 AND d.user_id1=$2 AND u.filter_id=$3
+	);`
 
 	var inputUser models.User
 	err = faker.FakeData(&inputUser)
@@ -483,6 +502,8 @@ func TestPostgresUserRepository_SelectUsers(t *testing.T) {
 	err = faker.FakeData(&outputUser)
 	require.NoError(t, err)
 	outputUser.IsSuperlike = false
+	inputUser.Target = "love"
+	outputUser.Target = "love"
 
 	outputUsers = append(outputUsers, outputUser)
 
@@ -496,25 +517,9 @@ func TestPostgresUserRepository_SelectUsers(t *testing.T) {
 
 	for i, testCase := range testCases {
 		msg := fmt.Sprintf("case %d aaaaaaaaaaaa", i)
-		data := []driver.Value{
-			1,
-			testCase.outputUsers[0].Name,
-			testCase.outputUsers[0].DateBirth,
-			testCase.outputUsers[0].Education,
-			testCase.outputUsers[0].Job,
-			testCase.outputUsers[0].AboutMe,
-		}
 
 		if testCase.err != nil {
-
-			dbMock.ExpectQuery(query).WithArgs(inputUser.Sex).WillReturnError(testCase.err)
-
-		} else {
-			rows := sqlmock.NewRows(columns).AddRow(data...)
-			for _, user := range testCase.outputUsers {
-				rows.AddRow(user.ID, user.Name, user.DateBirth, user.Job, user.Education, user.AboutMe)
-			}
-			dbMock.ExpectQuery(query).WithArgs(inputUser.Sex).WillReturnRows(rows)
+			dbMock.ExpectQuery(query).WithArgs(inputUser.Sex, inputUser.ID, 1).WillReturnError(testCase.err)
 		}
 
 		repo := NewPostgresUserRepository(sqlxDB.DB)

@@ -171,10 +171,10 @@ func TestPostgresPhotoRepository_SelectUserFeed(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT id, name, date_birth, education, job, about_me FROM users
-			  WHERE  telephone=$1;`
+	query := `SELECT id, name, date_birth, education, job, about_me, filter_id FROM users WHERE  telephone=$1;`
 
 	var telephone string
 	err = faker.FakeData(&telephone)
@@ -183,6 +183,7 @@ func TestPostgresPhotoRepository_SelectUserFeed(t *testing.T) {
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
 	outputUser.IsSuperlike = false
+	outputUser.Target = "love"
 	require.NoError(t, err)
 
 	testCases := []insertUserTestCase{
@@ -207,6 +208,7 @@ func TestPostgresPhotoRepository_SelectUserFeed(t *testing.T) {
 			testCase.outputUser.Education,
 			testCase.outputUser.Job,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {

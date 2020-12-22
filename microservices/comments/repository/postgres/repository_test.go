@@ -49,10 +49,10 @@ func TestPostgresCommentRepository_SelectUserFeed(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT id, name, date_birth, education, job, about_me FROM users
-			  WHERE  telephone=$1;`
+	query := `SELECT id, name, date_birth, education, job, about_me, filter_id FROM users WHERE  telephone=$1;`
 
 	var telephone string
 	err = faker.FakeData(&telephone)
@@ -61,6 +61,7 @@ func TestPostgresCommentRepository_SelectUserFeed(t *testing.T) {
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
 	outputUser.IsSuperlike = false
+	outputUser.Target = "love"
 	require.NoError(t, err)
 
 	testCases := []insertUserTestCase{
@@ -85,6 +86,7 @@ func TestPostgresCommentRepository_SelectUserFeed(t *testing.T) {
 			testCase.outputUser.Education,
 			testCase.outputUser.Job,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {
@@ -137,10 +139,10 @@ func TestPostgresCommentRepository_SelectUserFeedByID(t *testing.T) {
 		"job",
 		"education",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT name, date_birth, job, education, about_me FROM users
-			  WHERE id=$1;`
+	query := `SELECT name, date_birth, job, education, about_me, filter_id FROM users WHERE id=$1;`
 
 	var telephone string
 	err = faker.FakeData(&telephone)
@@ -149,6 +151,7 @@ func TestPostgresCommentRepository_SelectUserFeedByID(t *testing.T) {
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
 	outputUser.IsSuperlike = false
+	outputUser.Target = "love"
 	require.NoError(t, err)
 
 	testCases := []insertUserTestCase{
@@ -172,6 +175,7 @@ func TestPostgresCommentRepository_SelectUserFeedByID(t *testing.T) {
 			testCase.outputUser.Job,
 			testCase.outputUser.Education,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {

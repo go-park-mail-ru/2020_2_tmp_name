@@ -18,6 +18,7 @@ import (
 	userHttp "park_2020/2020_2_tmp_name/api/users/delivery/http"
 	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 	mockClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client/mock"
+	faceClient "park_2020/2020_2_tmp_name/microservices/face_features/delivery/grpc/client"
 )
 
 func TestHealthCheckHandler(t *testing.T) {
@@ -45,7 +46,8 @@ func TestNewUserHandler(t *testing.T) {
 
 	authClient := &authClient.AuthClient{}
 	mock := mock.NewMockUserUsecase(ctrl)
-	userHttp.NewUserHandler(router, mock, authClient)
+	faceClient := &faceClient.FaceClient{}
+	userHttp.NewUserHandler(router, mock, authClient, faceClient)
 }
 
 func TestUserHandler_UploadAvatarHandlerFail(t *testing.T) {

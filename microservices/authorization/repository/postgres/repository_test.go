@@ -37,10 +37,10 @@ func TestPostgresAuthRepository_SelectUser(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
-			  WHERE  telephone=$1;`
+	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me, filter_id FROM users WHERE  telephone=$1;`
 
 	var telephone string
 	err = faker.FakeData(&telephone)
@@ -55,6 +55,7 @@ func TestPostgresAuthRepository_SelectUser(t *testing.T) {
 	outputUser.Year = ""
 	outputUser.DateBirth = 19
 	outputUser.Telephone = telephone
+	outputUser.Target = "love"
 
 	testCases := []insertUserTestCase{
 		{
@@ -81,6 +82,7 @@ func TestPostgresAuthRepository_SelectUser(t *testing.T) {
 			testCase.outputUser.Education,
 			testCase.outputUser.Job,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {

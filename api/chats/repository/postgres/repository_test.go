@@ -49,10 +49,10 @@ func TestPostgresChatRepository_SelectUserFeed(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT id, name, date_birth, education, job, about_me FROM users
-			  WHERE  telephone=$1;`
+	query := `SELECT id, name, date_birth, education, job, about_me, filter_id FROM users WHERE  telephone=$1;`
 
 	var telephone string
 	err = faker.FakeData(&telephone)
@@ -61,6 +61,7 @@ func TestPostgresChatRepository_SelectUserFeed(t *testing.T) {
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
 	outputUser.IsSuperlike = false
+	outputUser.Target = "love"
 	require.NoError(t, err)
 
 	testCases := []insertUserTestCase{
@@ -85,6 +86,7 @@ func TestPostgresChatRepository_SelectUserFeed(t *testing.T) {
 			testCase.outputUser.Education,
 			testCase.outputUser.Job,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {
@@ -137,10 +139,10 @@ func TestPostgresChatRepository_SelectUserFeedByID(t *testing.T) {
 		"job",
 		"education",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT name, date_birth, job, education, about_me FROM users
-			  WHERE id=$1;`
+	query := `SELECT name, date_birth, job, education, about_me, filter_id FROM users WHERE id=$1;`
 
 	var telephone string
 	err = faker.FakeData(&telephone)
@@ -149,6 +151,7 @@ func TestPostgresChatRepository_SelectUserFeedByID(t *testing.T) {
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
 	outputUser.IsSuperlike = false
+	outputUser.Target = "love"
 	require.NoError(t, err)
 
 	testCases := []insertUserTestCase{
@@ -172,6 +175,7 @@ func TestPostgresChatRepository_SelectUserFeedByID(t *testing.T) {
 			testCase.outputUser.Job,
 			testCase.outputUser.Education,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {
@@ -228,9 +232,10 @@ func TestPostgresChatRepository_SelectUserByID(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users WHERE  id=$1;`
+	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me, filter_id FROM users WHERE id=$1;`
 
 	var telephone string
 	err = faker.FakeData(&telephone)
@@ -245,6 +250,7 @@ func TestPostgresChatRepository_SelectUserByID(t *testing.T) {
 	outputUser.Year = ""
 	outputUser.DateBirth = 19
 	outputUser.Telephone = telephone
+	outputUser.Target = "love"
 
 	testCases := []insertUserTestCase{
 		{
@@ -271,6 +277,7 @@ func TestPostgresChatRepository_SelectUserByID(t *testing.T) {
 			testCase.outputUser.Education,
 			testCase.outputUser.Job,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {
@@ -386,9 +393,10 @@ func TestPostgresChatRepository_InsertChat(t *testing.T) {
 		"id",
 		"user_id1",
 		"user_id2",
+		"filter_id",
 	}
 
-	query := `INSERT INTO chat(user_id1, user_id2) VALUES ($1, $2);`
+	query := `INSERT INTO chat(user_id1, user_id2, filter_id) VALUES ($1, $2, $3);`
 
 	var chat models.Chat
 	err = faker.FakeData(&chat)
@@ -405,12 +413,14 @@ func TestPostgresChatRepository_InsertChat(t *testing.T) {
 		args := []driver.Value{
 			testCase.chat.Uid1,
 			testCase.chat.Uid2,
+			0,
 		}
 
 		rows := []driver.Value{
 			testCase.chat.ID,
 			testCase.chat.Uid1,
 			testCase.chat.Uid2,
+			0,
 		}
 
 		sqlmock.NewRows(columns).AddRow(rows...)
@@ -617,6 +627,7 @@ func TestPostgresLikeRepository_InsertLike(t *testing.T) {
 	type insertLikeTestCase struct {
 		uid1 int
 		uid2 int
+		fid  int
 		err  error
 	}
 
@@ -631,11 +642,12 @@ func TestPostgresLikeRepository_InsertLike(t *testing.T) {
 		"id",
 		"user_id1",
 		"user_id2",
+		"filter_id",
 	}
 
-	query := `INSERT INTO likes(user_id1, user_id2) VALUES ($1, $2);`
+	query := `INSERT INTO likes(user_id1, user_id2, filter_id) VALUES ($1, $2, $3);`
 
-	var uid1, uid2 int
+	var uid1, uid2, fid int
 
 	err = faker.FakeData(&uid1)
 	require.NoError(t, err)
@@ -643,10 +655,14 @@ func TestPostgresLikeRepository_InsertLike(t *testing.T) {
 	err = faker.FakeData(&uid2)
 	require.NoError(t, err)
 
+	err = faker.FakeData(&fid)
+	require.NoError(t, err)
+
 	testCases := []insertLikeTestCase{
 		{
 			uid1: uid1,
 			uid2: uid2,
+			fid:  fid,
 			err:  nil,
 		},
 	}
@@ -655,12 +671,14 @@ func TestPostgresLikeRepository_InsertLike(t *testing.T) {
 		args := []driver.Value{
 			testCase.uid1,
 			testCase.uid2,
+			testCase.fid,
 		}
 
 		rows := []driver.Value{
 			1,
 			testCase.uid1,
 			testCase.uid2,
+			testCase.fid,
 		}
 
 		sqlmock.NewRows(columns).AddRow(rows...)
@@ -668,7 +686,7 @@ func TestPostgresLikeRepository_InsertLike(t *testing.T) {
 
 		repo := NewPostgresChatRepository(sqlxDB.DB)
 
-		err = repo.InsertLike(testCase.uid1, testCase.uid2)
+		err = repo.InsertLike(testCase.uid1, testCase.uid2, testCase.fid)
 		require.Equal(t, testCase.err, err)
 
 		err = mock.ExpectationsWereMet()
@@ -680,6 +698,7 @@ func TestPostgresLikeRepository_InsertDisLike(t *testing.T) {
 	type insertDisLikeTestCase struct {
 		uid1 int
 		uid2 int
+		fid  int
 		err  error
 	}
 
@@ -694,11 +713,12 @@ func TestPostgresLikeRepository_InsertDisLike(t *testing.T) {
 		"id",
 		"user_id1",
 		"user_id2",
+		"filter_id",
 	}
 
-	query := `INSERT INTO dislikes(user_id1, user_id2) VALUES ($1, $2);`
+	query := `INSERT INTO dislikes(user_id1, user_id2, filter_id) VALUES ($1, $2, $3);`
 
-	var uid1, uid2 int
+	var uid1, uid2, fid int
 
 	err = faker.FakeData(&uid1)
 	require.NoError(t, err)
@@ -706,10 +726,14 @@ func TestPostgresLikeRepository_InsertDisLike(t *testing.T) {
 	err = faker.FakeData(&uid2)
 	require.NoError(t, err)
 
+	err = faker.FakeData(&fid)
+	require.NoError(t, err)
+
 	testCases := []insertDisLikeTestCase{
 		{
 			uid1: uid1,
 			uid2: uid2,
+			fid:  fid,
 			err:  nil,
 		},
 	}
@@ -718,12 +742,14 @@ func TestPostgresLikeRepository_InsertDisLike(t *testing.T) {
 		args := []driver.Value{
 			testCase.uid1,
 			testCase.uid2,
+			testCase.fid,
 		}
 
 		rows := []driver.Value{
 			1,
 			testCase.uid1,
 			testCase.uid2,
+			testCase.fid,
 		}
 
 		sqlmock.NewRows(columns).AddRow(rows...)
@@ -731,7 +757,7 @@ func TestPostgresLikeRepository_InsertDisLike(t *testing.T) {
 
 		repo := NewPostgresChatRepository(sqlxDB.DB)
 
-		err = repo.InsertDislike(testCase.uid1, testCase.uid2)
+		err = repo.InsertDislike(testCase.uid1, testCase.uid2, testCase.fid)
 		require.Equal(t, testCase.err, err)
 
 		err = mock.ExpectationsWereMet()
@@ -743,6 +769,7 @@ func TestPostgresLikeRepository_InsertSuperlike(t *testing.T) {
 	type insertSuperlikeTestCase struct {
 		uid1 int
 		uid2 int
+		fid  int
 		err  error
 	}
 
@@ -757,16 +784,20 @@ func TestPostgresLikeRepository_InsertSuperlike(t *testing.T) {
 		"id",
 		"user_id1",
 		"user_id2",
+		"filter_id",
 	}
 
-	query := `INSERT INTO superlikes(user_id1, user_id2) VALUES ($1, $2);`
+	query := `INSERT INTO superlikes(user_id1, user_id2, filter_id) VALUES ($1, $2, $3);`
 
-	var uid1, uid2 int
+	var uid1, uid2, fid int
 
 	err = faker.FakeData(&uid1)
 	require.NoError(t, err)
 
 	err = faker.FakeData(&uid2)
+	require.NoError(t, err)
+
+	err = faker.FakeData(&fid)
 	require.NoError(t, err)
 
 	testCases := []insertSuperlikeTestCase{
@@ -781,12 +812,14 @@ func TestPostgresLikeRepository_InsertSuperlike(t *testing.T) {
 		args := []driver.Value{
 			testCase.uid1,
 			testCase.uid2,
+			testCase.fid,
 		}
 
 		rows := []driver.Value{
 			1,
 			testCase.uid1,
 			testCase.uid2,
+			testCase.fid,
 		}
 
 		sqlmock.NewRows(columns).AddRow(rows...)
@@ -794,7 +827,7 @@ func TestPostgresLikeRepository_InsertSuperlike(t *testing.T) {
 
 		repo := NewPostgresChatRepository(sqlxDB.DB)
 
-		err = repo.InsertSuperlike(testCase.uid1, testCase.uid2)
+		err = repo.InsertSuperlike(testCase.uid1, testCase.uid2, testCase.fid)
 		require.Equal(t, testCase.err, err)
 
 		err = mock.ExpectationsWereMet()

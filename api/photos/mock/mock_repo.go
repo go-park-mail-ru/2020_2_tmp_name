@@ -69,6 +69,19 @@ func (_mr *MockPhotoRepositoryMockRecorder) SelectImages(arg0 interface{}) *gomo
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "SelectImages", reflect.TypeOf((*MockPhotoRepository)(nil).SelectImages), arg0)
 }
 
+// SelectPhotoWithMask mocks base method
+func (_m *MockPhotoRepository) SelectPhotoWithMask(_param0 string) ([]string, error) {
+	ret := _m.ctrl.Call(_m, "SelectPhotoWithMask", _param0)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SelectPhotoWithMask indicates an expected call of SelectPhotoWithMask
+func (_mr *MockPhotoRepositoryMockRecorder) SelectPhotoWithMask(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "SelectPhotoWithMask", reflect.TypeOf((*MockPhotoRepository)(nil).SelectPhotoWithMask), arg0)
+}
+
 // SelectUserFeed mocks base method
 func (_m *MockPhotoRepository) SelectUserFeed(_param0 string) (models.UserFeed, error) {
 	ret := _m.ctrl.Call(_m, "SelectUserFeed", _param0)
