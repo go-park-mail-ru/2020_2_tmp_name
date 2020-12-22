@@ -26,6 +26,7 @@ build-and-run: build-docker
 ## run: Build and run docker with new changes
 run:
 	docker rm -vf $$(docker ps -a -q) || true
+	sudo rm -rf postgres_data/
 	docker build -t dependencies -f ${DOCKER_DIR}/builder.Dockerfile .
 	docker build -t main_service -f ${DOCKER_DIR}/main.Dockerfile .
 	docker build -t auth_service -f ${DOCKER_DIR}/auth.Dockerfile .

@@ -12,6 +12,7 @@ import (
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -251,11 +252,17 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 		clientsMe := make(map[string]*Client)
 		clientsPartner := make(map[string]*Client)
 
+		mu := &sync.Mutex{}
+
 		for _, client := range clients {
 			if client.ID == user.ID {
+				mu.Lock()
 				clientsMe[client.Session] = client
+				mu.Unlock()
 			} else if client.ID == chatData.Partner.ID {
+				mu.Lock()
 				clientsPartner[client.Session] = client
+				mu.Unlock()
 			}
 		}
 
@@ -406,13 +413,16 @@ func (c *Client) readPump(ch *ChatHandlerType, user models.User) {
 			return
 		}
 
+		mu := &sync.Mutex{}
 		sessions, err := ch.ChUsecase.Sessions(chatData.Partner.ID)
 		clients := ch.Hub.Clients
 		for _, session := range sessions {
+			mu.Lock()
 			client, ok := clients[session]
 			if ok {
 				client.Send <- data
 			}
+			mu.Unlock()
 		}
 
 	}
