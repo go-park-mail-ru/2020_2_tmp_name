@@ -3,7 +3,6 @@ module park_2020/2020_2_tmp_name
 go 1.14
 
 require (
-	github.com/BurntSushi/toml v0.3.1
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/go-sql-driver/mysql v1.5.0 // indirect

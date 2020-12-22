@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc"
 
 	"park_2020/2020_2_tmp_name/middleware"
-	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -52,8 +51,6 @@ type application struct {
 	serv        *mux.Router
 }
 
-var conf models.Config
-
 func init() {
 	err := godotenv.Load("envs/postgres.env")
 	if err != nil {
@@ -61,7 +58,7 @@ func init() {
 	}
 }
 
-func DBConnection(conf *models.Config) *sql.DB {
+func DBConnection() *sql.DB {
 	connString := fmt.Sprintf("host=%v user=%v password=%v dbname=%v sslmode=disable",
 		os.Getenv("PostgresHost"),
 		os.Getenv("PostgresUser"),
@@ -89,7 +86,7 @@ func (app *application) initServer() {
 	originsOk := handlers.AllowedOrigins([]string{"https://mi-ami.ru"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE"})
 
-	dbConn := DBConnection(&conf)
+	dbConn := DBConnection()
 
 	router := mux.NewRouter()
 
@@ -171,7 +168,7 @@ func (app *application) initServer() {
 	}
 }
 
-func newApplication(conf models.Config) *application {
+func newApplication() *application {
 	return &application{
 		servicePort: 8080,
 		serv:        mux.NewRouter().StrictSlash(true),
@@ -179,7 +176,6 @@ func newApplication(conf models.Config) *application {
 }
 
 func main() {
-	app := newApplication(conf)
+	app := newApplication()
 	app.initServer()
-
 }
