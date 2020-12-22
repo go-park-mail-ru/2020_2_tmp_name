@@ -33,14 +33,9 @@ run:
 	
 	docker-compose up --build --no-deps
 
-## test-coverage: get final code coverage
-coverage:
-	go test -covermode=atomic -coverpkg=./... -coverprofile=cover ./...
-	rm -rf cover
-
 ## coverage-html: generates HTML file with test coverage
-test-html:
-	go test -covermode=atomic -coverpkg=./... -coverprofile=cover ./...
+tests:
+	go test ./... -coverprofile cover; go tool cover -func cover
 	go tool cover -html=cover
 	rm -rf cover
 
