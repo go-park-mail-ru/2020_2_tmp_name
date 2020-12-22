@@ -35,10 +35,12 @@ services:
   postgres:
     image: postgres:latest
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./postgres_data:/var/lib/postgresql/data
       - $PWD/docker/migrations/up.sql:/docker-entrypoint-initdb.d/init.sql
     env_file:
       - envs/postgres.env
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "trust"
     ports:
       - "5432:5432"
     restart: on-failure
