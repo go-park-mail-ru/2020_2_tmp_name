@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/photos"
 	"park_2020/2020_2_tmp_name/models"
@@ -70,10 +69,8 @@ func (p *photoUsecase) FindPhotoWithMask(path string) ([]string, error) {
 		}
 	}
 
-	fmt.Println(path)
 	photos, err := p.photoRepo.SelectPhotoWithMask(path)
-	fmt.Println(photos)
-	
+
 	return photos, err
 }
 
@@ -89,14 +86,12 @@ func (p *photoUsecase) FindPhotoWithoutMask(path string) (string, error) {
 		}
 	}
 
-	fmt.Println(photoName)
-
 	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars/"
 
 	files, _ := filepath.Glob(photoPath + photoName + "*")
 
 	for _, file := range files {
-		if !strings.Contains(file, photoPath + photoName + "_") {
+		if !strings.Contains(file, photoPath+photoName+"_") {
 			return file, nil
 		}
 	}

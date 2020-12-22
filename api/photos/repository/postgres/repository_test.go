@@ -304,3 +304,76 @@ func TestPostgresPhotoRepository_DeletePhoto(t *testing.T) {
 		require.NoError(t, err, "unfulfilled expectations: %s", err)
 	}
 }
+
+func TestPostgresPhotoRepository_SelectPhotosWithMask(t *testing.T) {
+	type insertPhotoTestCase struct {
+		uid  int
+		path []string
+		link string
+		err  error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"path",
+	}
+
+	query := `SELECT path FROM photo WHERE path LIKE '$1_%';`
+
+	var uid int
+	err = faker.FakeData(&uid)
+	require.NoError(t, err)
+
+	var path []string
+	err = faker.FakeData(&path)
+	require.NoError(t, err)
+
+	var link string
+	err = faker.FakeData(&link)
+	require.NoError(t, err)
+
+	testCases := []insertPhotoTestCase{
+		{
+			uid:  uid,
+			path: path,
+			link: link,
+			err:  sql.ErrNoRows,
+		},
+		{
+			uid:  uid,
+			path: path,
+			link: link,
+			err:  nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		if testCase.err != nil {
+			mock.ExpectQuery(query).WithArgs(testCase.link).WillReturnError(testCase.err)
+		} else {
+			rows := sqlmock.NewRows(columns)
+			for _, image := range testCase.path {
+				rows.AddRow(image)
+			}
+			mock.ExpectQuery(query).WithArgs(testCase.link).WillReturnRows(rows)
+		}
+
+		repo := NewPostgresPhotoRepository(sqlxDB.DB)
+
+		images, err := repo.SelectPhotoWithMask(testCase.link)
+		t.Log(images)
+		require.Equal(t, testCase.err, err)
+		if err == nil {
+			require.Equal(t, testCase.path, images)
+		}
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}

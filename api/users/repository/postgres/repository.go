@@ -22,7 +22,6 @@ func (p *postgresUserRepository) CheckUser(telephone string) bool {
 	if err != nil {
 		return false
 	}
-
 	return count > 0
 }
 

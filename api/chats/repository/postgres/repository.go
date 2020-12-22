@@ -276,7 +276,7 @@ func (p *postgresChatRepository) InsertDislike(uid1, uid2, fid int) error {
 
 func (p *postgresChatRepository) CheckLike(uid1, uid2 int) bool {
 	var count int
-	err := p.Conn.QueryRow(`SELECT COUNT(id) FROM likes WHERE user_id=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	err := p.Conn.QueryRow(`SELECT COUNT(id) FROM likes WHERE user_id1=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
 	if err != nil {
 		return false
 	}

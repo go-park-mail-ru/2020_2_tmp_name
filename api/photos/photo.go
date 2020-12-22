@@ -20,5 +20,5 @@ type PhotoRepository interface {
 	SelectImages(uid int) ([]string, error)                   // Tested
 	InsertPhoto(path string, uid int) error                   // Tested
 	DeletePhoto(path string, uid int) error                   // Tested
-	SelectPhotoWithMask(path string) ([]string, error)
+	SelectPhotoWithMask(path string) ([]string, error)        // Tested
 }

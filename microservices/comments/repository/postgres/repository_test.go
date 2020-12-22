@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"database/sql/driver"
 	"park_2020/2020_2_tmp_name/models"
@@ -332,6 +333,55 @@ func TestPostgresCommentRepository_SelectImages(t *testing.T) {
 		if err == nil {
 			require.Equal(t, testCase.path, images)
 		}
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresCommentRepository_SelectComments(t *testing.T) {
+	type insertPhotoTestCase struct {
+		uid1 int
+		uid2 int
+		text string
+		time time.Time
+		err  error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	query := `SELECT user_id1, text, time_delivery FROM comments WHERE user_id2=$1;`
+
+	var uid1, uid2 int
+	err = faker.FakeData(&uid1)
+	require.NoError(t, err)
+	err = faker.FakeData(&uid2)
+	require.NoError(t, err)
+
+	var text string
+	err = faker.FakeData(&text)
+	require.NoError(t, err)
+
+	testCases := []insertPhotoTestCase{
+		{
+			uid1: uid1,
+			uid2: uid2,
+			text: text,
+			err:  sql.ErrNoRows,
+		},
+	}
+
+	for _, testCase := range testCases {
+		mock.ExpectQuery(query).WithArgs(testCase.uid2).WillReturnError(testCase.err)
+
+		repo := NewPostgresCommentRepository(sqlxDB.DB)
+		_, err := repo.SelectComments(testCase.uid2)
+		require.Equal(t, testCase.err, err)
 
 		err = mock.ExpectationsWereMet()
 		require.NoError(t, err, "unfulfilled expectations: %s", err)

@@ -1036,3 +1036,192 @@ func TestPostgresChatRepository_SelectChatID(t *testing.T) {
 		require.NoError(t, err, "unfulfilled expectations: %s\n%s", err, msg)
 	}
 }
+
+func TestPostgresChatRepository_CheckUserBySession(t *testing.T) {
+	type checkUserTestCase struct {
+		telephone string
+		result    int
+		err       error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"telephone",
+	}
+
+	query := `SELECT value FROM sessions WHERE key=$1;`
+
+	var telephone string
+	err = faker.FakeData(&telephone)
+	require.NoError(t, err)
+
+	testCases := []checkUserTestCase{
+		{
+			telephone: telephone,
+			result:    1,
+			err:       sql.ErrNoRows,
+		},
+		{
+			telephone: telephone,
+			result:    1,
+			err:       nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		data := []driver.Value{
+			testCase.telephone,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			mock.ExpectQuery(query).WithArgs(telephone).WillReturnRows(rows)
+		} else {
+			mock.ExpectQuery(query).WithArgs(telephone).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresChatRepository(sqlxDB.DB)
+		repo.CheckUserBySession(telephone)
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresChatRepository_CheckLike(t *testing.T) {
+	type checkLikeTestCase struct {
+		uid1 int
+		uid2 int
+		id   int
+		err  error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"user_id1",
+		"user_id2",
+	}
+
+	query := `SELECT COUNT(id) FROM likes WHERE user_id1=$1 AND user_id2 = $2;`
+
+	var uid1, uid2, id int
+	err = faker.FakeData(&uid1)
+	require.NoError(t, err)
+	err = faker.FakeData(&uid2)
+	require.NoError(t, err)
+	err = faker.FakeData(&id)
+	require.NoError(t, err)
+
+	testCases := []checkLikeTestCase{
+		{
+			uid1: uid1,
+			uid2: uid2,
+			id:   id,
+			err:  sql.ErrNoRows,
+		},
+		{
+			uid1: uid1,
+			uid2: uid2,
+			id:   id,
+			err:  nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		data := []driver.Value{
+			testCase.uid1,
+			testCase.uid2,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			mock.ExpectQuery(query).WithArgs(uid1, uid2).WillReturnRows(rows)
+		} else {
+			mock.ExpectQuery(query).WithArgs(uid1, uid2).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresChatRepository(sqlxDB.DB)
+		repo.CheckLike(uid1, uid2)
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresChatRepository_CheckDisike(t *testing.T) {
+	type checkLikeTestCase struct {
+		uid1 int
+		uid2 int
+		id   int
+		err  error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"user_id1",
+		"user_id2",
+	}
+
+	query := `SELECT COUNT(id) FROM dislikes WHERE user_id1=$1 AND user_id2 = $2;`
+
+	var uid1, uid2, id int
+	err = faker.FakeData(&uid1)
+	require.NoError(t, err)
+	err = faker.FakeData(&uid2)
+	require.NoError(t, err)
+	err = faker.FakeData(&id)
+	require.NoError(t, err)
+
+	testCases := []checkLikeTestCase{
+		{
+			uid1: uid1,
+			uid2: uid2,
+			id:   id,
+			err:  sql.ErrNoRows,
+		},
+		{
+			uid1: uid1,
+			uid2: uid2,
+			id:   id,
+			err:  nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		data := []driver.Value{
+			testCase.uid1,
+			testCase.uid2,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			mock.ExpectQuery(query).WithArgs(uid1, uid2).WillReturnRows(rows)
+		} else {
+			mock.ExpectQuery(query).WithArgs(uid1, uid2).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresChatRepository(sqlxDB.DB)
+		repo.CheckDislike(uid1, uid2)
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}
