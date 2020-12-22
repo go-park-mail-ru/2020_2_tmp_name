@@ -4,11 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 
 	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 
 	_ "github.com/lib/pq"
 
@@ -28,15 +30,18 @@ type application struct {
 var conf models.Config
 
 func init() {
-	models.LoadConfig(&conf)
+	err := godotenv.Load("envs/postgres.env")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func DBConnection(conf *models.Config) *sql.DB {
 	connString := fmt.Sprintf("host=%v user=%v password=%v dbname=%v sslmode=disable",
-		conf.SQLDataBase.Server,
-		conf.SQLDataBase.UserID,
-		conf.SQLDataBase.Password,
-		conf.SQLDataBase.Database,
+		os.Getenv("PostgresHost"),
+		os.Getenv("PostgresUser"),
+		os.Getenv("PostgresPassword"),
+		os.Getenv("PostgresDBName"),
 	)
 
 	db, err := sql.Open("postgres", connString)
@@ -87,5 +92,6 @@ func main() {
 	ar := _authRepo.NewPostgresAuthRepository(dbConn)
 	au := _authUcase.NewAuthUsecase(ar)
 
+	fmt.Println("Starting server at: 8081")
 	grpcServer.StartAuthGRPCServer(au, "localhost:8081")
 }
