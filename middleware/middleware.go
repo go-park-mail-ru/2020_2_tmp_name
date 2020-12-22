@@ -2,21 +2,29 @@ package middleware
 
 import (
 	"fmt"
-	"log"
 	"net/http"
-	"strconv"
 	"time"
-
-	metrics "park_2020/2020_2_tmp_name/prometheus"
-
-	uuid "github.com/nu7hatch/gouuid"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+
+	domain "park_2020/2020_2_tmp_name/microservices/authorization"
 )
 
 type AccessLogger struct {
 	LogrusLogger *logrus.Entry
+}
+
+const SessionCookieName = "authCookie"
+
+type SessionMiddleware struct {
+	sessionRepo domain.UserRepository
+}
+
+func NewSessionMiddleware(u domain.UserRepository) *SessionMiddleware {
+	return &SessionMiddleware{
+		sessionRepo: u,
+	}
 }
 
 func MyCORSMethodMiddleware(_ *mux.Router) mux.MiddlewareFunc {
@@ -50,57 +58,25 @@ func (ac *AccessLogger) AccessLogMiddleware(_ *mux.Router) mux.MiddlewareFunc {
 	}
 }
 
-func NewLoggingMiddleware(metrics *metrics.PromMetrics) mux.MiddlewareFunc {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			msg := fmt.Sprintf("URL: %s, METHOD: %s", r.RequestURI, r.Method)
-			log.Println(msg)
+// func (s *SessionMiddleware) SessionMiddleware(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		if len(r.Cookies()) != 0 {
+// 			telephone, err := s.sessionRepo.SelectUserBySession(r.Cookies()[0].Value)
+// 			if err != nil {
+// 				return
+// 			}
 
-			reqTime := time.Now()
-			next.ServeHTTP(w, r)
-			respTime := time.Since(reqTime)
-			if r.URL.Path != "/metrics" {
-				metrics.Hits.WithLabelValues(strconv.Itoa(http.StatusOK), r.URL.String(), r.Method).Inc()
-				metrics.Timings.WithLabelValues(
-					strconv.Itoa(http.StatusOK), r.URL.String(), r.Method).Observe(respTime.Seconds())
-			}
-		})
-	}
-}
+// 			if found := s.sessionRepo.CheckUserBySession(r.Cookies()[0].Value); !found {
+// 				err = s.sessionRepo.InsertSession(r.Cookies()[0].Value, telephone)
+// 				if err != nil {
+// 					return
+// 				}
+// 			}
 
-func generateCsrfLogic(w http.ResponseWriter) {
-	csrf, err := uuid.NewV4()
-	if err != nil {
+// 			r = r.WithContext(context.WithValue(r.Context(), "session", r.Cookies()[0].Value))
+// 		}
 
-		return
-	}
-	timeDelta := time.Now().Add(time.Hour * 24 * 30)
-	cookie := &http.Cookie{Name: "csrf", Value: csrf.String(), Path: "/", HttpOnly: true, Expires: timeDelta}
+// 		next.ServeHTTP(w, r)
 
-	http.SetCookie(w, cookie)
-	w.Header().Set("csrf", csrf.String())
-
-}
-
-func SetCSRF(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			generateCsrfLogic(w)
-			next.ServeHTTP(w, r)
-		})
-}
-
-func CheckCSRF(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			csrf := r.Header.Get("X-Csrf-Token")
-			csrfCookie, err := r.Cookie("csrf")
-
-			if err != nil || csrf == "" || csrfCookie.Value == "" || csrfCookie.Value != csrf {
-				return
-			}
-			generateCsrfLogic(w)
-			next.ServeHTTP(w, r)
-		})
-
-}
+// 	})
+// }

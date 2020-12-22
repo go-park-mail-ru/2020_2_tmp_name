@@ -27,7 +27,6 @@ message User {
     string job = 11;
     string education = 12;
     string aboutMe = 13;
-    string target = 14;
 }
 
 message Nothing {

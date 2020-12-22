@@ -3,20 +3,14 @@ package models
 import "time"
 
 type LoginData struct {
-	Telephone  string `json:"telephone"`
-	Password   string `json:"password"`
-	IsLoggedIn bool   `json:"is_logged_in"`
-}
-
-type HasTelephone struct {
-	Telephone bool `json:"telephone"`
+	Telephone string `json:"telephone"`
+	Password  string `json:"password"`
 }
 
 type Photo struct {
 	ID        int    `json:"-"`
 	Path      string `json:"linkImages"`
 	Telephone string `json:"telephone"`
-	Mask      string `json:"mask"`
 }
 
 type Comment struct {
@@ -48,17 +42,15 @@ type CommentById struct {
 }
 
 type Like struct {
-	ID     int    `json:"-"`
-	Uid1   int    `json:"-"`
-	Uid2   int    `json:"user_id2"`
-	Target string `json:"filter"`
+	ID   int `json:"-"`
+	Uid1 int `json:"-"`
+	Uid2 int `json:"user_id2"`
 }
 
 type Dislike struct {
-	ID     int    `json:"-"`
-	Uid1   int    `json:"-"`
-	Uid2   int    `json:"user_id2"`
-	Target string `json:"filter"`
+	ID   int `json:"-"`
+	Uid1 int `json:"-"`
+	Uid2 int `json:"user_id2"`
 }
 
 type Chat struct {
@@ -66,14 +58,12 @@ type Chat struct {
 	Uid1    int    `json:"user_id1"`
 	Uid2    int    `json:"user_id2"`
 	LastMsg string `json:"last_msg"`
-	Target  string `json:"filter"`
 }
 
 type ChatData struct {
 	ID       int      `json:"id"`
 	Partner  UserFeed `json:"partner"`
 	Messages []Msg    `json:"messages"`
-	Target   string   `json:"filter"`
 }
 
 type Msg struct {
@@ -112,13 +102,7 @@ type Error struct {
 }
 
 type Superlike struct {
-	ID     int    `json:"-"`
-	Uid1   int    `json:"-"`
-	Uid2   int    `json:"user_id2"`
-	Target string `json:"filter"`
-}
-
-type Filter struct {
-	ID     int    `json:"-"`
-	Target string `json:"filter"`
+	ID   int `json:"-"`
+	Uid1 int `json:"-"`
+	Uid2 int `json:"user_id2"`
 }

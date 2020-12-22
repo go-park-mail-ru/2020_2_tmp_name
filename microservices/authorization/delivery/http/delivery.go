@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	domain "park_2020/2020_2_tmp_name/microservices/authorization"
-	_authClientGRPC "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
 
@@ -13,15 +12,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type AuthHandlerType struct {
-	AUsecase   domain.AuthUsecase
-	AuthClient _authClientGRPC.AuthClientInterface
+type UserHandlerType struct {
+	UUsecase domain.UserUsecase
 }
 
-func NewAuthHandler(r *mux.Router, us domain.AuthUsecase, client _authClientGRPC.AuthClientInterface) {
-	handler := &AuthHandlerType{
-		AUsecase:   us,
-		AuthClient: client,
+func NewUserHandler(r *mux.Router, us domain.UserUsecase) {
+	handler := &UserHandlerType{
+		UUsecase: us,
 	}
 
 	r.HandleFunc("/api/v1/login", handler.LoginHandler).Methods(http.MethodGet, http.MethodPost)
@@ -36,7 +33,7 @@ func JSONError(message string) []byte {
 	return jsonError
 }
 
-func (a *AuthHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
+func (u *UserHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	loginData := models.LoginData{}
 	err := json.NewDecoder(r.Body).Decode(&loginData)
 	if err != nil {
@@ -46,13 +43,7 @@ func (a *AuthHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !loginData.IsLoggedIn {
-		logrus.Error("have not firebase cookie")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	sidString, err := a.AuthClient.Login(context.Background(), &loginData)
+	sidString, err := u.UUsecase.Login(context.Background(), loginData)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -80,7 +71,7 @@ func (a *AuthHandlerType) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func (a *AuthHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+func (u *UserHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	session, err := r.Cookie("session_id")
 	if err == http.ErrNoCookie {
 		logrus.Error(err)
@@ -89,7 +80,7 @@ func (a *AuthHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = a.AuthClient.Logout(context.Background(), session.Value)
+	err = u.UUsecase.Logout(context.Background(), session.Value)
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -106,6 +97,32 @@ func (a *AuthHandlerType) LogoutHandler(w http.ResponseWriter, r *http.Request) 
 
 	session.Expires = time.Now().AddDate(0, 0, -1)
 	http.SetCookie(w, session)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (u *UserHandlerType) CheckSessionHandler(w http.ResponseWriter, r *http.Request) {
+	if len(r.Cookies()) == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(JSONError("User not authorized"))
+		return
+	}
+
+	user, err := u.UUsecase.CheckSession(context.Background(), r.Cookies()[0].Value)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	body, err := json.Marshal(user)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)

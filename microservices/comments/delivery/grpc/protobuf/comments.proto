@@ -45,7 +45,6 @@ message User{
   string Job = 11;
   string Education = 12;
   string AboutMe = 13;
-  string target = 14;
 }
 
 message UserFeed{
@@ -57,7 +56,6 @@ message UserFeed{
   string Education = 6;
   string AboutMe = 7;
   bool IsSuperLike = 8;
-  string target = 9;
 }
 
 message CommentId{

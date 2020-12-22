@@ -14,18 +14,29 @@ func NewPostgresPhotoRepository(Conn *sql.DB) domain.PhotoRepository {
 	return &postgresPhotoRepository{Conn}
 }
 
-func (p *postgresPhotoRepository) SelectUserFeed(telephone string) (models.UserFeed, error) {
-	var u models.UserFeed
-	var tid int
-	row := p.Conn.QueryRow(`SELECT id, name, date_birth, education, job, about_me, filter_id FROM users
+func (p *postgresPhotoRepository) SelectUser(telephone string) (models.User, error) {
+	var u models.User
+	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
 						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe, &tid)
+	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe)
 	if err != nil {
 		return u, err
 	}
 
 	u.LinkImages, err = p.SelectImages(u.ID)
-	u.Target = models.IDToTarget(tid)
+	return u, err
+}
+
+func (p *postgresPhotoRepository) SelectUserFeed(telephone string) (models.UserFeed, error) {
+	var u models.UserFeed
+	row := p.Conn.QueryRow(`SELECT id, name, date_birth, education, job, about_me FROM users
+						WHERE  telephone=$1;`, telephone)
+	err := row.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe)
+	if err != nil {
+		return u, err
+	}
+
+	u.LinkImages, err = p.SelectImages(u.ID)
 	return u, err
 }
 
@@ -56,4 +67,10 @@ func (p *postgresPhotoRepository) InsertPhoto(path string, uid int) error {
 func (p *postgresPhotoRepository) DeletePhoto(path string, uid int) error {
 	_, err := p.Conn.Exec(`DELETE FROM photo WHERE path=$1 AND user_id=$2;`, path, uid)
 	return err
+}
+
+func (p *postgresPhotoRepository) CheckUserBySession(sid string) string {
+	var count string
+	p.Conn.QueryRow(`SELECT value FROM sessions WHERE key=$1;`, sid).Scan(&count)
+	return count
 }

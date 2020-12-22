@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	domain "park_2020/2020_2_tmp_name/api/chats"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
@@ -79,6 +78,15 @@ func (ch *chatUsecase) Partner(user models.User, chid int) (models.UserFeed, err
 	return partner, nil
 }
 
+func (ch *chatUsecase) User(cookie string) (models.User, error) {
+	telephone := ch.chatRepo.CheckUserBySession(cookie)
+	user, err := ch.chatRepo.SelectUser(telephone)
+	if err != nil {
+		return user, models.ErrNotFound
+	}
+	return user, nil
+}
+
 func (ch *chatUsecase) UserFeed(cookie string) (models.UserFeed, error) {
 	telephone := ch.chatRepo.CheckUserBySession(cookie)
 	user, err := ch.chatRepo.SelectUserFeed(telephone)
@@ -100,7 +108,7 @@ func (ch *chatUsecase) Like(user models.User, like models.Like) error {
 		}
 	}
 
-	err := ch.chatRepo.InsertLike(user.ID, like.Uid2, models.TargetToID(user.Target))
+	err := ch.chatRepo.InsertLike(user.ID, like.Uid2)
 	if err != nil {
 		return models.ErrInternalServerError
 	}
@@ -109,11 +117,9 @@ func (ch *chatUsecase) Like(user models.User, like models.Like) error {
 
 func (ch *chatUsecase) MatchUser(user models.User, like models.Like) (models.Chat, bool, error) {
 	var chat models.Chat
-	if ch.chatRepo.Match(user.ID, like.Uid2, models.TargetToID(user.Target)) {
+	if ch.chatRepo.Match(user.ID, like.Uid2) {
 		chat.Uid1 = user.ID
 		chat.Uid2 = like.Uid2
-		chat.Target = user.Target
-		fmt.Println(chat)
 		if !ch.chatRepo.CheckChat(chat) {
 			err := ch.chatRepo.InsertChat(chat)
 			if err != nil {
@@ -142,7 +148,7 @@ func (ch *chatUsecase) Dislike(user models.User, dislike models.Dislike) error {
 		}
 	}
 
-	err := ch.chatRepo.InsertDislike(user.ID, dislike.Uid2, models.TargetToID(user.Target))
+	err := ch.chatRepo.InsertDislike(user.ID, dislike.Uid2)
 	if err != nil {
 		return models.ErrInternalServerError
 	}
@@ -157,13 +163,13 @@ func (ch *chatUsecase) Superlike(user models.User, superlike models.Superlike) e
 		}
 	}
 
-	err := ch.chatRepo.InsertSuperlike(user.ID, superlike.Uid2, models.TargetToID(user.Target))
+	err := ch.chatRepo.InsertSuperlike(user.ID, superlike.Uid2)
 	if err != nil {
 		return models.ErrInternalServerError
 	}
 
 	if !ch.chatRepo.CheckLike(user.ID, superlike.Uid2) {
-		err := ch.chatRepo.InsertLike(user.ID, superlike.Uid2, models.TargetToID(user.Target))
+		err := ch.chatRepo.InsertLike(user.ID, superlike.Uid2)
 		if err != nil {
 			return models.ErrInternalServerError
 		}

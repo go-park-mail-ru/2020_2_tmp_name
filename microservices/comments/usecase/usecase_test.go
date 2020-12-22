@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"context"
 	domain "park_2020/2020_2_tmp_name/microservices/comments"
 	"park_2020/2020_2_tmp_name/microservices/comments/mock"
 	"park_2020/2020_2_tmp_name/models"
@@ -51,7 +50,7 @@ func TestCommentUsecase_CommentSuccess(t *testing.T) {
 		commentRepo: mock,
 	}
 
-	err := cs.Comment(context.Background(), user, comment)
+	err := cs.Comment(user, comment)
 
 	require.NoError(t, err)
 	require.Equal(t, nil, err)
@@ -86,7 +85,7 @@ func TestCommentUsecase_CommentFail(t *testing.T) {
 		commentRepo: mock,
 	}
 
-	err := cs.Comment(context.Background(), user, comment)
+	err := cs.Comment(user, comment)
 	require.Equal(t, models.ErrInternalServerError, err)
 
 }
@@ -107,7 +106,7 @@ func TestCommentUsecase_CommentsByIDSuccess(t *testing.T) {
 		commentRepo: mock,
 	}
 
-	data, err := cs.CommentsByID(context.Background(), id)
+	data, err := cs.CommentsByID(id)
 
 	require.NoError(t, err)
 	require.Equal(t, Data, data)
@@ -129,7 +128,68 @@ func TestCommentUsecase_CommentsByIDFail(t *testing.T) {
 		commentRepo: mock,
 	}
 
-	_, err := cs.CommentsByID(context.Background(), id)
+	_, err := cs.CommentsByID(id)
 
 	require.Equal(t, models.ErrNotFound, err)
+}
+
+func TestCommentUsecase_UserSuccess(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	telephone := "(944) 546 98 24"
+	sid := "something-like-this"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockCommentRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Return(telephone)
+	mock.EXPECT().SelectUser(telephone).Return(user, nil)
+
+	chs := commentUsecase{
+		commentRepo: mock,
+	}
+
+	result, err := chs.User(sid)
+
+	require.NoError(t, err)
+	require.Equal(t, result, user)
+}
+
+func TestCommentUsecase_UserFail(t *testing.T) {
+	user := models.User{
+		ID:         0,
+		Name:       "Misha",
+		DateBirth:  0,
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	telephone := "(944) 546 98 24"
+	sid := "something-like-this"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockCommentRepository(ctrl)
+	mock.EXPECT().CheckUserBySession(sid).Return(telephone)
+	mock.EXPECT().SelectUser(telephone).Return(user, models.ErrNotFound)
+
+	chs := commentUsecase{
+		commentRepo: mock,
+	}
+
+	_, err := chs.User(sid)
+
+	require.Equal(t, err, models.ErrNotFound)
 }
