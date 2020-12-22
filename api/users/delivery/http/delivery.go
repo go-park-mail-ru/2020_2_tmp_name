@@ -3,40 +3,45 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/users"
 	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
-	auth "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/protobuf"
+	faceClient "park_2020/2020_2_tmp_name/microservices/face_features/delivery/grpc/client"
+	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
 type UserHandlerType struct {
 	UUsecase   domain.UserUsecase
-	AuthClient *authClient.AuthClient
+	AuthClient authClient.AuthClientInterface
+	FaceClient *faceClient.FaceClient
 }
 
-func NewUserHandler(r *mux.Router, us domain.UserUsecase, ac *authClient.AuthClient) {
+func NewUserHandler(r *mux.Router, us domain.UserUsecase, ac authClient.AuthClientInterface, fc *faceClient.FaceClient) {
 	handler := &UserHandlerType{
 		UUsecase:   us,
 		AuthClient: ac,
+		FaceClient: fc,
 	}
 
 	r.HandleFunc("/health", handler.HealthHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/signup", handler.SignupHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/settings", handler.SettingsHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/me", handler.MeHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/feed", handler.FeedHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/user/{user_id}", handler.UserIDHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/is_premium", handler.IsPremiumHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/telephone", handler.TelephoneHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/upload", handler.UploadAvatarHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/signup", middleware.CheckCSRF(handler.SignupHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/settings", middleware.CheckCSRF(handler.SettingsHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/me", middleware.SetCSRF(handler.MeHandler)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/feed", middleware.SetCSRF(handler.FeedHandler)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/user/{user_id}", middleware.SetCSRF(handler.UserIDHandler)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/is_premium", middleware.SetCSRF(handler.IsPremiumHandler)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/telephone", middleware.CheckCSRF(handler.TelephoneHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/upload", middleware.CheckCSRF(handler.UploadAvatarHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/get_premium", handler.GetPremiumHandler).Methods(http.MethodPost)
 }
 
@@ -83,14 +88,14 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars"
 	os.Chdir(photoPath)
 
-	photoID, err := u.UUsecase.UploadAvatar()
+	photoID, err := uuid.NewRandom()
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
 	}
 
-	f, err := os.OpenFile(photoID.String(), os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(photoID.String() + ".jpg", os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -101,7 +106,7 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 
 	os.Chdir(str)
 
-	body, err := json.Marshal("https://mi-ami.ru/static/avatars/" + photoID.String())
+	body, err := json.Marshal("https://mi-ami.ru/static/avatars/" + photoID.String() + ".jpg")
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -113,6 +118,27 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	photoModel := &models.Photo{
+		Path: photoPath + "/" + photoID.String() + ".jpg",
+		Mask: "",
+	}
+
+	haveFace, err := u.FaceClient.HaveFace(context.Background(), photoModel)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	if !haveFace {
+		err = errors.New("no face on photo")
+		logrus.Error(err.Error())
+		w.WriteHeader(http.StatusForbidden)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -160,13 +186,7 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := u.UUsecase.User(r.Cookies()[0].Value)
+	user, err := u.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -193,14 +213,9 @@ func (u *UserHandlerType) SettingsHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (u *UserHandlerType) IsPremiumHandler(w http.ResponseWriter, r *http.Request) {
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := u.UUsecase.User(r.Cookies()[0].Value)
+	user, err := u.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
+		logrus.Error(err)
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
@@ -222,27 +237,12 @@ func (u *UserHandlerType) IsPremiumHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (u *UserHandlerType) MeHandler(w http.ResponseWriter, r *http.Request) {
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	var in auth.Session
-	in.Sess = r.Cookies()[0].Value
-	user, err := u.AuthClient.CheckSession(context.Background(), &in)
+	user, err := u.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
 	}
-
-	// user, err := u.UUsecase.Me(r.Cookies()[0].Value)
-	// if err != nil {
-	// 	w.WriteHeader(models.GetStatusCode(err))
-	// 	w.Write(JSONError(err.Error()))
-	// 	return
-	// }
 
 	body, err := json.Marshal(user)
 	if err != nil {
@@ -257,13 +257,7 @@ func (u *UserHandlerType) MeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserHandlerType) FeedHandler(w http.ResponseWriter, r *http.Request) {
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := u.UUsecase.User(r.Cookies()[0].Value)
+	user, err := u.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -330,13 +324,20 @@ func (u *UserHandlerType) TelephoneHandler(w http.ResponseWriter, r *http.Reques
 
 	hasUser := u.UUsecase.Telephone(phoneData.Telephone)
 
-	body, err := json.Marshal(hasUser)
+
+	result := models.HasTelephone{
+		Telephone: hasUser,
+	}
+
+	body, err := json.Marshal(result)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
 	}
+
+	logrus.Println(body)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
@@ -348,7 +349,6 @@ func (u *UserHandlerType) GetPremiumHandler(w http.ResponseWriter, r *http.Reque
 		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(JSONError(err.Error()))
-
 		return
 	}
 

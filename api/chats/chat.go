@@ -15,7 +15,6 @@ type ChatUsecase interface {
 	ChatID(user models.User, chid int) (models.ChatData, error)
 	Partner(user models.User, chid int) (models.UserFeed, error)
 	Sessions(uid int) ([]string, error)
-	User(cookie string) (models.User, error)
 	UserFeed(cookie string) (models.UserFeed, error)
 	Like(user models.User, like models.Like) error
 	Dislike(user models.User, dislike models.Dislike) error
@@ -26,26 +25,25 @@ type ChatUsecase interface {
 type ChatRepository interface {
 	SelectUserFeed(telephone string) (models.UserFeed, error) // Tested
 	SelectUserFeedByID(uid int) (models.UserFeed, error)      // Tested
-	SelectUser(telephone string) (models.User, error)         // Tested
 	SelectImages(uid int) ([]string, error)                   // Tested
-	CheckChat(chat models.Chat) bool
-	InsertChat(chat models.Chat) error                // Tested
-	InsertMessage(text string, chatID, uid int) error // Tested
-	SelectMessage(uid, chid int) (models.Msg, error)  // Tested
-	SelectMessages(chid int) ([]models.Msg, error)    // Tested
+	InsertChat(chat models.Chat) error                        // Tested
+	InsertMessage(text string, chatID, uid int) error         // Tested
+	SelectMessages(chid int) ([]models.Msg, error)            // Tested
+	SelectMessage(uid, chid int) (models.Msg, error)          // Tested
+	InsertLike(uid1, uid2, fid int) error                     // Tested
+	InsertDislike(uid1, uid2, fid int) error                  // Tested
+	InsertSuperlike(uid1, uid2, fid int) error                // Tested
+	DeleteLike(uid1, uid2 int) error                          // Tested
+	DeleteDislike(uid1, uid2 int) error                       // Tested
+	SelectUserByID(uid int) (models.User, error)              // Tested
+	SelectChatID(uid1, uid2 int) (int, error)                 // Tested
 	SelectChatsByID(uid int) ([]models.ChatData, error)
 	SelectChatByID(uid, chid int) (models.ChatData, error)
 	SelectUserByChat(uid, chid int) (models.UserFeed, error)
-	SelectUserByID(uid int) (models.User, error)
 	SelectSessions(uid int) ([]string, error)
 	CheckUserBySession(sid string) string
-	SelectChatID(uid1, uid2 int) (int, error)
-	Match(uid1, uid2 int) bool
-	InsertLike(uid1, uid2 int) error    // Tested
-	InsertDislike(uid1, uid2 int) error // Tested
-	InsertSuperlike(uid1, uid2 int) error
-	DeleteLike(uid1, uid2 int) error
-	DeleteDislike(uid1, uid2 int) error
+	CheckChat(chat models.Chat) bool
+	Match(uid1, uid2, fid int) bool
 	CheckLike(uid1, uid2 int) bool
 	CheckDislike(uid1, uid2 int) bool
 }

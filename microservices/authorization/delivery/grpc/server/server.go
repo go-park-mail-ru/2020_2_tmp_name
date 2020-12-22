@@ -15,10 +15,10 @@ import (
 )
 
 type server struct {
-	authUseCase auth.UserUsecase
+	authUseCase auth.AuthUsecase
 }
 
-func NewAuthServerGRPC(gServer *grpc.Server, authUCase auth.UserUsecase) {
+func NewAuthServerGRPC(gServer *grpc.Server, authUCase auth.AuthUsecase) {
 	articleServer := &server{
 		authUseCase: authUCase,
 	}
@@ -26,7 +26,7 @@ func NewAuthServerGRPC(gServer *grpc.Server, authUCase auth.UserUsecase) {
 	reflection.Register(gServer)
 }
 
-func StartAuthGRPCServer(authUCase auth.UserUsecase, url string) {
+func StartAuthGRPCServer(authUCase auth.AuthUsecase, url string) {
 	list, err := net.Listen("tcp", url)
 	if err != nil {
 		logrus.Error(err)
@@ -45,7 +45,8 @@ func StartAuthGRPCServer(authUCase auth.UserUsecase, url string) {
 
 func (s *server) Login(ctx context.Context, data *proto.LoginData) (*proto.Session, error) {
 	var err error
-	var session *proto.Session
+	session := &proto.Session{}
+
 	var loginData models.LoginData
 	loginData.Password = data.Password
 	loginData.Telephone = data.Telephone
@@ -54,13 +55,16 @@ func (s *server) Login(ctx context.Context, data *proto.LoginData) (*proto.Sessi
 }
 
 func (s *server) Logout(ctx context.Context, session *proto.Session) (*proto.Nothing, error) {
-	var nothing *proto.Nothing
+	nothing := &proto.Nothing{}
 	err := s.authUseCase.Logout(ctx, session.Sess)
 	return nothing, err
 }
 
 func (s *server) CheckSession(ctx context.Context, session *proto.Session) (*proto.User, error) {
 	user, err := s.authUseCase.CheckSession(ctx, session.Sess)
+	if err != nil {
+		return nil, err
+	}
 	userProto := &proto.User{
 		Id:         int32(user.ID),
 		Name:       user.Name,
@@ -75,6 +79,7 @@ func (s *server) CheckSession(ctx context.Context, session *proto.Session) (*pro
 		Job:        user.Job,
 		Education:  user.Education,
 		AboutMe:    user.AboutMe,
+		Target: 	user.Target,
 	}
-	return userProto, err
+	return userProto, nil
 }

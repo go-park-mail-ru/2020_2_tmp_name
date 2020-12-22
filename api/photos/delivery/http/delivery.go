@@ -1,33 +1,42 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
+	"github.com/pkg/errors"
+	"io"
 	"net/http"
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/photos"
+	_authClientGRPC "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
+	faceClient "park_2020/2020_2_tmp_name/microservices/face_features/delivery/grpc/client"
+	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 
-	"io"
-
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
 type PhotoHandlerType struct {
-	PUsecase domain.PhotoUsecase
+	PUsecase   domain.PhotoUsecase
+	AuthClient _authClientGRPC.AuthClientInterface
+	FaceClient *faceClient.FaceClient
 }
 
-func NewPhotoHandler(r *mux.Router, ps domain.PhotoUsecase) {
+func NewPhotoHandler(r *mux.Router, ps domain.PhotoUsecase, ac _authClientGRPC.AuthClientInterface, fc *faceClient.FaceClient) {
 	handler := &PhotoHandlerType{
-		PUsecase: ps,
+		PUsecase:   ps,
+		AuthClient: ac,
+		FaceClient: fc,
 	}
 
 	path := "/static/avatars/"
 	http.Handle("/", r)
 	r.PathPrefix(path).Handler(http.StripPrefix(path, http.FileServer(http.Dir("."+path))))
 
-	r.HandleFunc("/api/v1/add_photo", handler.AddPhotoHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/remove_photo", handler.RemovePhotoHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/add_photo", middleware.CheckCSRF(handler.AddPhotoHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/remove_photo", middleware.CheckCSRF(handler.RemovePhotoHandler)).Methods(http.MethodPost)
 }
 
 func JSONError(message string) []byte {
@@ -39,14 +48,15 @@ func JSONError(message string) []byte {
 }
 
 func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Request) {
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
+	user, err := p.AuthClient.CheckSession(context.Background(), r.Cookies())
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
 		return
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, 10*1024*1024)
-	err := r.ParseMultipartForm(10 * 1024 * 1024)
+	err = r.ParseMultipartForm(10 * 1024 * 1024)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -75,14 +85,14 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars"
 	os.Chdir(photoPath)
 
-	photoID, err := p.PUsecase.UploadAvatar()
+	photoID, err := uuid.NewRandom()
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
 		return
 	}
 
-	f, err := os.OpenFile(photoID.String(), os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(photoID.String() + ".jpg", os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -101,16 +111,30 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	user, err := p.PUsecase.User(r.Cookies()[0].Value)
+	photoModel := &models.Photo{
+		Path: photoPath + "/" + photoID.String() + ".jpg",
+		Mask: "",
+	}
+
+	haveFace, err := p.FaceClient.HaveFace(context.Background(), photoModel)
 	if err != nil {
-		w.WriteHeader(models.GetStatusCode(err))
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	if !haveFace {
+		err = errors.New("no face on photo")
+		logrus.Error(err.Error())
+		w.WriteHeader(http.StatusForbidden)
 		w.Write(JSONError(err.Error()))
 		return
 	}
 
 	var photo models.Photo
 	photo.Telephone = user.Telephone
-	photo.Path = "https://mi-ami.ru/static/avatars/" + photoID.String()
+	photo.Path = "https://mi-ami.ru/static/avatars/" + photoID.String() + ".jpg"
 
 	err = p.PUsecase.AddPhoto(photo)
 	if err != nil {
@@ -127,7 +151,6 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
@@ -142,13 +165,7 @@ func (p *PhotoHandlerType) RemovePhotoHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := p.PUsecase.User(r.Cookies()[0].Value)
+	user, err := p.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -172,5 +189,4 @@ func (p *PhotoHandlerType) RemovePhotoHandler(w http.ResponseWriter, r *http.Req
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
-
 }

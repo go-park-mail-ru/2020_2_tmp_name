@@ -8,23 +8,23 @@ import (
 	"github.com/google/uuid"
 )
 
-type userUsecase struct {
-	userRepo domain.UserRepository
+type authUsecase struct {
+	userRepo domain.AuthRepository
 }
 
-func NewAuthUsecase(u domain.UserRepository) *userUsecase {
-	return &userUsecase{
+func NewAuthUsecase(u domain.AuthRepository) *authUsecase {
+	return &authUsecase{
 		userRepo: u,
 	}
 }
 
-func (u *userUsecase) Login(ctx context.Context, data models.LoginData) (string, error) {
+func (a *authUsecase) Login(ctx context.Context, data models.LoginData) (string, error) {
 	var check bool
-	if check = u.userRepo.CheckUser(data.Telephone); !check {
+	if check = a.userRepo.CheckUser(data.Telephone); !check {
 		return "", models.ErrUnauthorized
 	}
 
-	user, err := u.userRepo.SelectUser(data.Telephone)
+	user, err := a.userRepo.SelectUser(data.Telephone)
 	if err != nil {
 		return "", models.ErrNotFound
 	}
@@ -38,7 +38,7 @@ func (u *userUsecase) Login(ctx context.Context, data models.LoginData) (string,
 		return "", models.ErrInternalServerError
 	}
 
-	err = u.userRepo.InsertSession(SID.String(), data.Telephone)
+	err = a.userRepo.InsertSession(SID.String(), data.Telephone)
 	if err != nil {
 		return "", models.ErrInternalServerError
 	}
@@ -46,13 +46,13 @@ func (u *userUsecase) Login(ctx context.Context, data models.LoginData) (string,
 	return SID.String(), nil
 }
 
-func (u *userUsecase) Logout(ctx context.Context, session string) error {
-	return u.userRepo.DeleteSession(session)
+func (a *authUsecase) Logout(ctx context.Context, session string) error {
+	return a.userRepo.DeleteSession(session)
 }
 
-func (u *userUsecase) CheckSession(ctx context.Context, cookie string) (models.User, error) {
-	telephone := u.userRepo.CheckUserBySession(cookie)
-	user, err := u.userRepo.SelectUser(telephone)
+func (a *authUsecase) CheckSession(ctx context.Context, cookie string) (models.User, error) {
+	telephone := a.userRepo.CheckUserBySession(cookie)
+	user, err := a.userRepo.SelectUser(telephone)
 	if err != nil {
 		return user, models.ErrNotFound
 	}

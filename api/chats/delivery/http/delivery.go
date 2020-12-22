@@ -2,10 +2,13 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	domain "park_2020/2020_2_tmp_name/api/chats"
+	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
+	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
@@ -17,8 +20,9 @@ import (
 )
 
 type ChatHandlerType struct {
-	ChUsecase domain.ChatUsecase
-	Hub       Hub
+	ChUsecase  domain.ChatUsecase
+	AuthClient authClient.AuthClientInterface
+	Hub        Hub
 }
 
 func (h Hub) run() {
@@ -35,21 +39,22 @@ func (h Hub) run() {
 	}
 }
 
-func NewChatHandler(r *mux.Router, chs domain.ChatUsecase) {
+func NewChatHandler(r *mux.Router, chs domain.ChatUsecase, ac authClient.AuthClientInterface) {
 	handler := &ChatHandlerType{
-		ChUsecase: chs,
-		Hub:       *NewHub(),
+		ChUsecase:  chs,
+		AuthClient: ac,
+		Hub:        *NewHub(),
 	}
 
 	go handler.Hub.run()
 
-	r.HandleFunc("/api/v1/chat", handler.ChatHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/message", handler.MessageHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/chats", handler.ChatsHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/chats/{chat_id}", handler.ChatIDHandler).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/like", handler.LikeHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/dislike", handler.DislikeHandler).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/superlike", handler.SuperlikeHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/chat", middleware.CheckCSRF(handler.ChatHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/message", middleware.CheckCSRF(handler.MessageHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/chats", middleware.SetCSRF(handler.ChatsHandler)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/chats/{chat_id}", middleware.SetCSRF(handler.ChatIDHandler)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/like", middleware.CheckCSRF(handler.LikeHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/dislike", middleware.CheckCSRF(handler.DislikeHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/superlike", middleware.CheckCSRF(handler.SuperlikeHandler)).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v1/gochat", handler.GochatHandler).Methods(http.MethodGet)
 }
@@ -101,13 +106,7 @@ func (ch *ChatHandlerType) MessageHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -134,13 +133,7 @@ func (ch *ChatHandlerType) MessageHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (ch *ChatHandlerType) ChatsHandler(w http.ResponseWriter, r *http.Request) {
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -175,13 +168,7 @@ func (ch *ChatHandlerType) ChatIDHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -217,13 +204,7 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -301,7 +282,6 @@ func (ch *ChatHandlerType) LikeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, client := range clientsPartner {
-
 			client.Send <- bodyMe
 		}
 	}
@@ -328,13 +308,7 @@ func (ch *ChatHandlerType) DislikeHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -361,13 +335,7 @@ func (ch *ChatHandlerType) DislikeHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (ch *ChatHandlerType) GochatHandler(w http.ResponseWriter, r *http.Request) {
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))
@@ -500,13 +468,7 @@ func (ch *ChatHandlerType) SuperlikeHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if len(r.Cookies()) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(JSONError("User not authorized"))
-		return
-	}
-
-	user, err := ch.ChUsecase.User(r.Cookies()[0].Value)
+	user, err := ch.AuthClient.CheckSession(context.Background(), r.Cookies())
 	if err != nil {
 		w.WriteHeader(models.GetStatusCode(err))
 		w.Write(JSONError(err.Error()))

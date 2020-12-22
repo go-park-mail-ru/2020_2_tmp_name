@@ -2,6 +2,8 @@ package http_test
 
 import (
 	"bytes"
+	"context"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"park_2020/2020_2_tmp_name/api/photos/mock"
@@ -13,6 +15,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	photoHttp "park_2020/2020_2_tmp_name/api/photos/delivery/http"
+	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
+
+	mockClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client/mock"
 )
 
 func TestNewUserHandler(t *testing.T) {
@@ -21,13 +26,66 @@ func TestNewUserHandler(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockPhotoUsecase(ctrl)
-	photoHttp.NewPhotoHandler(router, mock)
+	authClient := &authClient.AuthClient{}
+	photoHttp.NewPhotoHandler(router, mock, authClient)
 }
 
 func TestPhotoHandler_AddPhotoHandlerSuccess(t *testing.T) {
-	photo := models.Photo{
-		Path:      "./static/avatars/4.jpg",
-		Telephone: "909-277-47-21",
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	var byteData = []byte(`{
+		"linkImages": "./static/avatars/4.jpg",
+		"telephone":  "909-277-47-21"
+	}`)
+
+	buf := new(bytes.Buffer)
+	writer := multipart.NewWriter(buf)
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/add_photo", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Add("Content-Type", writer.FormDataContentType())
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockPhotoUsecase(ctrl)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
+
+	photoHandler := photoHttp.PhotoHandlerType{
+		PUsecase:   mock,
+		AuthClient: clientMock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(photoHandler.AddPhotoHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 400, status)
+}
+func TestPhotoHandler_AddPhotoHandlerFailUser(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
 	}
 
 	var byteData = []byte(`{
@@ -45,33 +103,91 @@ func TestPhotoHandler_AddPhotoHandlerSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockPhotoUsecase(ctrl)
-	mock.EXPECT().AddPhoto(photo).Return(nil)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, models.ErrUnauthorized)
 
 	photoHandler := photoHttp.PhotoHandlerType{
-		PUsecase: mock,
+		PUsecase:   mock,
+		AuthClient: clientMock,
 	}
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(photoHandler.AddPhotoHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 401, status)
+}
+
+func TestPhotoHandler_RemovePhotoHandlerSuccess(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	image := models.Image{
+		LinkImage: "./static/avatars/4.jpg",
+	}
+
+	var byteData = []byte(`{
+		"link_image": "./static/avatars/4.jpg"
+	}`)
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/remove_photo", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockPhotoUsecase(ctrl)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
+	mock.EXPECT().RemovePhoto(image.LinkImage, user.ID).Return(nil)
+
+	photoHandler := photoHttp.PhotoHandlerType{
+		PUsecase:   mock,
+		AuthClient: clientMock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(photoHandler.RemovePhotoHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 200, status)
 }
 
-func TestPhotoHandler_AddPhotoHandlerFail(t *testing.T) {
-	photo := models.Photo{
-		Path:      "./static/avatars/4.jpg",
-		Telephone: "909-277-47-21",
+func TestPhotoHandler_RemovePhotoHandlerFail(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	image := models.Image{
+		LinkImage: "./static/avatars/4.jpg",
 	}
 
 	var byteData = []byte(`{
-		"linkImages": "./static/avatars/4.jpg",
-		"telephone":  "909-277-47-21"
+		"link_image": "./static/avatars/4.jpg"
 	}`)
 
 	body := bytes.NewReader(byteData)
-	req, err := http.NewRequest("POST", "/add_photo", body)
+	req, err := http.NewRequest("POST", "/remove_photo", body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,24 +196,69 @@ func TestPhotoHandler_AddPhotoHandlerFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mock := mock.NewMockPhotoUsecase(ctrl)
-	mock.EXPECT().AddPhoto(photo).Return(models.ErrInternalServerError)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, nil)
+	mock.EXPECT().RemovePhoto(image.LinkImage, user.ID).Return(models.ErrInternalServerError)
 
 	photoHandler := photoHttp.PhotoHandlerType{
-		PUsecase: mock,
+		PUsecase:   mock,
+		AuthClient: clientMock,
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(photoHandler.AddPhotoHandler)
+	handler := http.HandlerFunc(photoHandler.RemovePhotoHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 
 	require.Equal(t, 500, status)
 }
 
-func TestPhotoHandler_AddPhotoHandlerFailDecode(t *testing.T) {
+func TestPhotoHandler_RemovePhotoHandlerFailUser(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	var byteData = []byte(`{
+		"link_image": "./static/avatars/4.jpg"
+	}`)
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/remove_photo", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockPhotoUsecase(ctrl)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, models.ErrUnauthorized)
+
+	photoHandler := photoHttp.PhotoHandlerType{
+		PUsecase:   mock,
+		AuthClient: clientMock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(photoHandler.RemovePhotoHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 401, status)
+}
+
+func TestPhotoHandler_RemovePhotoHandlerFailDecode(t *testing.T) {
 	var byteData = []byte(``)
 	body := bytes.NewReader(byteData)
-	req, err := http.NewRequest("POST", "/add_photo", body)
+	req, err := http.NewRequest("POST", "/remove_photo", body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,7 +273,7 @@ func TestPhotoHandler_AddPhotoHandlerFailDecode(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(photoHandler.AddPhotoHandler)
+	handler := http.HandlerFunc(photoHandler.RemovePhotoHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 

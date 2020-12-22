@@ -17,14 +17,16 @@ func NewPostgresChatRepository(Conn *sql.DB) domain.ChatRepository {
 
 func (p *postgresChatRepository) SelectUserFeed(telephone string) (models.UserFeed, error) {
 	var u models.UserFeed
-	row := p.Conn.QueryRow(`SELECT id, name, date_birth, education, job, about_me FROM users
+	var tid int
+	row := p.Conn.QueryRow(`SELECT id, name, date_birth, education, job, about_me, filter_id FROM users
 						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe)
+	err := row.Scan(&u.ID, &u.Name, &u.DateBirth, &u.Education, &u.Job, &u.AboutMe, &tid)
 	if err != nil {
 		return u, err
 	}
 
 	u.LinkImages, err = p.SelectImages(u.ID)
+	u.Target = models.IDToTarget(tid)
 	return u, err
 }
 
@@ -47,19 +49,6 @@ func (p *postgresChatRepository) SelectImages(uid int) ([]string, error) {
 	return images, nil
 }
 
-func (p *postgresChatRepository) SelectUser(telephone string) (models.User, error) {
-	var u models.User
-	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
-						WHERE  telephone=$1;`, telephone)
-	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe)
-	if err != nil {
-		return u, err
-	}
-
-	u.LinkImages, err = p.SelectImages(u.ID)
-	return u, err
-}
-
 func (p *postgresChatRepository) CheckChat(chat models.Chat) bool {
 	var id1, id2 int
 	row := p.Conn.QueryRow(`SELECT user_id1, user_id2 FROM chat 
@@ -70,7 +59,8 @@ func (p *postgresChatRepository) CheckChat(chat models.Chat) bool {
 }
 
 func (p *postgresChatRepository) InsertChat(chat models.Chat) error {
-	_, err := p.Conn.Exec(`INSERT INTO chat(user_id1, user_id2) VALUES ($1, $2);`, chat.Uid1, chat.Uid2)
+	_, err := p.Conn.Exec(`INSERT INTO chat(user_id1, user_id2, filter_id) VALUES ($1, $2, $3);`,
+		chat.Uid1, chat.Uid2, models.TargetToID(chat.Target))
 	return err
 }
 
@@ -112,7 +102,7 @@ func (p *postgresChatRepository) SelectMessages(chid int) ([]models.Msg, error) 
 
 func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, error) {
 	var chats []models.ChatData
-	rows, err := p.Conn.Query(`SELECT id, user_id1 FROM chat WHERE user_id2=$1;`, uid)
+	rows, err := p.Conn.Query(`SELECT id, user_id1, filter_id FROM chat WHERE user_id2=$1;`, uid)
 	if err != nil {
 		return chats, err
 	}
@@ -120,11 +110,12 @@ func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 
 	for rows.Next() {
 		var chat models.ChatData
-		var uid1 int
-		err := rows.Scan(&chat.ID, &uid1)
+		var uid1, fid int
+		err := rows.Scan(&chat.ID, &uid1, &fid)
 		if err != nil {
 			continue
 		}
+		chat.Target = models.IDToTarget(fid)
 		chat.Partner, err = p.SelectUserFeedByID(uid1)
 		if err != nil {
 			return chats, err
@@ -137,19 +128,19 @@ func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 		chats = append(chats, chat)
 	}
 
-	rows, err = p.Conn.Query(`SELECT id, user_id2 FROM chat WHERE user_id1=$1;`, uid)
+	rows, err = p.Conn.Query(`SELECT id, user_id2, filter_id FROM chat WHERE user_id1=$1;`, uid)
 	if err != nil {
 		return chats, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var chat models.ChatData
-		var uid2 int
-		err := rows.Scan(&chat.ID, &uid2)
+		var uid2, fid int
+		err := rows.Scan(&chat.ID, &uid2, &fid)
 		if err != nil {
 			continue
 		}
-
+		chat.Target = models.IDToTarget(fid)
 		chat.Partner, err = p.SelectUserFeedByID(uid2)
 		if err != nil {
 			return chats, err
@@ -176,6 +167,7 @@ func (p *postgresChatRepository) SelectChatByID(uid, chid int) (models.ChatData,
 	}
 
 	chat.Messages, err = p.SelectMessages(chid)
+	chat.Target = models.IDToTarget(uid)
 	return chat, err
 }
 
@@ -202,35 +194,42 @@ func (p *postgresChatRepository) SelectUserByChat(uid, chid int) (models.UserFee
 
 func (p *postgresChatRepository) SelectUserFeedByID(uid int) (models.UserFeed, error) {
 	var u models.UserFeed
-	row := p.Conn.QueryRow(`SELECT name, date_birth, job, education, about_me FROM users
+	var tid int
+	row := p.Conn.QueryRow(`SELECT name, date_birth, job, education, about_me, filter_id FROM users
 						WHERE  id=$1;`, uid)
-	err := row.Scan(&u.Name, &u.DateBirth, &u.Job, &u.Education, &u.AboutMe)
+	err := row.Scan(&u.Name, &u.DateBirth, &u.Job, &u.Education, &u.AboutMe, &tid)
 	if err != nil {
 		return u, err
 	}
 	u.ID = uid
 
 	u.LinkImages, err = p.SelectImages(u.ID)
+	u.Target = models.IDToTarget(tid)
 	return u, err
 }
 
 func (p *postgresChatRepository) SelectUserByID(uid int) (models.User, error) {
 	var u models.User
-	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
+	var tid int
+	row := p.Conn.QueryRow(`SELECT id, name, telephone, password, date_birth, sex, job, education, about_me, filter_id FROM users
 						WHERE  id=$1;`, uid)
-	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe)
+	err := row.Scan(&u.ID, &u.Name, &u.Telephone, &u.Password, &u.DateBirth, &u.Sex, &u.Education, &u.Job, &u.AboutMe, &tid)
 	if err != nil {
 		return u, err
 	}
 
 	u.LinkImages, err = p.SelectImages(u.ID)
+	u.Target = models.IDToTarget(tid)
 	return u, err
 }
 
 func (p *postgresChatRepository) CheckUserBySession(sid string) string {
-	var count string
-	p.Conn.QueryRow(`SELECT value FROM sessions WHERE key=$1;`, sid).Scan(&count)
-	return count
+	var str string
+	err := p.Conn.QueryRow(`SELECT value FROM sessions WHERE key=$1;`, sid).Scan(&str)
+	if err != nil {
+		return ""
+	}
+	return str
 }
 
 func (p *postgresChatRepository) SelectSessions(uid int) ([]string, error) {
@@ -257,33 +256,39 @@ func (p *postgresChatRepository) SelectSessions(uid int) ([]string, error) {
 	return sessions, nil
 }
 
-func (p *postgresChatRepository) Match(uid1, uid2 int) bool {
+func (p *postgresChatRepository) Match(uid1, uid2, fid int) bool {
 	var id1, id2 int
 	row := p.Conn.QueryRow(`Select user_id1, user_id2 FROM likes 
-							WHERE user_id1 = $1 AND user_id2 = $2;`, uid2, uid1)
+							WHERE user_id1 = $1 AND user_id2 = $2 AND filter_id = $3;`, uid2, uid1, fid)
 	err := row.Scan(&id1, &id2)
 	return err == nil
 }
 
-func (p *postgresChatRepository) InsertLike(uid1, uid2 int) error {
-	_, err := p.Conn.Exec(`INSERT INTO likes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
+func (p *postgresChatRepository) InsertLike(uid1, uid2, fid int) error {
+	_, err := p.Conn.Exec(`INSERT INTO likes(user_id1, user_id2, filter_id) VALUES ($1, $2, $3);`, uid1, uid2, fid)
 	return err
 }
 
-func (p *postgresChatRepository) InsertDislike(uid1, uid2 int) error {
-	_, err := p.Conn.Exec(`INSERT INTO dislikes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
+func (p *postgresChatRepository) InsertDislike(uid1, uid2, fid int) error {
+	_, err := p.Conn.Exec(`INSERT INTO dislikes(user_id1, user_id2, filter_id) VALUES ($1, $2, $3);`, uid1, uid2, fid)
 	return err
 }
 
 func (p *postgresChatRepository) CheckLike(uid1, uid2 int) bool {
 	var count int
-	p.Conn.QueryRow(`SELECT value FROM likes WHERE user_id=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	err := p.Conn.QueryRow(`SELECT COUNT(id) FROM likes WHERE user_id=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	if err != nil {
+		return false
+	}
 	return count > 0
 }
 
 func (p *postgresChatRepository) CheckDislike(uid1, uid2 int) bool {
 	var count int
-	p.Conn.QueryRow(`SELECT value FROM dislikes WHERE user_id=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	err := p.Conn.QueryRow(`SELECT COUNT(id) FROM dislikes WHERE user_id1=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	if err != nil {
+		return false
+	}
 	return count > 0
 }
 
@@ -304,7 +309,7 @@ func (p *postgresChatRepository) SelectChatID(uid1, uid2 int) (int, error) {
 	return chid, err
 }
 
-func (p *postgresChatRepository) InsertSuperlike(uid1, uid2 int) error {
-	_, err := p.Conn.Exec(`INSERT INTO superlikes(user_id1, user_id2) VALUES ($1, $2);`, uid1, uid2)
+func (p *postgresChatRepository) InsertSuperlike(uid1, uid2, fid int) error {
+	_, err := p.Conn.Exec(`INSERT INTO superlikes(user_id1, user_id2, filter_id) VALUES ($1, $2, $3);`, uid1, uid2, fid)
 	return err
 }

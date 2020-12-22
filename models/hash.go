@@ -79,3 +79,29 @@ func Age(Day, Month, Year string) (int, error) {
 
 	return year, nil
 }
+
+func TargetToID(target string) int {
+	var id int
+	switch target {
+	case "love":
+		id = 1
+	case "friends":
+		id = 2
+	case "communication":
+		id = 3
+	}
+	return id
+}
+
+func IDToTarget(id int) string {
+	var target string
+	switch id {
+	case 1:
+		target = "love"
+	case 2:
+		target = "friends"
+	case 3:
+		target = "communication"
+	}
+	return target
+}

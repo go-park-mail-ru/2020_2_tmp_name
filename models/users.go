@@ -1,7 +1,7 @@
 package models
 
 type User struct {
-	ID         int      `json:"-"`
+	ID         int      `json:"id"`
 	Name       string   `json:"name"`
 	Telephone  string   `json:"telephone"`
 	Password   string   `json:"password"`
@@ -14,17 +14,7 @@ type User struct {
 	Job        string   `json:"job"`
 	Education  string   `json:"education"`
 	AboutMe    string   `json:"aboutMe"`
-}
-
-type UserMe struct {
-	ID         int      `json:"id"`
-	Name       string   `json:"name"`
-	Telephone  string   `json:"telephone"`
-	DateBirth  int      `json:"date_birth"`
-	LinkImages []string `json:"linkImages"`
-	Job        string   `json:"job"`
-	Education  string   `json:"education"`
-	AboutMe    string   `json:"aboutMe"`
+	Target     string   `json:"filter"`
 }
 
 type UserFeed struct {
@@ -36,6 +26,7 @@ type UserFeed struct {
 	Education   string   `json:"education"`
 	AboutMe     string   `json:"aboutMe"`
 	IsSuperlike bool     `json:"is_superlike"`
+	Target      string   `json:"filter"`
 }
 
 type Feed struct {
