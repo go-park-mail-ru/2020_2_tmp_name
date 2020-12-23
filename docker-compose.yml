@@ -24,6 +24,15 @@ services:
       - postgres
 
   comment:
+    image: face_service
+    ports:
+      - "8083:8083"
+    volumes:
+      - $PWD/static:/app/static
+    depends_on:
+      - postgres
+
+  face:
     image: comment_service
     ports:
       - "8082:8082"
@@ -42,7 +51,7 @@ services:
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
     ports:
-      - "5432:5432"
+      - "9432:9432"
     restart: on-failure
     healthcheck:
       test: "exit 0"
