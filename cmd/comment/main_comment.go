@@ -62,5 +62,5 @@ func main() {
 	cu := _commentUcase.NewCommentUsecase(cr)
 
 	fmt.Println("Starting server at: 8082")
-	grpcServer.StartCommentsGRPCServer(cu, ":8082")
+	grpcServer.StartCommentsGRPCServer(cu, "comment:8082")
 }

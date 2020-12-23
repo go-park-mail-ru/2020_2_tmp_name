@@ -48,7 +48,7 @@ func (p *photoUsecase) RemovePhoto(path string, uid int) error {
 
 func (p *photoUsecase) ClearPhotos(path string) error {
 	localPath := strings.Replace(path, "https://mi-ami.ru/static/avatars/", "", -1)
-	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars/"
+	photoPath := "/app/static/avatars/"
 
 	err := os.RemoveAll(photoPath + localPath)
 	if err != nil {
@@ -86,7 +86,7 @@ func (p *photoUsecase) FindPhotoWithoutMask(path string) (string, error) {
 		}
 	}
 
-	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars/"
+	photoPath := "/app/static/avatars/"
 
 	files, _ := filepath.Glob(photoPath + photoName + "*")
 

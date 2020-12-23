@@ -5,10 +5,10 @@ volumes:
   postgis-data:
 
 services:
-  main_service:
-    image: main_service
+  face:
+    image: face_service
     ports:
-      - "8080:8080"
+      - "8083:8083"
     volumes:
       - $PWD/static:/app/static
     depends_on:
@@ -32,10 +32,10 @@ services:
     depends_on:
       - postgres
 
-  face:
-    image: face_service
+  main_service:
+    image: main_service
     ports:
-      - "8083:8083"
+      - "8080:8080"
     volumes:
       - $PWD/static:/app/static
     depends_on:

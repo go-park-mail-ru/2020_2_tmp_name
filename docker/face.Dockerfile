@@ -1,11 +1,17 @@
-FROM python:3.8-slim-buster
+# pull official base image
+FROM jjanzic/docker-python3-opencv
 
-COPY microservices/face_features/delivery/grpc/server/python_app /opt
+# set work directory
+WORKDIR /app
 
-RUN python3 -m venv /opt/venv
+# install dependencies
+RUN pip install --upgrade pip
+COPY ./requirements.txt /app/requirements.txt
+RUN pip install -r requirements.txt
 
-# Install dependencies:
-RUN . /opt/venv/bin/activate && pip install --upgrade pip -r opt/requirements.txt
+# copy project
+COPY . /app/
 
-# Run the application:
-CMD . /opt/venv/bin/activate && exec python /opt/main.py
+EXPOSE 8083
+
+CMD python microservices/face_features/delivery/grpc/server/python_app/main.py

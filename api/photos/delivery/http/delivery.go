@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -84,7 +85,7 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars"
+	photoPath := "/app/static/avatars"
 	os.Chdir(photoPath)
 
 	photoID, err := uuid.NewRandom()
@@ -94,7 +95,7 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	f, err := os.OpenFile(photoID.String() + ".jpg", os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(photoID.String()+".jpg", os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -211,7 +212,7 @@ func (p *PhotoHandlerType) MaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	localPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars/"
+	localPath := "/app/static/avatars/"
 	urlPath := "https://mi-ami.ru/static/avatars/"
 
 	photo.Path = strings.Replace(photo.Path, urlPath, localPath, -1)

@@ -63,5 +63,5 @@ func main() {
 	au := _authUcase.NewAuthUsecase(ar)
 
 	fmt.Println("Starting server at: 8081")
-	grpcServer.StartAuthGRPCServer(au, "localhost:8081")
+	grpcServer.StartAuthGRPCServer(au, "auth:8081")
 }

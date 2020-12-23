@@ -112,7 +112,7 @@ func (app *application) initServer() {
 	router.Use(AccessLogOut.AccessLogMiddleware(router))
 
 	ar := _authRepo.NewPostgresAuthRepository(dbConn)
-	grpcConnAuth, err := grpc.Dial("0.0.0.0:8081", grpc.WithInsecure())
+	grpcConnAuth, err := grpc.Dial("auth:8081", grpc.WithInsecure())
 	if err != nil {
 		log.Println(err)
 		return
@@ -127,7 +127,7 @@ func (app *application) initServer() {
 	_chatDelivery.NewChatHandler(router, chu, grpcAuthClient)
 
 	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
-	grpcConnComments, err := grpc.Dial("localhost:8082", grpc.WithInsecure())
+	grpcConnComments, err := grpc.Dial("comment:8082", grpc.WithInsecure())
 	if err != nil {
 		logrus.Error(err)
 		return
@@ -137,7 +137,7 @@ func (app *application) initServer() {
 	cu := _commentUcase.NewCommentUsecase(cr)
 	_commentDelivery.NewCommentHandler(router, cu, grpcCommentClient, grpcAuthClient)
 
-	grpcConnFace, err := grpc.Dial("localhost:8083", grpc.WithInsecure())
+	grpcConnFace, err := grpc.Dial("face:8083", grpc.WithInsecure())
 	if err != nil {
 		logrus.Error(err)
 		return
@@ -151,7 +151,7 @@ func (app *application) initServer() {
 	middleware.MyCORSMethodMiddleware(router)
 
 	serv := &http.Server{
-		Addr:         ":8080",
+		Addr:         "main_service:8080",
 		Handler:      handlers.CORS(originsOk, headersOk, methodsOk, handlers.AllowCredentials())(router),
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,

@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"github.com/pkg/errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -14,6 +14,8 @@ import (
 	"park_2020/2020_2_tmp_name/models"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -58,6 +60,7 @@ func JSONError(message string) []byte {
 }
 
 func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Upload avatar calls")
 	r.Body = http.MaxBytesReader(w, r.Body, 10*1024*1024)
 	err := r.ParseMultipartForm(10 * 1024 * 1024)
 	if err != nil {
@@ -85,8 +88,9 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars"
+	photoPath := "/app/static/avatars"
 	os.Chdir(photoPath)
+	fmt.Println(photoPath)
 
 	photoID, err := uuid.NewRandom()
 	if err != nil {
@@ -95,7 +99,7 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	f, err := os.OpenFile(photoID.String() + ".jpg", os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(photoID.String()+".jpg", os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -105,6 +109,7 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 	defer f.Close()
 
 	os.Chdir(str)
+	fmt.Println("str = ", str)
 
 	body, err := json.Marshal("https://mi-ami.ru/static/avatars/" + photoID.String() + ".jpg")
 	if err != nil {
@@ -127,6 +132,7 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 		Mask: "",
 	}
 
+	fmt.Println(photoModel.Path)
 	haveFace, err := u.FaceClient.HaveFace(context.Background(), photoModel)
 	if err != nil {
 		logrus.Error(err)
@@ -323,7 +329,6 @@ func (u *UserHandlerType) TelephoneHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	hasUser := u.UUsecase.Telephone(phoneData.Telephone)
-
 
 	result := models.HasTelephone{
 		Telephone: hasUser,
