@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -60,7 +59,6 @@ func JSONError(message string) []byte {
 }
 
 func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Upload avatar calls")
 	r.Body = http.MaxBytesReader(w, r.Body, 10*1024*1024)
 	err := r.ParseMultipartForm(10 * 1024 * 1024)
 	if err != nil {
@@ -90,7 +88,6 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 
 	photoPath := "/app/static/avatars"
 	os.Chdir(photoPath)
-	fmt.Println(photoPath)
 
 	photoID, err := uuid.NewRandom()
 	if err != nil {
@@ -109,7 +106,6 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 	defer f.Close()
 
 	os.Chdir(str)
-	fmt.Println("str = ", str)
 
 	body, err := json.Marshal("https://mi-ami.ru/static/avatars/" + photoID.String() + ".jpg")
 	if err != nil {
@@ -132,7 +128,6 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 		Mask: "",
 	}
 
-	fmt.Println(photoModel.Path)
 	haveFace, err := u.FaceClient.HaveFace(context.Background(), photoModel)
 	if err != nil {
 		logrus.Error(err)
