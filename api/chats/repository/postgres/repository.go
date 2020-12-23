@@ -42,7 +42,7 @@ func (p *postgresChatRepository) SelectImages(uid int) ([]string, error) {
 		var image string
 		err := rows.Scan(&image)
 		if err != nil {
-			continue
+			return images, err
 		}
 		images = append(images, image)
 	}
@@ -91,7 +91,7 @@ func (p *postgresChatRepository) SelectMessages(chid int) ([]models.Msg, error) 
 		var message models.Msg
 		err := rows.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
 		if err != nil {
-			continue
+			return messages, err
 		}
 		message.ChatID = chid
 		messages = append(messages, message)
@@ -113,7 +113,7 @@ func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 		var uid1, fid int
 		err := rows.Scan(&chat.ID, &uid1, &fid)
 		if err != nil {
-			continue
+			return chats, err
 		}
 		chat.Target = models.IDToTarget(fid)
 		chat.Partner, err = p.SelectUserFeedByID(uid1)
@@ -138,7 +138,7 @@ func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 		var uid2, fid int
 		err := rows.Scan(&chat.ID, &uid2, &fid)
 		if err != nil {
-			continue
+			return chats, err
 		}
 		chat.Target = models.IDToTarget(fid)
 		chat.Partner, err = p.SelectUserFeedByID(uid2)
@@ -249,7 +249,7 @@ func (p *postgresChatRepository) SelectSessions(uid int) ([]string, error) {
 		var session string
 		err := rows.Scan(&session)
 		if err != nil {
-			continue
+			return sessions, err
 		}
 		sessions = append(sessions, session)
 	}

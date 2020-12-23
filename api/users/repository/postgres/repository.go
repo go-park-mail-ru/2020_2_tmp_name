@@ -231,7 +231,7 @@ func (p *postgresUserRepository) SelectImages(uid int) ([]string, error) {
 		var image string
 		err := rows.Scan(&image)
 		if err != nil {
-			continue
+			return images, err
 		}
 		images = append(images, image)
 	}

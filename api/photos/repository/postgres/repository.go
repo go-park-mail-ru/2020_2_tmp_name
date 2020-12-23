@@ -41,7 +41,7 @@ func (p *postgresPhotoRepository) SelectImages(uid int) ([]string, error) {
 		var image string
 		err := rows.Scan(&image)
 		if err != nil {
-			continue
+			return images, err
 		}
 		images = append(images, image)
 	}
@@ -59,18 +59,18 @@ func (p *postgresPhotoRepository) DeletePhoto(path string, uid int) error {
 }
 
 func (p *postgresPhotoRepository) SelectPhotoWithMask(path string) ([]string, error) {
+	var images []string
 	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE path LIKE '$1_%';`, path)
 	if err != nil {
-		return nil, err
+		return images, err
 	}
 	defer rows.Close()
 
-	var images []string
 	for rows.Next() {
 		var image string
 		err := rows.Scan(&image)
 		if err != nil {
-			continue
+			return images, err
 		}
 		images = append(images, image)
 	}

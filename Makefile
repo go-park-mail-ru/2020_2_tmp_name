@@ -18,6 +18,7 @@ build-docker:
 	docker build -t main_service -f ${DOCKER_DIR}/main.Dockerfile .
 	docker build -t auth_service -f ${DOCKER_DIR}/auth.Dockerfile .
 	docker build -t comment_service -f ${DOCKER_DIR}/comment.Dockerfile .
+	docker build -t face_service -f ${DOCKER_DIR}/face.Dockerfile .
 
 ## run-and-build: Build and run docker
 build-and-run: build-docker
@@ -31,6 +32,7 @@ run:
 	docker build -t main_service -f ${DOCKER_DIR}/main.Dockerfile .
 	docker build -t auth_service -f ${DOCKER_DIR}/auth.Dockerfile .
 	docker build -t comment_service -f ${DOCKER_DIR}/comment.Dockerfile .
+	docker build -t face_service -f ${DOCKER_DIR}/face.Dockerfile .
 	
 	docker-compose up --build --no-deps
 
