@@ -43,7 +43,7 @@ jobs:
     needs: build
     steps:
       - name: pull project
-        uses: appleboy/ssh-action@master
+        uses: temporary_name/ssh-action@master
         with:
           envs: GITHUB_SHA
           host: ${{ secrets.HOST }}
@@ -53,7 +53,7 @@ jobs:
             docker pull temporary_name/auth_service:${GITHUB_SHA::8} &&
             docker pull temporary_name/comment_service:${GITHUB_SHA::8}
       - name: run project
-        uses: appleboy/ssh-action@master
+        uses: temporary_name/ssh-action@master
         with:
           envs: GITHUB_SHA
           host: ${{ secrets.HOST }}
