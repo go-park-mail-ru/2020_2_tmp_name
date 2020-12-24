@@ -14,13 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type anyPassword struct{}
-
-func (a anyPassword) Match(v driver.Value) bool {
-	_, ok := v.(string)
-	return ok
-}
-
 func TestPostgresPhotoRepository_InsertPhoto(t *testing.T) {
 	type insertPhotoTestCase struct {
 		uid  int
@@ -152,7 +145,6 @@ func TestPostgresPhotoRepository_SelectImages(t *testing.T) {
 
 func TestPostgresPhotoRepository_SelectUserFeed(t *testing.T) {
 	type insertUserTestCase struct {
-		telephone  string
 		outputUser models.UserFeed
 		err        error
 	}
@@ -188,12 +180,10 @@ func TestPostgresPhotoRepository_SelectUserFeed(t *testing.T) {
 
 	testCases := []insertUserTestCase{
 		{
-			telephone:  "telephone",
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			telephone:  telephone,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -307,7 +297,6 @@ func TestPostgresPhotoRepository_DeletePhoto(t *testing.T) {
 
 func TestPostgresPhotoRepository_SelectPhotosWithMask(t *testing.T) {
 	type insertPhotoTestCase struct {
-		uid  int
 		path []string
 		link string
 		err  error
@@ -340,13 +329,11 @@ func TestPostgresPhotoRepository_SelectPhotosWithMask(t *testing.T) {
 
 	testCases := []insertPhotoTestCase{
 		{
-			uid:  uid,
 			path: path,
 			link: link,
 			err:  sql.ErrNoRows,
 		},
 		{
-			uid:  uid,
 			path: path,
 			link: link,
 			err:  nil,

@@ -14,13 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type anyPassword struct{}
-
-func (a anyPassword) Match(v driver.Value) bool {
-	_, ok := v.(string)
-	return ok
-}
-
 type anyTime struct{}
 
 func (a anyTime) Match(v driver.Value) bool {
@@ -30,7 +23,6 @@ func (a anyTime) Match(v driver.Value) bool {
 
 func TestPostgresChatRepository_SelectUserFeed(t *testing.T) {
 	type insertUserTestCase struct {
-		telephone  string
 		outputUser models.UserFeed
 		err        error
 	}
@@ -66,12 +58,10 @@ func TestPostgresChatRepository_SelectUserFeed(t *testing.T) {
 
 	testCases := []insertUserTestCase{
 		{
-			telephone:  "telephone",
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			telephone:  telephone,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -121,7 +111,6 @@ func TestPostgresChatRepository_SelectUserFeed(t *testing.T) {
 
 func TestPostgresChatRepository_SelectUserFeedByID(t *testing.T) {
 	type insertUserTestCase struct {
-		id         int
 		outputUser models.UserFeed
 		err        error
 	}
@@ -156,12 +145,10 @@ func TestPostgresChatRepository_SelectUserFeedByID(t *testing.T) {
 
 	testCases := []insertUserTestCase{
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -210,7 +197,6 @@ func TestPostgresChatRepository_SelectUserFeedByID(t *testing.T) {
 
 func TestPostgresChatRepository_SelectUserByID(t *testing.T) {
 	type insertUserTestCase struct {
-		id         int
 		outputUser models.User
 		err        error
 	}
@@ -254,12 +240,10 @@ func TestPostgresChatRepository_SelectUserByID(t *testing.T) {
 
 	testCases := []insertUserTestCase{
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -1040,7 +1024,6 @@ func TestPostgresChatRepository_SelectChatID(t *testing.T) {
 func TestPostgresChatRepository_CheckUserBySession(t *testing.T) {
 	type checkUserTestCase struct {
 		telephone string
-		result    int
 		err       error
 	}
 
@@ -1064,12 +1047,10 @@ func TestPostgresChatRepository_CheckUserBySession(t *testing.T) {
 	testCases := []checkUserTestCase{
 		{
 			telephone: telephone,
-			result:    1,
 			err:       sql.ErrNoRows,
 		},
 		{
 			telephone: telephone,
-			result:    1,
 			err:       nil,
 		},
 	}
@@ -1098,7 +1079,6 @@ func TestPostgresChatRepository_CheckLike(t *testing.T) {
 	type checkLikeTestCase struct {
 		uid1 int
 		uid2 int
-		id   int
 		err  error
 	}
 
@@ -1128,13 +1108,11 @@ func TestPostgresChatRepository_CheckLike(t *testing.T) {
 		{
 			uid1: uid1,
 			uid2: uid2,
-			id:   id,
 			err:  sql.ErrNoRows,
 		},
 		{
 			uid1: uid1,
 			uid2: uid2,
-			id:   id,
 			err:  nil,
 		},
 	}
@@ -1164,7 +1142,6 @@ func TestPostgresChatRepository_CheckDisike(t *testing.T) {
 	type checkLikeTestCase struct {
 		uid1 int
 		uid2 int
-		id   int
 		err  error
 	}
 
@@ -1194,13 +1171,11 @@ func TestPostgresChatRepository_CheckDisike(t *testing.T) {
 		{
 			uid1: uid1,
 			uid2: uid2,
-			id:   id,
 			err:  sql.ErrNoRows,
 		},
 		{
 			uid1: uid1,
 			uid2: uid2,
-			id:   id,
 			err:  nil,
 		},
 	}

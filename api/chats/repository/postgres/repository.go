@@ -72,7 +72,11 @@ func (p *postgresChatRepository) InsertMessage(text string, chatID, uid int) err
 func (p *postgresChatRepository) SelectMessage(uid, chid int) (models.Msg, error) {
 	var message models.Msg
 	row := p.Conn.QueryRow(`SELECT text, time_delivery, user_id FROM message WHERE chat_id=$1 order by id desc limit 1;`, chid)
-	row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
+	err := row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
+	if err != nil {
+		return message, err
+	}
+
 	message.ChatID = chid
 	message.UserID = uid
 	return message, nil
