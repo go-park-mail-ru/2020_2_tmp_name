@@ -34,14 +34,13 @@ jobs:
 
       - name: Build Docker images
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/dependencies:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/dependencies:latest -f docker/builder.Dockerfile .
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/main_service:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/main_service:latest -f docker/main.Dockerfile .
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/auth_service:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/auth_service:latest -f docker/auth.Dockerfile .
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/comment_service:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/comment_service:latest -f docker/comment.Dockerfile .
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/face_service:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/face_service:latest -f docker/face.Dockerfile .
+          sudo docker build -t dependencies -f docker/builder.Dockerfile .
+          sudo docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/main_service:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/main_service:latest -f docker/main.Dockerfile .
+          sudo docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/auth_service:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/auth_service:latest -f docker/auth.Dockerfile .
+          sudo docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/comment_service:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/comment_service:latest -f docker/comment.Dockerfile .
+          sudo docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/face_service:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/face_service:latest -f docker/face.Dockerfile .
       - name: Push the images
         run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/dependencies:${GITHUB_SHA::8}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/main_service:${GITHUB_SHA::8}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/auth_service:${GITHUB_SHA::8}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/comment_service:${GITHUB_SHA::8}
