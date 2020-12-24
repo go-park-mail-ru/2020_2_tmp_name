@@ -1,5 +1,25 @@
 run:
-  skip-dirs:
-    - models
   linters-settings:
     ignore: fmt:.*,io/ioutil:^Read.*/ioutil:^Write.*,os:.*
+
+linters:
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - exhaustive
+    - gocyclo
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - misspell
+    - nolintlint
+    - scopelint
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
