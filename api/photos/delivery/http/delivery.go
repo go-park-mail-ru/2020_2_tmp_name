@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"os"
@@ -12,6 +11,9 @@ import (
 	faceClient "park_2020/2020_2_tmp_name/microservices/face_features/delivery/grpc/client"
 	"park_2020/2020_2_tmp_name/middleware"
 	"park_2020/2020_2_tmp_name/models"
+	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -37,6 +39,7 @@ func NewPhotoHandler(r *mux.Router, ps domain.PhotoUsecase, ac _authClientGRPC.A
 
 	r.HandleFunc("/api/v1/add_photo", middleware.CheckCSRF(handler.AddPhotoHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/remove_photo", middleware.CheckCSRF(handler.RemovePhotoHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/mask", middleware.CheckCSRF(handler.MaskHandler)).Methods(http.MethodPost)
 }
 
 func JSONError(message string) []byte {
@@ -82,7 +85,7 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	photoPath := "/home/ubuntu/go/src/park_2020/2020_2_tmp_name/static/avatars"
+	photoPath := "/app/static/avatars"
 	os.Chdir(photoPath)
 
 	photoID, err := uuid.NewRandom()
@@ -92,7 +95,7 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	f, err := os.OpenFile(photoID.String() + ".jpg", os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(photoID.String()+".jpg", os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -180,6 +183,61 @@ func (p *PhotoHandlerType) RemovePhotoHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	body, err := json.Marshal(linkImage)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (p *PhotoHandlerType) MaskHandler(w http.ResponseWriter, r *http.Request) {
+	photo := models.Photo{}
+	err := json.NewDecoder(r.Body).Decode(&photo)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	user, err := p.AuthClient.CheckSession(context.Background(), r.Cookies())
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	localPath := "/app/static/avatars/"
+	urlPath := "https://mi-ami.ru/static/avatars/"
+
+	photo.Path = strings.Replace(photo.Path, urlPath, localPath, -1)
+
+	newPhoto, err := p.FaceClient.AddMask(context.Background(), &photo)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	newPhoto.Path = strings.Replace(newPhoto.Path, localPath, urlPath, -1)
+
+	newPhoto.Telephone = user.Telephone
+
+	err = p.PUsecase.AddPhoto(newPhoto)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	body, err := json.Marshal(newPhoto)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)

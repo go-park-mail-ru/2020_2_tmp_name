@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"park_2020/2020_2_tmp_name/middleware"
-	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -21,13 +20,6 @@ import (
 	grpcServer "park_2020/2020_2_tmp_name/microservices/comments/delivery/grpc/server"
 )
 
-type application struct {
-	servicePort int
-	serv        *mux.Router
-}
-
-var conf models.Config
-
 func init() {
 	err := godotenv.Load("envs/postgres.env")
 	if err != nil {
@@ -35,7 +27,7 @@ func init() {
 	}
 }
 
-func DBConnection(conf *models.Config) *sql.DB {
+func DBConnection() *sql.DB {
 	connString := fmt.Sprintf("host=%v user=%v password=%v dbname=%v sslmode=disable",
 		os.Getenv("PostgresHost"),
 		os.Getenv("PostgresUser"),
@@ -59,7 +51,7 @@ func DBConnection(conf *models.Config) *sql.DB {
 }
 
 func main() {
-	dbConn := DBConnection(&conf)
+	dbConn := DBConnection()
 
 	router := mux.NewRouter()
 
@@ -70,5 +62,5 @@ func main() {
 	cu := _commentUcase.NewCommentUsecase(cr)
 
 	fmt.Println("Starting server at: 8082")
-	grpcServer.StartCommentsGRPCServer(cu, ":8082")
+	grpcServer.StartCommentsGRPCServer(cu, "comment:8082")
 }

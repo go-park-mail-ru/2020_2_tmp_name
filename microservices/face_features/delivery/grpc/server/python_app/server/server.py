@@ -5,6 +5,7 @@ import server.api.api as api
 
 class Server(grpc_face.FaceGRPCHandlerServicer):
     def HaveFace(self, request, context):
+        print("I have face")
         faces = api.find_faces(request.path)
         print(faces)
         return face.Face(have=faces != ())

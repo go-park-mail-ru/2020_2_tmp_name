@@ -5,10 +5,10 @@ volumes:
   postgis-data:
 
 services:
-  main_service:
-    image: main_service
+  face:
+    image: face_service
     ports:
-      - "8080:8080"
+      - "8083:8083"
     volumes:
       - $PWD/static:/app/static
     depends_on:
@@ -32,15 +32,26 @@ services:
     depends_on:
       - postgres
 
+  main_service:
+    image: main_service
+    ports:
+      - "8080:8080"
+    volumes:
+      - $PWD/static:/app/static
+    depends_on:
+      - postgres
+
   postgres:
     image: postgres:latest
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./postgres_data:/var/lib/postgresql/data
       - $PWD/docker/migrations/up.sql:/docker-entrypoint-initdb.d/init.sql
     env_file:
       - envs/postgres.env
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "trust"
     ports:
-      - "5432:5432"
+      - "9432:9432"
     restart: on-failure
     healthcheck:
       test: "exit 0"

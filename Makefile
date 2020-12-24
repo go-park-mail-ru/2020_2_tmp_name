@@ -18,6 +18,7 @@ build-docker:
 	docker build -t main_service -f ${DOCKER_DIR}/main.Dockerfile .
 	docker build -t auth_service -f ${DOCKER_DIR}/auth.Dockerfile .
 	docker build -t comment_service -f ${DOCKER_DIR}/comment.Dockerfile .
+	docker build -t face_service -f ${DOCKER_DIR}/face.Dockerfile .
 
 ## run-and-build: Build and run docker
 build-and-run: build-docker
@@ -26,21 +27,19 @@ build-and-run: build-docker
 ## run: Build and run docker with new changes
 run:
 	docker rm -vf $$(docker ps -a -q) || true
+	sudo rm -rf postgres_data/
 	docker build -t dependencies -f ${DOCKER_DIR}/builder.Dockerfile .
 	docker build -t main_service -f ${DOCKER_DIR}/main.Dockerfile .
 	docker build -t auth_service -f ${DOCKER_DIR}/auth.Dockerfile .
 	docker build -t comment_service -f ${DOCKER_DIR}/comment.Dockerfile .
+	docker build -t face_service -f ${DOCKER_DIR}/face.Dockerfile .
 	
 	docker-compose up --build --no-deps
 
-## test-coverage: get final code coverage
-coverage:
-	go test -covermode=atomic -coverpkg=./... -coverprofile=cover ./...
-	rm -rf cover
-
 ## coverage-html: generates HTML file with test coverage
-test-html:
-	go test -covermode=atomic -coverpkg=./... -coverprofile=cover ./...
+tests:
+	sudo rm -rf postgres_data/
+	go test ./... -coverprofile cover; go tool cover -func cover
 	go tool cover -html=cover
 	rm -rf cover
 

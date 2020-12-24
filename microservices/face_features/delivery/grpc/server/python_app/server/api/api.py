@@ -3,17 +3,19 @@ from PIL import Image
 
 
 def get_mask_path(mask_name):
-    return 'masks/' + mask_name + '.png'
+    return '/app/microservices/face_features/delivery/grpc/server/python_app/server/api/masks/' + mask_name + '.png'
 
 
 def get_photo_mask_name(path, mask):
-    return path + '_' + mask + '.png'
+    return path.replace('.jpg', '_' + mask + '.jpg')
 
 
 def find_faces(path):
-    cascade_path = '/home/ubuntu/go/src/park_2020/2020_2_tmp_name/microservices/face_features/delivery/grpc/server/python_app/server/api/cascade/frontalface_default.xml'
+    cascade_path = '/app/microservices/face_features/delivery/grpc/server/python_app/server/api/cascade/frontalface_default.xml'
+    print(path)
     face_cascade = cv2.CascadeClassifier(cascade_path)
     img = cv2.imread(path)
+    print(img)
     faces = face_cascade.detectMultiScale(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 1.1, 4)
 
     return faces
@@ -35,4 +37,4 @@ def overlay_mask(path, mask):
     photo_path = get_photo_mask_name(path, mask)
     photo.save(photo_path)
 
-    return photo, photo_path
+    return photo_path, mask

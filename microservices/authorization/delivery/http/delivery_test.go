@@ -32,12 +32,14 @@ func TestNewAuthHandler(t *testing.T) {
 func TestAuthHandler_LoginHandlerSuccess(t *testing.T) {
 	var byteData = []byte(`{
 			"telephone" : "909-277-47-21",
-			"password" : "qwerty"
+			"password" : "qwerty",
+			"is_logged_in" : true
 		}`)
 
 	login := models.LoginData{
-		Telephone: "909-277-47-21",
-		Password:  "qwerty",
+		Telephone:  "909-277-47-21",
+		Password:   "qwerty",
+		IsLoggedIn: true,
 	}
 	body := bytes.NewReader(byteData)
 
@@ -73,12 +75,14 @@ func TestAuthHandler_LoginHandlerSuccess(t *testing.T) {
 func TestAuthHandler_LoginHandlerFail(t *testing.T) {
 	var byteData = []byte(`{
 			"telephone" : "909-277-47-21",
-			"password" : "qwerty"
+			"password" : "qwerty",
+			"is_logged_in" : true
 		}`)
 
 	login := models.LoginData{
-		Telephone: "909-277-47-21",
-		Password:  "qwerty",
+		Telephone:  "909-277-47-21",
+		Password:   "qwerty",
+		IsLoggedIn: true,
 	}
 	body := bytes.NewReader(byteData)
 
@@ -108,7 +112,39 @@ func TestAuthHandler_LoginHandlerFail(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, 400, status)
+}
 
+func TestAuthHandler_LoginHandlerFailLogin(t *testing.T) {
+	var byteData = []byte(`{
+			"telephone" : "909-277-47-21",
+			"password" : "qwerty"
+		}`)
+
+	body := bytes.NewReader(byteData)
+
+	req, err := http.NewRequest("POST", "/login", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockAuthUsecase(ctrl)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+
+	authHandler := authHttp.AuthHandlerType{
+		AUsecase:   mock,
+		AuthClient: clientMock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(authHandler.LoginHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.NoError(t, err)
+	require.Equal(t, 400, status)
 }
 
 func TestAuthHandler_LoginHandlerFailDecode(t *testing.T) {

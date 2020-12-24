@@ -37,13 +37,13 @@ type ChatRepository interface {
 	DeleteDislike(uid1, uid2 int) error                       // Tested
 	SelectUserByID(uid int) (models.User, error)              // Tested
 	SelectChatID(uid1, uid2 int) (int, error)                 // Tested
+	CheckUserBySession(sid string) string                     // Tested
+	CheckLike(uid1, uid2 int) bool
+	CheckDislike(uid1, uid2 int) bool
+	CheckChat(chat models.Chat) bool
 	SelectChatsByID(uid int) ([]models.ChatData, error)
 	SelectChatByID(uid, chid int) (models.ChatData, error)
 	SelectUserByChat(uid, chid int) (models.UserFeed, error)
 	SelectSessions(uid int) ([]string, error)
-	CheckUserBySession(sid string) string
-	CheckChat(chat models.Chat) bool
 	Match(uid1, uid2, fid int) bool
-	CheckLike(uid1, uid2 int) bool
-	CheckDislike(uid1, uid2 int) bool
 }

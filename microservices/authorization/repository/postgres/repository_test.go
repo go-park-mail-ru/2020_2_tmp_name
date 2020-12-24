@@ -15,7 +15,6 @@ import (
 
 func TestPostgresAuthRepository_SelectUser(t *testing.T) {
 	type insertUserTestCase struct {
-		telephone  string
 		outputUser models.User
 		err        error
 	}
@@ -37,10 +36,10 @@ func TestPostgresAuthRepository_SelectUser(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users
-			  WHERE  telephone=$1;`
+	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me, filter_id FROM users WHERE  telephone=$1;`
 
 	var telephone string
 	err = faker.FakeData(&telephone)
@@ -55,15 +54,14 @@ func TestPostgresAuthRepository_SelectUser(t *testing.T) {
 	outputUser.Year = ""
 	outputUser.DateBirth = 19
 	outputUser.Telephone = telephone
+	outputUser.Target = "love"
 
 	testCases := []insertUserTestCase{
 		{
-			telephone:  "telephone",
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			telephone:  telephone,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -81,6 +79,7 @@ func TestPostgresAuthRepository_SelectUser(t *testing.T) {
 			testCase.outputUser.Education,
 			testCase.outputUser.Job,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {
@@ -115,7 +114,6 @@ func TestPostgresAuthRepository_SelectUser(t *testing.T) {
 
 func TestPostgresAuthRepository_SelectUserBySession(t *testing.T) {
 	type selectUserBySessionTestCase struct {
-		sid   string
 		value string
 		err   error
 	}
@@ -142,12 +140,10 @@ func TestPostgresAuthRepository_SelectUserBySession(t *testing.T) {
 
 	testCases := []selectUserBySessionTestCase{
 		{
-			sid:   "some-sid",
 			value: "value",
 			err:   sql.ErrNoRows,
 		},
 		{
-			sid:   sid,
 			value: value,
 			err:   nil,
 		},
@@ -355,6 +351,114 @@ func TestPostgresAuthRepository_DeleteSession(t *testing.T) {
 
 		err = repo.DeleteSession(testCase.key)
 		require.Equal(t, testCase.err, err)
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresAuthRepository_CheckUser(t *testing.T) {
+	type checkUserTestCase struct {
+		telephone string
+		err       error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"telephone",
+	}
+
+	query := `SELECT COUNT(telephone) FROM users WHERE telephone=$1;`
+
+	var telephone string
+	err = faker.FakeData(&telephone)
+	require.NoError(t, err)
+
+	testCases := []checkUserTestCase{
+		{
+			telephone: telephone,
+			err:       sql.ErrNoRows,
+		},
+		{
+			telephone: telephone,
+			err:       nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		data := []driver.Value{
+			testCase.telephone,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			mock.ExpectQuery(query).WithArgs(telephone).WillReturnRows(rows)
+		} else {
+			mock.ExpectQuery(query).WithArgs(telephone).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresAuthRepository(sqlxDB.DB)
+		repo.CheckUser(telephone)
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresAuthRepository_CheckUserBySession(t *testing.T) {
+	type checkUserTestCase struct {
+		telephone string
+		err       error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"telephone",
+	}
+
+	query := `SELECT value FROM sessions WHERE key=$1;`
+
+	var telephone string
+	err = faker.FakeData(&telephone)
+	require.NoError(t, err)
+
+	testCases := []checkUserTestCase{
+		{
+			telephone: telephone,
+			err:       sql.ErrNoRows,
+		},
+		{
+			telephone: telephone,
+			err:       nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		data := []driver.Value{
+			testCase.telephone,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			mock.ExpectQuery(query).WithArgs(telephone).WillReturnRows(rows)
+		} else {
+			mock.ExpectQuery(query).WithArgs(telephone).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresAuthRepository(sqlxDB.DB)
+		repo.CheckUserBySession(telephone)
 
 		err = mock.ExpectationsWereMet()
 		require.NoError(t, err, "unfulfilled expectations: %s", err)

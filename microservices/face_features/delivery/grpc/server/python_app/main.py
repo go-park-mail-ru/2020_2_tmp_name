@@ -6,12 +6,13 @@ import daemon
 
 
 def serve():
+    print("Starting server at: 8083")
     s = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     grpc_face.add_FaceGRPCHandlerServicer_to_server(Server(), s)
-    s.add_insecure_port('[::]:8083')
+    s.add_insecure_port('face:8083')
     s.start()
     s.wait_for_termination()
 
 
-with daemon.DaemonContext():
-    serve()
+# with daemon.DaemonContext():
+serve()

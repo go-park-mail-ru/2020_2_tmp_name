@@ -4,12 +4,10 @@ import (
 	"fmt"
 	domain "park_2020/2020_2_tmp_name/api/chats"
 	"park_2020/2020_2_tmp_name/models"
-	"time"
 )
 
 type chatUsecase struct {
-	chatRepo       domain.ChatRepository
-	contextTimeout time.Duration
+	chatRepo domain.ChatRepository
 }
 
 func NewChatUsecase(ch domain.ChatRepository) domain.ChatUsecase {

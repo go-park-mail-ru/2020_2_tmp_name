@@ -1,0 +1,6 @@
+issues:
+  exclude:
+    - w.Write
+    - os.Chdir
+    - day
+    - month

@@ -14,13 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type anyPassword struct{}
-
-func (a anyPassword) Match(v driver.Value) bool {
-	_, ok := v.(string)
-	return ok
-}
-
 func TestPostgresPhotoRepository_InsertPhoto(t *testing.T) {
 	type insertPhotoTestCase struct {
 		uid  int
@@ -152,7 +145,6 @@ func TestPostgresPhotoRepository_SelectImages(t *testing.T) {
 
 func TestPostgresPhotoRepository_SelectUserFeed(t *testing.T) {
 	type insertUserTestCase struct {
-		telephone  string
 		outputUser models.UserFeed
 		err        error
 	}
@@ -171,10 +163,10 @@ func TestPostgresPhotoRepository_SelectUserFeed(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT id, name, date_birth, education, job, about_me FROM users
-			  WHERE  telephone=$1;`
+	query := `SELECT id, name, date_birth, education, job, about_me, filter_id FROM users WHERE  telephone=$1;`
 
 	var telephone string
 	err = faker.FakeData(&telephone)
@@ -183,16 +175,15 @@ func TestPostgresPhotoRepository_SelectUserFeed(t *testing.T) {
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
 	outputUser.IsSuperlike = false
+	outputUser.Target = "love"
 	require.NoError(t, err)
 
 	testCases := []insertUserTestCase{
 		{
-			telephone:  "telephone",
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			telephone:  telephone,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -207,6 +198,7 @@ func TestPostgresPhotoRepository_SelectUserFeed(t *testing.T) {
 			testCase.outputUser.Education,
 			testCase.outputUser.Job,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {
@@ -297,6 +289,76 @@ func TestPostgresPhotoRepository_DeletePhoto(t *testing.T) {
 
 		err = repo.DeletePhoto(testCase.path, testCase.uid)
 		require.Equal(t, testCase.err, err)
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresPhotoRepository_SelectPhotosWithMask(t *testing.T) {
+	type insertPhotoTestCase struct {
+		path []string
+		link string
+		err  error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"path",
+	}
+
+	query := `SELECT path FROM photo WHERE path LIKE '$1_%';`
+
+	var uid int
+	err = faker.FakeData(&uid)
+	require.NoError(t, err)
+
+	var path []string
+	err = faker.FakeData(&path)
+	require.NoError(t, err)
+
+	var link string
+	err = faker.FakeData(&link)
+	require.NoError(t, err)
+
+	testCases := []insertPhotoTestCase{
+		{
+			path: path,
+			link: link,
+			err:  sql.ErrNoRows,
+		},
+		{
+			path: path,
+			link: link,
+			err:  nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		if testCase.err != nil {
+			mock.ExpectQuery(query).WithArgs(testCase.link).WillReturnError(testCase.err)
+		} else {
+			rows := sqlmock.NewRows(columns)
+			for _, image := range testCase.path {
+				rows.AddRow(image)
+			}
+			mock.ExpectQuery(query).WithArgs(testCase.link).WillReturnRows(rows)
+		}
+
+		repo := NewPostgresPhotoRepository(sqlxDB.DB)
+
+		images, err := repo.SelectPhotoWithMask(testCase.link)
+		t.Log(images)
+		require.Equal(t, testCase.err, err)
+		if err == nil {
+			require.Equal(t, testCase.path, images)
+		}
 
 		err = mock.ExpectationsWereMet()
 		require.NoError(t, err, "unfulfilled expectations: %s", err)

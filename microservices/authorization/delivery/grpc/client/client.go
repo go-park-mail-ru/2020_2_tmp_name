@@ -65,19 +65,6 @@ func transformIntoGRPCLoginData(data *models.LoginData) *proto.LoginData {
 	return loginDataProto
 }
 
-func transformIntoLoginDataModel(data *proto.LoginData) models.LoginData {
-	if data == nil {
-		return models.LoginData{}
-	}
-
-	loginData := models.LoginData{
-		Telephone: data.Telephone,
-		Password:  data.Password,
-	}
-
-	return loginData
-}
-
 func transformIntoUserModel(user *proto.User) models.User {
 	if user == nil {
 		return models.User{}
@@ -96,7 +83,7 @@ func transformIntoUserModel(user *proto.User) models.User {
 		Job:        user.Job,
 		Education:  user.Education,
 		AboutMe:    user.AboutMe,
-		Target: 	user.Target,
+		Target:     user.Target,
 	}
 
 	return userModel

@@ -142,7 +142,7 @@ func TestUserUsecase_SettingsFail(t *testing.T) {
 
 func TestUserUsecase_Feed(t *testing.T) {
 	user := models.User{
-		ID:         1,
+		ID:         0,
 		Name:       "Andrey",
 		Telephone:  "944-739-32-28",
 		Password:   "password",
@@ -156,7 +156,7 @@ func TestUserUsecase_Feed(t *testing.T) {
 
 	var users []models.UserFeed
 	user1 := models.UserFeed{
-		ID:         3,
+		ID:         0,
 		Name:       "Masha",
 		DateBirth:  20,
 		LinkImages: nil,
@@ -166,7 +166,7 @@ func TestUserUsecase_Feed(t *testing.T) {
 	}
 
 	user2 := models.UserFeed{
-		ID:         4,
+		ID:         0,
 		Name:       "Dasha",
 		DateBirth:  20,
 		LinkImages: nil,
@@ -182,6 +182,7 @@ func TestUserUsecase_Feed(t *testing.T) {
 
 	mock := mock.NewMockUserRepository(ctrl)
 	mock.EXPECT().SelectUsers(user).Times(1).Return(users, nil)
+	mock.EXPECT().CheckSuperLikeMe(user.ID, user1.ID).Times(2).Return(true)
 
 	us := userUsecase{
 		userRepo: mock,

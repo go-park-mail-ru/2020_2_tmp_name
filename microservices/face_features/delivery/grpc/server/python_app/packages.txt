@@ -1,0 +1,5 @@
+pip3 install grpcio
+pip3 install --upgrade google-api-python-client
+pip3 install opencv-python
+pip3 install pillow
+pip3 install python-daemon

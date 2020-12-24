@@ -152,3 +152,40 @@ func TestPhotoUsecase_TestRemovePhotoFail(t *testing.T) {
 	err := ps.RemovePhoto(path, uid)
 	require.NotEqual(t, err, nil)
 }
+
+func TestPhotoUsecase_TestFindPhotoWithMaskSuccess(t *testing.T) {
+	path := "path"
+	links := []string{"link1", "link2"}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockPhotoRepository(ctrl)
+	mock.EXPECT().SelectPhotoWithMask(path).Times(1).Return(links, nil)
+
+	ps := photoUsecase{
+		photoRepo: mock,
+	}
+
+	result, err := ps.FindPhotoWithMask(path)
+
+	require.NoError(t, err)
+	require.Equal(t, links, result)
+}
+
+func TestPhotoUsecase_TestFindPhotoWitouthMaskSuccess(t *testing.T) {
+	path := "path"
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockPhotoRepository(ctrl)
+
+	ps := photoUsecase{
+		photoRepo: mock,
+	}
+
+	_, err := ps.FindPhotoWithoutMask(path)
+
+	require.NotEqual(t, err, nil)
+}

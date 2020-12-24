@@ -20,6 +20,6 @@ type AuthRepository interface {
 	SelectImages(uid int) ([]string, error)           // Tested
 	DeleteSession(sid string) error                   // Tested
 	SelectUserBySession(sid string) (string, error)   // Tested
-	CheckUser(telephone string) bool
-	CheckUserBySession(sid string) string
+	CheckUser(telephone string) bool                  // Tested
+	CheckUserBySession(sid string) string             // Tested
 }

@@ -42,7 +42,7 @@ func (p *postgresChatRepository) SelectImages(uid int) ([]string, error) {
 		var image string
 		err := rows.Scan(&image)
 		if err != nil {
-			continue
+			return images, err
 		}
 		images = append(images, image)
 	}
@@ -72,7 +72,11 @@ func (p *postgresChatRepository) InsertMessage(text string, chatID, uid int) err
 func (p *postgresChatRepository) SelectMessage(uid, chid int) (models.Msg, error) {
 	var message models.Msg
 	row := p.Conn.QueryRow(`SELECT text, time_delivery, user_id FROM message WHERE chat_id=$1 order by id desc limit 1;`, chid)
-	row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
+	err := row.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
+	if err != nil {
+		return message, err
+	}
+
 	message.ChatID = chid
 	message.UserID = uid
 	return message, nil
@@ -91,7 +95,7 @@ func (p *postgresChatRepository) SelectMessages(chid int) ([]models.Msg, error) 
 		var message models.Msg
 		err := rows.Scan(&message.Message, &message.TimeDelivery, &message.UserID)
 		if err != nil {
-			continue
+			return messages, err
 		}
 		message.ChatID = chid
 		messages = append(messages, message)
@@ -113,7 +117,7 @@ func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 		var uid1, fid int
 		err := rows.Scan(&chat.ID, &uid1, &fid)
 		if err != nil {
-			continue
+			return chats, err
 		}
 		chat.Target = models.IDToTarget(fid)
 		chat.Partner, err = p.SelectUserFeedByID(uid1)
@@ -138,7 +142,7 @@ func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 		var uid2, fid int
 		err := rows.Scan(&chat.ID, &uid2, &fid)
 		if err != nil {
-			continue
+			return chats, err
 		}
 		chat.Target = models.IDToTarget(fid)
 		chat.Partner, err = p.SelectUserFeedByID(uid2)
@@ -249,7 +253,7 @@ func (p *postgresChatRepository) SelectSessions(uid int) ([]string, error) {
 		var session string
 		err := rows.Scan(&session)
 		if err != nil {
-			continue
+			return sessions, err
 		}
 		sessions = append(sessions, session)
 	}
@@ -276,7 +280,7 @@ func (p *postgresChatRepository) InsertDislike(uid1, uid2, fid int) error {
 
 func (p *postgresChatRepository) CheckLike(uid1, uid2 int) bool {
 	var count int
-	err := p.Conn.QueryRow(`SELECT COUNT(id) FROM likes WHERE user_id=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
+	err := p.Conn.QueryRow(`SELECT COUNT(id) FROM likes WHERE user_id1=$1 AND user_id2 = $2;`, uid1, uid2).Scan(&count)
 	if err != nil {
 		return false
 	}

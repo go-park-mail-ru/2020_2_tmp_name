@@ -45,10 +45,11 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `INSERT INTO users(name, telephone, password, date_birth, sex, job, education, about_me) 
-			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`
+	query := `INSERT INTO users(name, telephone, password, date_birth, sex, job, education, about_me, filter_id) 
+			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`
 
 	var inputUser models.User
 
@@ -59,6 +60,7 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 	inputUser.Month = "Май"
 	inputUser.Year = "2001"
 	inputUser.DateBirth = 19
+	inputUser.Target = "love"
 
 	testCases := []insertUserTestCase{
 		{
@@ -77,6 +79,7 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 			testCase.inputUser.Job,
 			testCase.inputUser.Education,
 			testCase.inputUser.AboutMe,
+			1,
 		}
 
 		rows := []driver.Value{
@@ -89,6 +92,7 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 			testCase.inputUser.Education,
 			testCase.inputUser.Job,
 			testCase.inputUser.AboutMe,
+			1,
 		}
 
 		sqlmock.NewRows(columns).AddRow(rows...)
@@ -102,13 +106,6 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		require.NoError(t, err, "unfulfilled expectations: %s", err)
 	}
-}
-
-type anyTime struct{}
-
-func (a anyTime) Match(v driver.Value) bool {
-	_, ok := v.(string)
-	return ok
 }
 
 func TestPostgresUserRepository_InsertSession(t *testing.T) {
@@ -195,6 +192,7 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
 	var user models.User
@@ -238,6 +236,10 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 			q:    `UPDATE users SET about_me=$1 WHERE id = $2;`,
 			data: user.AboutMe,
 		},
+		{
+			q:    `UPDATE users SET filter_id=$1 WHERE id = $2;`,
+			data: 0,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -251,6 +253,7 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 			testCase.user.Education,
 			testCase.user.Job,
 			testCase.user.AboutMe,
+			1,
 		}
 
 		sqlmock.NewRows(columns).AddRow(rows...)
@@ -270,7 +273,6 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 
 func TestPostgresUserRepository_SelectUserByID(t *testing.T) {
 	type insertUserTestCase struct {
-		id         int
 		outputUser models.User
 		err        error
 	}
@@ -292,9 +294,10 @@ func TestPostgresUserRepository_SelectUserByID(t *testing.T) {
 		"education",
 		"job",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me FROM users WHERE  id=$1;`
+	query := `SELECT id, name, telephone, password, date_birth, sex, job, education, about_me, filter_id FROM users WHERE  id=$1;`
 
 	var telephone string
 	err = faker.FakeData(&telephone)
@@ -309,15 +312,14 @@ func TestPostgresUserRepository_SelectUserByID(t *testing.T) {
 	outputUser.Year = ""
 	outputUser.DateBirth = 19
 	outputUser.Telephone = telephone
+	outputUser.Target = "love"
 
 	testCases := []insertUserTestCase{
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -335,6 +337,7 @@ func TestPostgresUserRepository_SelectUserByID(t *testing.T) {
 			testCase.outputUser.Education,
 			testCase.outputUser.Job,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {
@@ -369,7 +372,6 @@ func TestPostgresUserRepository_SelectUserByID(t *testing.T) {
 
 func TestPostgresUserRepository_SelectUserFeedByID(t *testing.T) {
 	type insertUserTestCase struct {
-		id         int
 		outputUser models.UserFeed
 		err        error
 	}
@@ -387,23 +389,27 @@ func TestPostgresUserRepository_SelectUserFeedByID(t *testing.T) {
 		"job",
 		"education",
 		"about_me",
+		"filter_id",
 	}
 
-	query := `SELECT name, date_birth, job, education, about_me FROM users WHERE id=$1;`
+	query := `SELECT name, date_birth, job, education, about_me, filter_id FROM users WHERE id=$1;`
+
+	var telephone string
+	err = faker.FakeData(&telephone)
+	require.NoError(t, err)
 
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
-	require.NoError(t, err)
 	outputUser.IsSuperlike = false
+	outputUser.Target = "love"
+	require.NoError(t, err)
 
 	testCases := []insertUserTestCase{
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -417,6 +423,7 @@ func TestPostgresUserRepository_SelectUserFeedByID(t *testing.T) {
 			testCase.outputUser.Job,
 			testCase.outputUser.Education,
 			testCase.outputUser.AboutMe,
+			1,
 		}
 
 		if testCase.err == nil {
@@ -451,9 +458,7 @@ func TestPostgresUserRepository_SelectUserFeedByID(t *testing.T) {
 
 func TestPostgresUserRepository_SelectUsers(t *testing.T) {
 	type selectUsersTestCase struct {
-		inputUser   models.User
-		outputUsers []models.UserFeed
-		err         error
+		err error
 	}
 
 	db, dbMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -463,58 +468,38 @@ func TestPostgresUserRepository_SelectUsers(t *testing.T) {
 	defer db.Close()
 	sqlxDB := sqlx.NewDb(db, "sqlmock")
 
-	columns := []string{
-		"id",
-		"name",
-		"date_birth",
-		"job",
-		"education",
-		"about_me",
-	}
-
-	query := `SELECT id, name, date_birth, education, job, about_me FROM users WHERE sex != $1`
+	query := `SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me, u.filter_id FROM users AS u
+	WHERE u.sex != $1 AND u.filter_id=$3 AND u.id != $2
+	EXCEPT (
+	SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me, u.filter_id FROM users AS u
+	JOIN likes AS l ON u.id=l.user_id2 WHERE u.sex != $1 AND l.user_id1=$2 AND u.filter_id=$3
+	UNION
+	SELECT u.id, u.name, u.date_birth, u.education, u.job, u.about_me, u.filter_id FROM users AS u
+	JOIN dislikes AS d ON u.id=d.user_id2 WHERE u.sex != $1 AND d.user_id1=$2 AND u.filter_id=$3
+	);`
 
 	var inputUser models.User
 	err = faker.FakeData(&inputUser)
 	require.NoError(t, err)
 
-	var outputUsers []models.UserFeed
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
 	require.NoError(t, err)
 	outputUser.IsSuperlike = false
-
-	outputUsers = append(outputUsers, outputUser)
+	inputUser.Target = "love"
+	outputUser.Target = "love"
 
 	testCases := []selectUsersTestCase{
 		{
-			inputUser:   inputUser,
-			outputUsers: outputUsers,
-			err:         sql.ErrNoRows,
+			err: sql.ErrNoRows,
 		},
 	}
 
 	for i, testCase := range testCases {
 		msg := fmt.Sprintf("case %d aaaaaaaaaaaa", i)
-		data := []driver.Value{
-			1,
-			testCase.outputUsers[0].Name,
-			testCase.outputUsers[0].DateBirth,
-			testCase.outputUsers[0].Education,
-			testCase.outputUsers[0].Job,
-			testCase.outputUsers[0].AboutMe,
-		}
 
 		if testCase.err != nil {
-
-			dbMock.ExpectQuery(query).WithArgs(inputUser.Sex).WillReturnError(testCase.err)
-
-		} else {
-			rows := sqlmock.NewRows(columns).AddRow(data...)
-			for _, user := range testCase.outputUsers {
-				rows.AddRow(user.ID, user.Name, user.DateBirth, user.Job, user.Education, user.AboutMe)
-			}
-			dbMock.ExpectQuery(query).WithArgs(inputUser.Sex).WillReturnRows(rows)
+			dbMock.ExpectQuery(query).WithArgs(inputUser.Sex, inputUser.ID, 1).WillReturnError(testCase.err)
 		}
 
 		repo := NewPostgresUserRepository(sqlxDB.DB)
@@ -706,6 +691,171 @@ func TestPostgresUserRepository_InsertPremium(t *testing.T) {
 
 		err = repo.InsertPremium(testCase.uid, testCase.dateFrom, testCase.dateTo)
 		require.Equal(t, testCase.err, err)
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresUserRepository_CheckUser(t *testing.T) {
+	type checkUserTestCase struct {
+		telephone string
+		err       error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"telephone",
+	}
+
+	query := `SELECT COUNT(telephone) FROM users WHERE telephone=$1;`
+
+	var telephone string
+	err = faker.FakeData(&telephone)
+	require.NoError(t, err)
+
+	testCases := []checkUserTestCase{
+		{
+			telephone: telephone,
+			err:       sql.ErrNoRows,
+		},
+		{
+			telephone: telephone,
+			err:       nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		data := []driver.Value{
+			testCase.telephone,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			mock.ExpectQuery(query).WithArgs(telephone).WillReturnRows(rows)
+		} else {
+			mock.ExpectQuery(query).WithArgs(telephone).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresUserRepository(sqlxDB.DB)
+		repo.CheckUser(telephone)
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresUserRepository_CheckPremium(t *testing.T) {
+	type checkUserTestCase struct {
+		uid int
+		err error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"user_id",
+	}
+
+	query := `SELECT COUNT(user_id) FROM premium_accounts WHERE user_id=$1;`
+
+	var uid int
+	err = faker.FakeData(&uid)
+	require.NoError(t, err)
+
+	testCases := []checkUserTestCase{
+		{
+			uid: uid,
+			err: sql.ErrNoRows,
+		},
+		{
+			uid: uid,
+			err: nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		data := []driver.Value{
+			testCase.uid,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			mock.ExpectQuery(query).WithArgs(uid).WillReturnRows(rows)
+		} else {
+			mock.ExpectQuery(query).WithArgs(uid).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresUserRepository(sqlxDB.DB)
+		repo.CheckPremium(uid)
+
+		err = mock.ExpectationsWereMet()
+		require.NoError(t, err, "unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresUserRepository_CheckSuperlikeMe(t *testing.T) {
+	type checkUserTestCase struct {
+		uid int
+		err error
+	}
+
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if err != nil {
+		t.Fatalf("error '%s' when opening a stub database connection", err)
+	}
+	defer db.Close()
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	columns := []string{
+		"user_id",
+	}
+
+	query := `SELECT COUNT(*) FROM superlikes WHERE user_id2 = $1;`
+
+	var uid, me int
+	err = faker.FakeData(&uid)
+	require.NoError(t, err)
+
+	err = faker.FakeData(&me)
+	require.NoError(t, err)
+
+	testCases := []checkUserTestCase{
+		{
+			uid: uid,
+			err: sql.ErrNoRows,
+		},
+		{
+			uid: uid,
+			err: nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		data := []driver.Value{
+			testCase.uid,
+		}
+
+		if testCase.err == nil {
+			rows := sqlmock.NewRows(columns).AddRow(data...)
+			mock.ExpectQuery(query).WithArgs(uid).WillReturnRows(rows)
+		} else {
+			mock.ExpectQuery(query).WithArgs(uid).WillReturnError(testCase.err)
+		}
+
+		repo := NewPostgresUserRepository(sqlxDB.DB)
+		repo.CheckSuperLikeMe(uid, me)
 
 		err = mock.ExpectationsWereMet()
 		require.NoError(t, err, "unfulfilled expectations: %s", err)

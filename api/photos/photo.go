@@ -10,6 +10,9 @@ import (
 type PhotoUsecase interface {
 	AddPhoto(photo models.Photo) error
 	RemovePhoto(path string, uid int) error
+	ClearPhotos(path string) error
+	FindPhotoWithMask(path string) ([]string, error)
+	FindPhotoWithoutMask(path string) (string, error)
 }
 
 type PhotoRepository interface {
@@ -17,4 +20,5 @@ type PhotoRepository interface {
 	SelectImages(uid int) ([]string, error)                   // Tested
 	InsertPhoto(path string, uid int) error                   // Tested
 	DeletePhoto(path string, uid int) error                   // Tested
+	SelectPhotoWithMask(path string) ([]string, error)        // Tested
 }

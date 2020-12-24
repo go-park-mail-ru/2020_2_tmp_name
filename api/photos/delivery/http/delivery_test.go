@@ -9,6 +9,7 @@ import (
 	"park_2020/2020_2_tmp_name/api/photos/mock"
 	"park_2020/2020_2_tmp_name/models"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
@@ -16,6 +17,7 @@ import (
 
 	photoHttp "park_2020/2020_2_tmp_name/api/photos/delivery/http"
 	authClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client"
+	faceClient "park_2020/2020_2_tmp_name/microservices/face_features/delivery/grpc/client"
 
 	mockClient "park_2020/2020_2_tmp_name/microservices/authorization/delivery/grpc/client/mock"
 )
@@ -27,7 +29,8 @@ func TestNewUserHandler(t *testing.T) {
 
 	mock := mock.NewMockPhotoUsecase(ctrl)
 	authClient := &authClient.AuthClient{}
-	photoHttp.NewPhotoHandler(router, mock, authClient)
+	faceClient := &faceClient.FaceClient{}
+	photoHttp.NewPhotoHandler(router, mock, authClient, faceClient)
 }
 
 func TestPhotoHandler_AddPhotoHandlerSuccess(t *testing.T) {
@@ -274,6 +277,94 @@ func TestPhotoHandler_RemovePhotoHandlerFailDecode(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(photoHandler.RemovePhotoHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 400, status)
+}
+
+func TestPhotoHandler_MaskHandlerFail(t *testing.T) {
+	user := models.User{
+		Name:       "Misha",
+		Telephone:  "909-277-47-21",
+		Password:   "1234",
+		Sex:        "male",
+		LinkImages: nil,
+		Job:        "Fullstack",
+		Education:  "BMSTU",
+		AboutMe:    "",
+	}
+
+	var byteData = []byte(`{
+		"linkImages": "./static/avatars/4.jpg",
+		"telephone":  "909-277-47-21",
+		"mask": "mask"
+	}`)
+
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/mask", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockPhotoUsecase(ctrl)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+	clientMock.EXPECT().CheckSession(context.Background(), req.Cookies()).Return(user, models.ErrUnauthorized)
+
+	photoHandler := photoHttp.PhotoHandlerType{
+		PUsecase:   mock,
+		AuthClient: clientMock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(photoHandler.MaskHandler)
+	handler.ServeHTTP(rr, req)
+	status := rr.Code
+
+	require.Equal(t, 401, status)
+}
+
+func TestPhotoHandler_MaskHandlerFailDecode(t *testing.T) {
+	var byteData = []byte(``)
+
+	sid := "something-like-this"
+	cookie := &http.Cookie{
+		Name:    "session_id",
+		Value:   sid,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	body := bytes.NewReader(byteData)
+	req, err := http.NewRequest("POST", "/mask", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(cookie)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mock := mock.NewMockPhotoUsecase(ctrl)
+	clientMock := mockClient.NewMockAuthClientInterface(ctrl)
+
+	photoHandler := photoHttp.PhotoHandlerType{
+		PUsecase:   mock,
+		AuthClient: clientMock,
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(photoHandler.MaskHandler)
 	handler.ServeHTTP(rr, req)
 	status := rr.Code
 

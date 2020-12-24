@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc"
 
 	"park_2020/2020_2_tmp_name/middleware"
-	"park_2020/2020_2_tmp_name/models"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -52,8 +51,6 @@ type application struct {
 	serv        *mux.Router
 }
 
-var conf models.Config
-
 func init() {
 	err := godotenv.Load("envs/postgres.env")
 	if err != nil {
@@ -61,7 +58,7 @@ func init() {
 	}
 }
 
-func DBConnection(conf *models.Config) *sql.DB {
+func DBConnection() *sql.DB {
 	connString := fmt.Sprintf("host=%v user=%v password=%v dbname=%v sslmode=disable",
 		os.Getenv("PostgresHost"),
 		os.Getenv("PostgresUser"),
@@ -89,7 +86,7 @@ func (app *application) initServer() {
 	originsOk := handlers.AllowedOrigins([]string{"https://mi-ami.ru"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE"})
 
-	dbConn := DBConnection(&conf)
+	dbConn := DBConnection()
 
 	router := mux.NewRouter()
 
@@ -115,7 +112,7 @@ func (app *application) initServer() {
 	router.Use(AccessLogOut.AccessLogMiddleware(router))
 
 	ar := _authRepo.NewPostgresAuthRepository(dbConn)
-	grpcConnAuth, err := grpc.Dial("0.0.0.0:8081", grpc.WithInsecure())
+	grpcConnAuth, err := grpc.Dial("auth:8081", grpc.WithInsecure())
 	if err != nil {
 		log.Println(err)
 		return
@@ -130,7 +127,7 @@ func (app *application) initServer() {
 	_chatDelivery.NewChatHandler(router, chu, grpcAuthClient)
 
 	cr := _commentRepo.NewPostgresCommentRepository(dbConn)
-	grpcConnComments, err := grpc.Dial("localhost:8082", grpc.WithInsecure())
+	grpcConnComments, err := grpc.Dial("comment:8082", grpc.WithInsecure())
 	if err != nil {
 		logrus.Error(err)
 		return
@@ -140,7 +137,7 @@ func (app *application) initServer() {
 	cu := _commentUcase.NewCommentUsecase(cr)
 	_commentDelivery.NewCommentHandler(router, cu, grpcCommentClient, grpcAuthClient)
 
-	grpcConnFace, err := grpc.Dial("localhost:8083", grpc.WithInsecure())
+	grpcConnFace, err := grpc.Dial("face:8083", grpc.WithInsecure())
 	if err != nil {
 		logrus.Error(err)
 		return
@@ -154,7 +151,7 @@ func (app *application) initServer() {
 	middleware.MyCORSMethodMiddleware(router)
 
 	serv := &http.Server{
-		Addr:         ":8080",
+		Addr:         "main_service:8080",
 		Handler:      handlers.CORS(originsOk, headersOk, methodsOk, handlers.AllowCredentials())(router),
 		WriteTimeout: 60 * time.Second,
 		ReadTimeout:  60 * time.Second,
@@ -171,7 +168,7 @@ func (app *application) initServer() {
 	}
 }
 
-func newApplication(conf models.Config) *application {
+func newApplication() *application {
 	return &application{
 		servicePort: 8080,
 		serv:        mux.NewRouter().StrictSlash(true),
@@ -179,7 +176,6 @@ func newApplication(conf models.Config) *application {
 }
 
 func main() {
-	app := newApplication(conf)
+	app := newApplication()
 	app.initServer()
-
 }

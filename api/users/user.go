@@ -19,16 +19,16 @@ type UserUsecase interface {
 }
 
 type UserRepository interface {
-	InsertUser(user models.User) error                   // Tested
-	InsertSession(sid, telephone string) error           // Tested
-	UpdateUser(user models.User, uid int) error          // Tested
-	SelectUserByID(uid int) (models.User, error)         // Tested
-	SelectUserFeedByID(uid int) (models.UserFeed, error) // Tested
-	SelectImages(uid int) ([]string, error)              // Tested
-	DeleteSession(sid string) error                      // Tested
-	CheckUser(telephone string) bool
-	CheckPremium(uid int) bool
+	InsertUser(user models.User) error                                 // Tested
+	InsertSession(sid, telephone string) error                         // Tested
+	UpdateUser(user models.User, uid int) error                        // Tested
+	SelectUserByID(uid int) (models.User, error)                       // Tested
+	SelectUserFeedByID(uid int) (models.UserFeed, error)               // Tested
+	SelectImages(uid int) ([]string, error)                            // Tested
+	DeleteSession(sid string) error                                    // Tested
+	CheckUser(telephone string) bool                                   // Tested
+	CheckPremium(uid int) bool                                         // Tested
 	SelectUsers(user models.User) ([]models.UserFeed, error)           // Tested
 	InsertPremium(uid int, dateFrom time.Time, dateTo time.Time) error // Tested
-	CheckSuperLikeMe(me, userId int) bool
+	CheckSuperLikeMe(me, userId int) bool                              // Tested
 }
