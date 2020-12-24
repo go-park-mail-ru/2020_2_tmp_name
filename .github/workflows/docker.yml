@@ -10,16 +10,15 @@ on:
       - master
       - dev
 
+
+
 jobs:
-  linter:
-    name: lint
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v1
-        with:
-          version: v1.26
+      - name: Run golangci-lint
+        uses: actions-contrib/golangci-lint@v1
   build:
     runs-on: ubuntu-latest
     steps:
