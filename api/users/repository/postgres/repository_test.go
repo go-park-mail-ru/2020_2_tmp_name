@@ -482,15 +482,12 @@ func TestPostgresUserRepository_SelectUsers(t *testing.T) {
 	err = faker.FakeData(&inputUser)
 	require.NoError(t, err)
 
-	var outputUsers []models.UserFeed
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
 	require.NoError(t, err)
 	outputUser.IsSuperlike = false
 	inputUser.Target = "love"
 	outputUser.Target = "love"
-
-	outputUsers = append(outputUsers, outputUser)
 
 	testCases := []selectUsersTestCase{
 		{

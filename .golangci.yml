@@ -1,3 +1,5 @@
-linters-settings:
-  ignore: fmt:.*,io/ioutil:^Read.*/ioutil:^Write.*
-  ineffassign:
+run:
+  skip-dirs:
+    - models
+  linters-settings:
+    ignore: fmt:.*,io/ioutil:^Read.*/ioutil:^Write.*,os:.*
