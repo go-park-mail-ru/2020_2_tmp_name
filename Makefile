@@ -38,6 +38,7 @@ run:
 
 ## coverage-html: generates HTML file with test coverage
 tests:
+	sudo rm -rf postgres_data/
 	go test ./... -coverprofile cover; go tool cover -func cover
 	go tool cover -html=cover
 	rm -rf cover

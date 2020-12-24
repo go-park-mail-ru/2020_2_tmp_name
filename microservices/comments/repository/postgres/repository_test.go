@@ -3,7 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"database/sql/driver"
 	"park_2020/2020_2_tmp_name/models"
@@ -15,13 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type anyPassword struct{}
-
-func (a anyPassword) Match(v driver.Value) bool {
-	_, ok := v.(string)
-	return ok
-}
-
 type anyTime struct{}
 
 func (a anyTime) Match(v driver.Value) bool {
@@ -31,7 +23,6 @@ func (a anyTime) Match(v driver.Value) bool {
 
 func TestPostgresCommentRepository_SelectUserFeed(t *testing.T) {
 	type insertUserTestCase struct {
-		telephone  string
 		outputUser models.UserFeed
 		err        error
 	}
@@ -67,12 +58,10 @@ func TestPostgresCommentRepository_SelectUserFeed(t *testing.T) {
 
 	testCases := []insertUserTestCase{
 		{
-			telephone:  "telephone",
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			telephone:  telephone,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -122,7 +111,6 @@ func TestPostgresCommentRepository_SelectUserFeed(t *testing.T) {
 
 func TestPostgresCommentRepository_SelectUserFeedByID(t *testing.T) {
 	type insertUserTestCase struct {
-		id         int
 		outputUser models.UserFeed
 		err        error
 	}
@@ -157,12 +145,10 @@ func TestPostgresCommentRepository_SelectUserFeedByID(t *testing.T) {
 
 	testCases := []insertUserTestCase{
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -341,10 +327,7 @@ func TestPostgresCommentRepository_SelectImages(t *testing.T) {
 
 func TestPostgresCommentRepository_SelectComments(t *testing.T) {
 	type insertPhotoTestCase struct {
-		uid1 int
 		uid2 int
-		text string
-		time time.Time
 		err  error
 	}
 
@@ -369,9 +352,7 @@ func TestPostgresCommentRepository_SelectComments(t *testing.T) {
 
 	testCases := []insertPhotoTestCase{
 		{
-			uid1: uid1,
 			uid2: uid2,
-			text: text,
 			err:  sql.ErrNoRows,
 		},
 	}

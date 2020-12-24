@@ -371,9 +371,6 @@ func (c *Client) readPump(ch *ChatHandlerType, user models.User) {
 		c.Conn.Close()
 	}()
 
-	c.Conn.SetReadLimit(maxMessageSize)
-	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, message, err := c.Conn.ReadMessage()
 
@@ -415,6 +412,10 @@ func (c *Client) readPump(ch *ChatHandlerType, user models.User) {
 
 		mu := &sync.Mutex{}
 		sessions, err := ch.ChUsecase.Sessions(chatData.Partner.ID)
+		if err != nil {
+			logrus.Error(err)
+			return
+		}
 		clients := ch.Hub.Clients
 		for _, session := range sessions {
 			mu.Lock()
@@ -438,9 +439,11 @@ func (c *Client) writePump(ch *ChatHandlerType, user models.User) {
 	for {
 		select {
 		case message, ok := <-c.Send:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err != nil {
+					log.Println(err)
+				}
 				return
 			}
 
@@ -460,7 +463,6 @@ func (c *Client) writePump(ch *ChatHandlerType, user models.User) {
 				return
 			}
 		case <-ticker.C:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}

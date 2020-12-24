@@ -576,14 +576,7 @@ func TestUserHandler_FeedHandlerSuccess(t *testing.T) {
 		AboutMe:    "",
 	}
 
-	user2 := models.UserFeed{
-		Name:       "Masha",
-		LinkImages: nil,
-		Job:        "Fullstack",
-		Education:  "BMSTU",
-		AboutMe:    "",
-	}
-	users = append(users, user1, user2)
+	users = append(users, user1)
 
 	sid := "something-like-this"
 	cookie := &http.Cookie{
@@ -630,14 +623,7 @@ func TestUserHandler_FeedHandlerFail(t *testing.T) {
 		AboutMe:    "",
 	}
 
-	user2 := models.UserFeed{
-		Name:       "Masha",
-		LinkImages: nil,
-		Job:        "Fullstack",
-		Education:  "BMSTU",
-		AboutMe:    "",
-	}
-	users = append(users, user1, user2)
+	users = append(users, user1)
 
 	sid := "something-like-this"
 	cookie := &http.Cookie{
@@ -675,23 +661,6 @@ func TestUserHandler_FeedHandlerFail(t *testing.T) {
 
 func TestUserHandler_FeedHandlerFailUser(t *testing.T) {
 	var user models.User
-	var users []models.UserFeed
-	user1 := models.UserFeed{
-		Name:       "Misha",
-		LinkImages: nil,
-		Job:        "Fullstack",
-		Education:  "BMSTU",
-		AboutMe:    "",
-	}
-
-	user2 := models.UserFeed{
-		Name:       "Masha",
-		LinkImages: nil,
-		Job:        "Fullstack",
-		Education:  "BMSTU",
-		AboutMe:    "",
-	}
-	users = append(users, user1, user2)
 
 	sid := "something-like-this"
 	cookie := &http.Cookie{

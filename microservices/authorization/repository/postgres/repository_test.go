@@ -15,7 +15,6 @@ import (
 
 func TestPostgresAuthRepository_SelectUser(t *testing.T) {
 	type insertUserTestCase struct {
-		telephone  string
 		outputUser models.User
 		err        error
 	}
@@ -59,12 +58,10 @@ func TestPostgresAuthRepository_SelectUser(t *testing.T) {
 
 	testCases := []insertUserTestCase{
 		{
-			telephone:  "telephone",
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			telephone:  telephone,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -117,7 +114,6 @@ func TestPostgresAuthRepository_SelectUser(t *testing.T) {
 
 func TestPostgresAuthRepository_SelectUserBySession(t *testing.T) {
 	type selectUserBySessionTestCase struct {
-		sid   string
 		value string
 		err   error
 	}
@@ -144,12 +140,10 @@ func TestPostgresAuthRepository_SelectUserBySession(t *testing.T) {
 
 	testCases := []selectUserBySessionTestCase{
 		{
-			sid:   "some-sid",
 			value: "value",
 			err:   sql.ErrNoRows,
 		},
 		{
-			sid:   sid,
 			value: value,
 			err:   nil,
 		},
@@ -366,7 +360,6 @@ func TestPostgresAuthRepository_DeleteSession(t *testing.T) {
 func TestPostgresAuthRepository_CheckUser(t *testing.T) {
 	type checkUserTestCase struct {
 		telephone string
-		result    int
 		err       error
 	}
 
@@ -390,12 +383,10 @@ func TestPostgresAuthRepository_CheckUser(t *testing.T) {
 	testCases := []checkUserTestCase{
 		{
 			telephone: telephone,
-			result:    1,
 			err:       sql.ErrNoRows,
 		},
 		{
 			telephone: telephone,
-			result:    1,
 			err:       nil,
 		},
 	}
@@ -423,7 +414,6 @@ func TestPostgresAuthRepository_CheckUser(t *testing.T) {
 func TestPostgresAuthRepository_CheckUserBySession(t *testing.T) {
 	type checkUserTestCase struct {
 		telephone string
-		result    int
 		err       error
 	}
 
@@ -447,12 +437,10 @@ func TestPostgresAuthRepository_CheckUserBySession(t *testing.T) {
 	testCases := []checkUserTestCase{
 		{
 			telephone: telephone,
-			result:    1,
 			err:       sql.ErrNoRows,
 		},
 		{
 			telephone: telephone,
-			result:    1,
 			err:       nil,
 		},
 	}

@@ -108,13 +108,6 @@ func TestPostgresUserRepository_InsertUser(t *testing.T) {
 	}
 }
 
-type anyTime struct{}
-
-func (a anyTime) Match(v driver.Value) bool {
-	_, ok := v.(string)
-	return ok
-}
-
 func TestPostgresUserRepository_InsertSession(t *testing.T) {
 	type insertSessionTestCase struct {
 		key   string
@@ -280,7 +273,6 @@ func TestPostgresUserRepository_UpdateUser(t *testing.T) {
 
 func TestPostgresUserRepository_SelectUserByID(t *testing.T) {
 	type insertUserTestCase struct {
-		id         int
 		outputUser models.User
 		err        error
 	}
@@ -324,12 +316,10 @@ func TestPostgresUserRepository_SelectUserByID(t *testing.T) {
 
 	testCases := []insertUserTestCase{
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -382,7 +372,6 @@ func TestPostgresUserRepository_SelectUserByID(t *testing.T) {
 
 func TestPostgresUserRepository_SelectUserFeedByID(t *testing.T) {
 	type insertUserTestCase struct {
-		id         int
 		outputUser models.UserFeed
 		err        error
 	}
@@ -417,12 +406,10 @@ func TestPostgresUserRepository_SelectUserFeedByID(t *testing.T) {
 
 	testCases := []insertUserTestCase{
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        sql.ErrNoRows,
 		},
 		{
-			id:         1,
 			outputUser: outputUser,
 			err:        nil,
 		},
@@ -471,9 +458,7 @@ func TestPostgresUserRepository_SelectUserFeedByID(t *testing.T) {
 
 func TestPostgresUserRepository_SelectUsers(t *testing.T) {
 	type selectUsersTestCase struct {
-		inputUser   models.User
-		outputUsers []models.UserFeed
-		err         error
+		err error
 	}
 
 	db, dbMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -497,7 +482,6 @@ func TestPostgresUserRepository_SelectUsers(t *testing.T) {
 	err = faker.FakeData(&inputUser)
 	require.NoError(t, err)
 
-	var outputUsers []models.UserFeed
 	var outputUser models.UserFeed
 	err = faker.FakeData(&outputUser)
 	require.NoError(t, err)
@@ -505,13 +489,9 @@ func TestPostgresUserRepository_SelectUsers(t *testing.T) {
 	inputUser.Target = "love"
 	outputUser.Target = "love"
 
-	outputUsers = append(outputUsers, outputUser)
-
 	testCases := []selectUsersTestCase{
 		{
-			inputUser:   inputUser,
-			outputUsers: outputUsers,
-			err:         sql.ErrNoRows,
+			err: sql.ErrNoRows,
 		},
 	}
 
@@ -720,7 +700,6 @@ func TestPostgresUserRepository_InsertPremium(t *testing.T) {
 func TestPostgresUserRepository_CheckUser(t *testing.T) {
 	type checkUserTestCase struct {
 		telephone string
-		result    int
 		err       error
 	}
 
@@ -744,12 +723,10 @@ func TestPostgresUserRepository_CheckUser(t *testing.T) {
 	testCases := []checkUserTestCase{
 		{
 			telephone: telephone,
-			result:    1,
 			err:       sql.ErrNoRows,
 		},
 		{
 			telephone: telephone,
-			result:    1,
 			err:       nil,
 		},
 	}
@@ -776,9 +753,8 @@ func TestPostgresUserRepository_CheckUser(t *testing.T) {
 
 func TestPostgresUserRepository_CheckPremium(t *testing.T) {
 	type checkUserTestCase struct {
-		uid    int
-		result int
-		err    error
+		uid int
+		err error
 	}
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -800,14 +776,12 @@ func TestPostgresUserRepository_CheckPremium(t *testing.T) {
 
 	testCases := []checkUserTestCase{
 		{
-			uid:    uid,
-			result: 1,
-			err:    sql.ErrNoRows,
+			uid: uid,
+			err: sql.ErrNoRows,
 		},
 		{
-			uid:    uid,
-			result: 1,
-			err:    nil,
+			uid: uid,
+			err: nil,
 		},
 	}
 
@@ -834,7 +808,6 @@ func TestPostgresUserRepository_CheckPremium(t *testing.T) {
 func TestPostgresUserRepository_CheckSuperlikeMe(t *testing.T) {
 	type checkUserTestCase struct {
 		uid int
-		me  int
 		err error
 	}
 
@@ -861,12 +834,10 @@ func TestPostgresUserRepository_CheckSuperlikeMe(t *testing.T) {
 	testCases := []checkUserTestCase{
 		{
 			uid: uid,
-			me:  me,
 			err: sql.ErrNoRows,
 		},
 		{
 			uid: uid,
-			me:  me,
 			err: nil,
 		},
 	}
