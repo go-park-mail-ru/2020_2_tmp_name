@@ -45,16 +45,6 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/auth_service:${GITHUB_SHA::8}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/comment_service:${GITHUB_SHA::8}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/face_service:${GITHUB_SHA::8}
-      # - name: Build Docker image
-      #   run: sudo docker build -t dependencies -f ./docker/builder.Dockerfile . &&
-      #     sudo docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/main:${GITHUB_SHA::8} -f ./docker/main.Dockerfile . &&
-      #     sudo docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/staff_service:${GITHUB_SHA::8} -f ./docker/staff.Dockerfile . &&
-      #     sudo docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/survey_service:${GITHUB_SHA::8} -f ./docker/survey.Dockerfile .
-
-      # - name: Push the image
-      #   run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/main_service:${GITHUB_SHA::8} &&
-      #     docker push ${{ secrets.DOCKERHUB_USERNAME }}/staff_service:${GITHUB_SHA::8} &&
-      #     docker push ${{ secrets.DOCKERHUB_USERNAME }}/survey_service:${GITHUB_SHA::8}
 
   deploy:
     runs-on: ubuntu-latest
