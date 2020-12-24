@@ -59,6 +59,7 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           script: |
             echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+            cd 2020_2_tmp_name/
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/main_service:${GITHUB_SHA::8}
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/auth_service:${GITHUB_SHA::8}
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/comment_service:${GITHUB_SHA::8}
@@ -70,4 +71,4 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          script: docker rm -vf $(docker ps -a -q) || true && 2020_2_tmp_name/ && docker-compose up -d --build --no-deps
+          script: docker rm -vf $(docker ps -a -q) || true && cd 2020_2_tmp_name/ && docker-compose up -d --build --no-deps
