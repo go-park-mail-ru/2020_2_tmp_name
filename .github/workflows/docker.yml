@@ -34,7 +34,7 @@ jobs:
 
       - name: Build Docker images
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/dependencies:${GITHUB_SHA::8} -е ${{ secrets.DOCKERHUB_USERNAME }}/dependencies:latest -f docker/dependencies.Dockerfile .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/dependencies:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/dependencies:latest -f docker/dependencies.Dockerfile .
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/main:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/main:latest -f docker/main.Dockerfile .
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/auth:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/auth:latest -f docker/auth.Dockerfile .
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/comment:${GITHUB_SHA::8} -t ${{ secrets.DOCKERHUB_USERNAME }}/comment:latest -f docker/comment.Dockerfile .
