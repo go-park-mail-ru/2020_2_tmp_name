@@ -70,5 +70,4 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.PASSWORD }}
-          script: docker rm -vf $(docker ps -a -q) || true && docker-compose up -d --build --no-deps
-
+          script: sudo docker rm -vf $(docker ps -a -q) || true && cd / && docker-compose up -d --build --no-deps
