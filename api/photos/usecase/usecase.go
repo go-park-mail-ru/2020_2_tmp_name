@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"github.com/nfnt/resize"
+	"image/jpeg"
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/photos"
 	"park_2020/2020_2_tmp_name/models"
@@ -96,4 +98,38 @@ func (p *photoUsecase) FindPhotoWithoutMask(path string) (string, error) {
 		}
 	}
 	return "", models.ErrNotFound
+}
+
+func (p *photoUsecase) ResizePhoto(path string) error {
+	imgIn, err := os.Open(path)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	imgJpg, err := jpeg.Decode(imgIn)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	defer imgIn.Close()
+
+	width, height := imgJpg.Bounds().Dx(), imgJpg.Bounds().Dy()
+	////
+	//dst := image.NewRGBA(image.Rect(0, 0, width/10, height/10))
+	//fmt.Println(dst.Bounds())
+
+
+	//draw.ApproxBiLinear.Scale(dst, dst.Bounds(), imgJpg,
+	//	imgJpg.Bounds(), draw.Over, nil)
+
+	imgJpg = resize.Resize(uint(width)/2, uint(height)/2, imgJpg, resize.Bilinear)
+
+	imgOut, err := os.Create(path)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	err = jpeg.Encode(imgOut, imgJpg, nil)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	defer imgOut.Close()
+	return nil
 }

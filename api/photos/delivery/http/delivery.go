@@ -135,6 +135,16 @@ func (p *PhotoHandlerType) AddPhotoHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	//resize
+
+	err = p.PUsecase.ResizePhoto(photoPath + "/" + photoID.String() + ".jpg")
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
 	var photo models.Photo
 	photo.Telephone = user.Telephone
 	photo.Path = "https://mi-ami.ru/static/avatars/" + photoID.String() + ".jpg"
