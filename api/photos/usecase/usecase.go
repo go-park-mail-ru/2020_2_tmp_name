@@ -105,6 +105,17 @@ func (p *photoUsecase) ResizePhoto(path string) error {
 	if err != nil {
 		return models.ErrInternalServerError
 	}
+
+	fi, err := imgIn.Stat()
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	size := fi.Size()
+	if (size < 800000) {
+		return nil
+	}
+
+
 	imgJpg, err := jpeg.Decode(imgIn)
 	if err != nil {
 		return models.ErrInternalServerError
@@ -120,7 +131,7 @@ func (p *photoUsecase) ResizePhoto(path string) error {
 	//draw.ApproxBiLinear.Scale(dst, dst.Bounds(), imgJpg,
 	//	imgJpg.Bounds(), draw.Over, nil)
 
-	imgJpg = resize.Resize(uint(width)/2, uint(height)/2, imgJpg, resize.Bilinear)
+	imgJpg = resize.Resize(uint(width)/2, uint(height)/2, imgJpg, resize.Bicubic)
 
 	imgOut, err := os.Create(path)
 	if err != nil {
