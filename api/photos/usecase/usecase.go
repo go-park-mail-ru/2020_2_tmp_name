@@ -1,7 +1,11 @@
 package usecase
 
 import (
+	"github.com/disintegration/imaging"
 	"github.com/nfnt/resize"
+	"github.com/sirupsen/logrus"
+	"github.com/rwcarlsen/goexif/exif"
+	"image"
 	"image/jpeg"
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/photos"
@@ -105,6 +109,7 @@ func (p *photoUsecase) ResizePhoto(path string) error {
 	if err != nil {
 		return models.ErrInternalServerError
 	}
+	defer imgIn.Close()
 
 	fi, err := imgIn.Stat()
 	if err != nil {
@@ -115,22 +120,25 @@ func (p *photoUsecase) ResizePhoto(path string) error {
 		return nil
 	}
 
-
-	imgJpg, err := jpeg.Decode(imgIn)
+	err = p.rotateImg(path)
 	if err != nil {
 		return models.ErrInternalServerError
 	}
-	defer imgIn.Close()
+
+	imgForDecode, err := os.Open(path)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	defer imgForDecode.Close()
+
+
+	imgJpg, err := jpeg.Decode(imgForDecode)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+
 
 	width, height := imgJpg.Bounds().Dx(), imgJpg.Bounds().Dy()
-	////
-	//dst := image.NewRGBA(image.Rect(0, 0, width/10, height/10))
-	//fmt.Println(dst.Bounds())
-
-
-	//draw.ApproxBiLinear.Scale(dst, dst.Bounds(), imgJpg,
-	//	imgJpg.Bounds(), draw.Over, nil)
-
 	imgJpg = resize.Resize(uint(width)/2, uint(height)/2, imgJpg, resize.Bicubic)
 
 	imgOut, err := os.Create(path)
@@ -142,5 +150,69 @@ func (p *photoUsecase) ResizePhoto(path string) error {
 		return models.ErrInternalServerError
 	}
 	defer imgOut.Close()
+	return nil
+}
+
+func (p *photoUsecase) reverseOrientation(img image.Image, o string) *image.NRGBA {
+	switch o {
+	case "1":
+		return imaging.Clone(img)
+	case "2":
+		return imaging.FlipV(img)
+	case "3":
+		return imaging.Rotate180(img)
+	case "4":
+		return imaging.Rotate180(imaging.FlipV(img))
+	case "5":
+		return imaging.Rotate270(imaging.FlipV(img))
+	case "6":
+		return imaging.Rotate270(img)
+	case "7":
+		return imaging.Rotate90(imaging.FlipV(img))
+	case "8":
+		return imaging.Rotate90(img)
+	}
+	logrus.Errorf("unknown orientation %s, expect 1-8", o)
+	return imaging.Clone(img)
+}
+
+
+func (p *photoUsecase) rotateImg(path string) error{
+	imgInDecode, err := os.Open(path)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	defer imgInDecode.Close()
+	imgDecoded, err := os.Open(path)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	defer imgDecoded.Close()
+
+	var img image.Image
+	img, err = jpeg.Decode(imgInDecode)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	imgExif, err := exif.Decode(imgDecoded)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	if imgExif == nil {
+		return nil
+	}
+	orient, err := imgExif.Get(exif.Orientation)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
+	if orient != nil {
+		img = p.reverseOrientation(img, orient.String())
+	} else {
+		img = p.reverseOrientation(img, "1")
+	}
+	err = imaging.Save(img, path)
+	if err != nil {
+		return models.ErrInternalServerError
+	}
 	return nil
 }
