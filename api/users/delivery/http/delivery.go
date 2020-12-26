@@ -144,6 +144,14 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	err = u.UUsecase.ResizePhoto(photoPath + "/" + photoID.String() + ".jpg")
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }

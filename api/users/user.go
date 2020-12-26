@@ -16,6 +16,7 @@ type UserUsecase interface {
 	UserID(uid int) (models.UserFeed, error)
 	Telephone(telephone string) bool
 	GetPremium(uid int) error
+	ResizePhoto(path string) error
 }
 
 type UserRepository interface {
