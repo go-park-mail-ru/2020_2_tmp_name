@@ -238,6 +238,29 @@ func (p *postgresUserRepository) SelectImages(uid int) ([]string, error) {
 	return images, nil
 }
 
+func (p *postgresUserRepository) ChangeAvatarPath(uid int, newpath string) error {
+	row := p.Conn.QueryRow(`SELECT path FROM photo WHERE user_id=$1 ORDER BY id LIMIT 1;`, uid)
+
+	var path string
+	err := row.Scan(&path)
+	if err != nil {
+		return err
+	}
+
+	tempPath := newpath
+	_, err = p.Conn.Exec(`UPDATE path SET path=$1 WHERE path=$2`, newpath, path)
+	if err != nil {
+		return err
+	}
+
+	_, err = p.Conn.Exec(`UPDATE path SET path=$1 WHERE path=$2`, path, tempPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p *postgresUserRepository) InsertPremium(uid int, dateFrom time.Time, dateTo time.Time) error {
 	_, err := p.Conn.Exec(`INSERT INTO premium_accounts(user_id, date_to, date_from) 
 								 VALUES ($1, $2, $3);`, uid, dateTo, dateFrom)
