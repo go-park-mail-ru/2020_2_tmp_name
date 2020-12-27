@@ -32,7 +32,7 @@ func (p *postgresChatRepository) SelectUserFeed(telephone string) (models.UserFe
 
 func (p *postgresChatRepository) SelectImages(uid int) ([]string, error) {
 	var images []string
-	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE  user_id=$1;`, uid)
+	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE  user_id=$1 ORDER BY id ASC;`, uid)
 	if err != nil {
 		return images, err
 	}
