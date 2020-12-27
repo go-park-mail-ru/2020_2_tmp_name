@@ -152,7 +152,8 @@ func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 		}
 		msg, err := p.SelectMessage(uid2, chat.ID)
 		if err != nil {
-			return chats, err
+			chats = append(chats, chat)
+			continue
 		}
 		chat.Messages = append(chat.Messages, msg)
 		chats = append(chats, chat)
