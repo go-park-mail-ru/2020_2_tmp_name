@@ -31,7 +31,7 @@ func (p *postgresPhotoRepository) SelectUserFeed(telephone string) (models.UserF
 
 func (p *postgresPhotoRepository) SelectImages(uid int) ([]string, error) {
 	var images []string
-	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE  user_id=$1 ORDER BY id;`, uid)
+	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE  user_id=$1 ORDER BY id ASC;`, uid)
 	if err != nil {
 		return images, err
 	}
