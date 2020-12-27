@@ -1,16 +1,17 @@
 package usecase
 
 import (
-	"github.com/disintegration/imaging"
-	"github.com/nfnt/resize"
-	"github.com/rwcarlsen/goexif/exif"
-	"github.com/sirupsen/logrus"
 	"image"
 	"image/jpeg"
 	"os"
 	domain "park_2020/2020_2_tmp_name/api/users"
 	"park_2020/2020_2_tmp_name/models"
 	"time"
+
+	"github.com/disintegration/imaging"
+	"github.com/nfnt/resize"
+	"github.com/rwcarlsen/goexif/exif"
+	"github.com/sirupsen/logrus"
 )
 
 type userUsecase struct {
@@ -62,6 +63,14 @@ func (u *userUsecase) Feed(user models.User) ([]models.UserFeed, error) {
 	return data, nil
 }
 
+func (u *userUsecase) ChangeAvatar(user models.User, image models.Image) error {
+	err := u.userRepo.ChangeAvatarPath(user.ID, image.LinkImage)
+	if err != nil {
+		return models.ErrNotFound
+	}
+	return nil
+}
+
 func (u *userUsecase) UserID(uid int) (models.UserFeed, error) {
 	user, err := u.userRepo.SelectUserFeedByID(uid)
 	if err != nil {
@@ -90,7 +99,7 @@ func (p *userUsecase) ResizePhoto(path string) error {
 		return models.ErrInternalServerError
 	}
 	size := fi.Size()
-	if (size < 800000) {
+	if size < 800000 {
 		return nil
 	}
 
@@ -105,12 +114,10 @@ func (p *userUsecase) ResizePhoto(path string) error {
 	}
 	defer imgForDecode.Close()
 
-
 	imgJpg, err := jpeg.Decode(imgForDecode)
 	if err != nil {
 		return models.ErrInternalServerError
 	}
-
 
 	width, height := imgJpg.Bounds().Dx(), imgJpg.Bounds().Dy()
 	imgJpg = resize.Resize(uint(width)/2, uint(height)/2, imgJpg, resize.Bicubic)
@@ -150,8 +157,7 @@ func (p *userUsecase) reverseOrientation(img image.Image, o string) *image.NRGBA
 	return imaging.Clone(img)
 }
 
-
-func (p *userUsecase) rotateImg(path string) error{
+func (p *userUsecase) rotateImg(path string) error {
 	imgInDecode, err := os.Open(path)
 	if err != nil {
 		return models.ErrInternalServerError

@@ -221,7 +221,7 @@ func (p *postgresUserRepository) DeleteSession(sid string) error {
 
 func (p *postgresUserRepository) SelectImages(uid int) ([]string, error) {
 	var images []string
-	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE  user_id=$1;`, uid)
+	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE user_id=$1 ORDER BY id ASC;`, uid)
 	if err != nil {
 		return images, err
 	}
@@ -236,6 +236,37 @@ func (p *postgresUserRepository) SelectImages(uid int) ([]string, error) {
 		images = append(images, image)
 	}
 	return images, nil
+}
+
+func (p *postgresUserRepository) ChangeAvatarPath(uid int, newpath string) error {
+	row := p.Conn.QueryRow(`SELECT path FROM photo WHERE user_id=$1 ORDER BY id ASC LIMIT 1;`, uid)
+
+	var path string
+	err := row.Scan(&path)
+	if err != nil {
+		return err
+	}
+
+	tempPath := newpath
+	_, err = p.Conn.Exec(`UPDATE photo SET path=$1 WHERE path=$2`, newpath, path)
+	if err != nil {
+		return err
+	}
+
+	row = p.Conn.QueryRow(`SELECT id FROM photo WHERE path=$1 ORDER BY id DESC LIMIT 1;`, tempPath)
+
+	var id int
+	err = row.Scan(&id)
+	if err != nil {
+		return err
+	}
+
+	_, err = p.Conn.Exec(`UPDATE photo SET path=$1 WHERE id=$2;`, path, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *postgresUserRepository) InsertPremium(uid int, dateFrom time.Time, dateTo time.Time) error {
