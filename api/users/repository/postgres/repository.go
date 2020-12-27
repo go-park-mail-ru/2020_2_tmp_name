@@ -253,7 +253,16 @@ func (p *postgresUserRepository) ChangeAvatarPath(uid int, newpath string) error
 		return err
 	}
 
-	_, err = p.Conn.Exec(`UPDATE path SET path=$1 WHERE path=$2`, path, tempPath)
+
+	row = p.Conn.QueryRow(`SELECT id FROM photo WHERE path=$1 ORDER BY id DESC LIMIT 1;`, tempPath)
+
+	var id int
+	err = row.Scan(&id)
+	if err != nil {
+		return err
+	}
+
+	_, err = p.Conn.Exec(`UPDATE path SET path=$1 WHERE id=$2;`, path, id)
 	if err != nil {
 		return err
 	}
