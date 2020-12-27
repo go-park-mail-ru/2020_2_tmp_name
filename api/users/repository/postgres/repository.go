@@ -221,7 +221,7 @@ func (p *postgresUserRepository) DeleteSession(sid string) error {
 
 func (p *postgresUserRepository) SelectImages(uid int) ([]string, error) {
 	var images []string
-	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE  user_id=$1;`, uid)
+	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE  user_id=$1 ORDER BY id;`, uid)
 	if err != nil {
 		return images, err
 	}
