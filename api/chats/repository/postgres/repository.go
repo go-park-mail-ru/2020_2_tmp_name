@@ -32,7 +32,7 @@ func (p *postgresChatRepository) SelectUserFeed(telephone string) (models.UserFe
 
 func (p *postgresChatRepository) SelectImages(uid int) ([]string, error) {
 	var images []string
-	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE  user_id=$1;`, uid)
+	rows, err := p.Conn.Query(`SELECT path FROM photo WHERE  user_id=$1 ORDER BY id ASC;`, uid)
 	if err != nil {
 		return images, err
 	}
@@ -126,7 +126,8 @@ func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 		}
 		msg, err := p.SelectMessage(uid1, chat.ID)
 		if err != nil {
-			return chats, err
+			chats = append(chats, chat)
+			continue
 		}
 		chat.Messages = append(chat.Messages, msg)
 		chats = append(chats, chat)
@@ -151,7 +152,8 @@ func (p *postgresChatRepository) SelectChatsByID(uid int) ([]models.ChatData, er
 		}
 		msg, err := p.SelectMessage(uid2, chat.ID)
 		if err != nil {
-			return chats, err
+			chats = append(chats, chat)
+			continue
 		}
 		chat.Messages = append(chat.Messages, msg)
 		chats = append(chats, chat)
@@ -172,7 +174,7 @@ func (p *postgresChatRepository) SelectChatByID(uid, chid int) (models.ChatData,
 
 	chat.Messages, err = p.SelectMessages(chid)
 	chat.Target = models.IDToTarget(uid)
-	return chat, err
+	return chat, nil
 }
 
 func (p *postgresChatRepository) SelectUserByChat(uid, chid int) (models.UserFeed, error) {

@@ -13,6 +13,7 @@ type PhotoUsecase interface {
 	ClearPhotos(path string) error
 	FindPhotoWithMask(path string) ([]string, error)
 	FindPhotoWithoutMask(path string) (string, error)
+	ResizePhoto(path string) error
 }
 
 type PhotoRepository interface {

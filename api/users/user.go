@@ -16,6 +16,8 @@ type UserUsecase interface {
 	UserID(uid int) (models.UserFeed, error)
 	Telephone(telephone string) bool
 	GetPremium(uid int) error
+	ResizePhoto(path string) error
+	ChangeAvatar(user models.User, image models.Image) error
 }
 
 type UserRepository interface {
@@ -31,4 +33,5 @@ type UserRepository interface {
 	SelectUsers(user models.User) ([]models.UserFeed, error)           // Tested
 	InsertPremium(uid int, dateFrom time.Time, dateTo time.Time) error // Tested
 	CheckSuperLikeMe(me, userId int) bool                              // Tested
+	ChangeAvatarPath(uid int, newpath string) error
 }

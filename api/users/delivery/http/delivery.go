@@ -43,6 +43,7 @@ func NewUserHandler(r *mux.Router, us domain.UserUsecase, ac authClient.AuthClie
 	r.HandleFunc("/api/v1/is_premium", middleware.SetCSRF(handler.IsPremiumHandler)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/telephone", middleware.CheckCSRF(handler.TelephoneHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/upload", middleware.CheckCSRF(handler.UploadAvatarHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/change", middleware.CheckCSRF(handler.ChangeAvatarHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/get_premium", handler.GetPremiumHandler).Methods(http.MethodPost)
 }
 
@@ -140,6 +141,14 @@ func (u *UserHandlerType) UploadAvatarHandler(w http.ResponseWriter, r *http.Req
 		err = errors.New("no face on photo")
 		logrus.Error(err.Error())
 		w.WriteHeader(http.StatusForbidden)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	err = u.UUsecase.ResizePhoto(photoPath + "/" + photoID.String() + ".jpg")
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(JSONError(err.Error()))
 		return
 	}
@@ -274,6 +283,42 @@ func (u *UserHandlerType) FeedHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body, err := json.Marshal(feed)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
+func (u *UserHandlerType) ChangeAvatarHandler(w http.ResponseWriter, r *http.Request) {
+	image := models.Image{}
+	err := json.NewDecoder(r.Body).Decode(&image)
+	if err != nil {
+		logrus.Error(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	user, err := u.AuthClient.CheckSession(context.Background(), r.Cookies())
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	err = u.UUsecase.ChangeAvatar(user, image)
+	if err != nil {
+		w.WriteHeader(models.GetStatusCode(err))
+		w.Write(JSONError(err.Error()))
+		return
+	}
+
+	body, err := json.Marshal(image)
 	if err != nil {
 		logrus.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
